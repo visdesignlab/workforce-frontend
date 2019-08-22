@@ -1,6 +1,6 @@
 var countiesSvg = d3.select('#counties')
 	.append('svg')
-	.attr('height', 1100)
+	.attr('height', 1120)
 	var professionsSvg = d3.select('#professions')
 		.append('svg')
 		.attr('height', 1000)
@@ -8,14 +8,14 @@ function initSideBar(currentYear, selectedCounty = 'State of Utah') {
 	countiesSvg.selectAll('*').remove();
 
 	totalSupplyDemandByCounty(currentYear);
-	const domainMax = d3.max(Object.values(currentYear), d => d.totalSupply + d.totalDemand);
+	const domainMax = d3.max(Object.values(currentYear), d => Math.max(d.totalSupply, d.totalDemand));
 
 var xScale = d3.scaleLinear()
 	.domain([0, domainMax])
 	.range([0, barWidth]);
 
-	drawText(countiesSvg, Object.keys(currentYear));
-	drawStackedBar(countiesSvg, Object.values(currentYear).map(d => [d.totalSupply, d.totalDemand]), xScale);
+	drawText(countiesSvg, Object.keys(currentYear), 20);
+	draw1DScatterPlot(countiesSvg, Object.values(currentYear).map(d => [d.totalSupply, d.totalDemand]), xScale);
 
 
 	currentYear[selectedCounty].totalSupply = 0;
@@ -38,7 +38,12 @@ var xScale = d3.scaleLinear()
 		}
 	//}
 
-	drawAlexChart(professionsSvg, Object.values(stats).map(d => [d.totalSupply, d.totalDemand]), xScale);
+	var data = Object.values(stats).map(d => [d.totalSupply, d.totalDemand]);
+	var xScale = d3.scaleLinear()
+		.domain([0, d3.max(data, (d) => d3.max(d))])
+		.range([0, barWidth])
+
+	draw1DScatterPlot(professionsSvg, data, xScale);
 }
 
 function totalSupplyDemandByCounty(currentYear) {
@@ -95,12 +100,8 @@ function drawStackedBar(svg, data, xScale) {
 		.text(d => d[1])
 }
 
-function drawAlexChart(svg, data, xScale) {
+function draw1DScatterPlot(svg, data, xScale) {
 	const radius = 6;
-
-	var xScale = d3.scaleLinear()
-		.domain([0, d3.max(data, (d) => d3.max(d))])
-		.range([0, barWidth])
 
 	var groups = svg.append('g')
 		.selectAll('g')
