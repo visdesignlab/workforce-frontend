@@ -40,6 +40,7 @@ function getSortingOptions(sortIndexId, sortDirectionId) {
 
 var currentYear;
 var globalResults;
+var selectedProfessions = {};
 function update() {
 	let year = document.getElementById('year').value;
 	let mapData = document.getElementById('mapData').value;
@@ -47,9 +48,17 @@ function update() {
 		svg.selectAll('*').remove();
 		globalResults = results;
 		currentYear = results[year];
+		var professions = Object.keys(currentYear['State of Utah']['supply']);
 		for (let county in currentYear) {
-			let totalSupply = d3.sum(Object.values(currentYear[county]['supply']));
-			let totalDemand = d3.sum(Object.values(currentYear[county]['demand']));
+			let totalSupply = 0;
+			let totalDemand = 0;
+			for (let profession of professions) {
+				if (!selectedProfessions.hasOwnProperty(profession)
+					|| selectedProfessions[profession]) {
+					totalSupply += currentYear[county]['supply'][profession];
+					totalDemand += currentYear[county]['demand'][profession];
+				}
+			}
 			currentYear[county]['totalSupply'] = totalSupply;
 			supplyScore[county] = (totalSupply / totalDemand) / 2;
 		}

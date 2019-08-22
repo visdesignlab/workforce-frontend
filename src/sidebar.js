@@ -4,6 +4,7 @@ var countiesSvg = d3.select('#counties')
 	var professionsSvg = d3.select('#professions')
 		.append('svg')
 		.attr('height', 1000)
+
 function initSideBar(currentYear, selectedCounty = 'State of Utah') {
 	countiesSvg.selectAll('*').remove();
 
@@ -93,6 +94,34 @@ var xScale = d3.scaleLinear()
 		.enter()
 		.append('g')
 		.attr('transform', (d, i) => `translate(0, ${i * barHeight + barHeight / 2})`);
+
+	professionsGroups.append('rect')
+		.attr('width', 2 * barWidth)
+		.attr('height', barHeight - 4)
+		.attr('fill', (d) => {
+			if (!selectedProfessions.hasOwnProperty(d[0])
+				|| selectedProfessions[d[0]]) {
+				return '#cccccc';
+			}
+			return '#ffffff';
+		})
+		.attr('fill-opacity', 0.8)
+
+
+	professionsGroups.on('click', function(d, i ,j) {
+		if (!selectedProfessions.hasOwnProperty(d[0])
+			|| selectedProfessions[d[0]]) {
+			selectedProfessions[d[0]] = false;
+			d3.select(this)
+				.select('rect')
+				.attr('fill', '#ffffff');
+		} else {
+			selectedProfessions[d[0]] = true;
+			d3.select(this)
+				.select('rect')
+				.attr('fill', '#cccccc');
+		}
+	})
 
 	professionsGroups.call(drawText);
 	professionsGroups.call(draw1DScatterPlot, xScale, barWidth, 1, 2);
