@@ -34,6 +34,7 @@ function update() {
 		for (let county in currentYear) {
 			let totalSupply = d3.sum(Object.values(currentYear[county]['supply']));
 			let totalDemand = d3.sum(Object.values(currentYear[county]['demand']));
+			currentYear[county]['totalSupply'] = totalSupply;
 			supplyScore[county] = (totalSupply / totalDemand) / 2;
 		}
 
@@ -41,6 +42,14 @@ function update() {
 			var linear = d3.scaleOrdinal()
 				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 				.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
+		} else if (mapData == 'supply_per_100k') {
+			let max = d3.max(Object.values(results[year]), d => {
+				return d['totalSupply'] / d['population'] * 100000;
+			});
+
+			var linear = d3.scaleLinear()
+				.domain([0, max])
+				.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
 		} else {
 			var linear = d3.scaleLinear()
 				.domain([1000, 1000000])
@@ -60,10 +69,23 @@ function update() {
 			.call(legendLinear);
 
 		let colorScale = function(d) {
+			let county = d.properties.NAME + ' County';
 			if (mapData == 'supply_need') {
-				return d3.interpolateRdBu(supplyScore[d.properties.NAME + ' County']);
+				return d3.interpolateRdBu(supplyScore[county]);
+			} else if (mapData == 'supply_per_100k') {
+				function getSupplyPer100k(county) {
+					return county['totalSupply'] / county['population'] * 100000;
+				};
+
+				let max = d3.max(Object.values(results[year]), d => getSupplyPer100k(d))
+
+				const scale = d3.scaleLinear()
+					.domain([0, max])
+					.range([0, 1]);
+
+				return d3.interpolateBlues(scale(getSupplyPer100k(results[year][county])));
 			}
-			return d3.interpolateGreens(results['2018'][d.properties.NAME + ' County']['population'] / 1000000);
+			return d3.interpolateGreens(results[year][county]['population'] / 1000000);
 		}
 
 
@@ -106,9 +128,13 @@ function toolTip(d){
 	var f = d3.format(".2f");
 	const supplyDemandRatio = f(2 *supplyScore[d.properties.NAME + ' County']);
 	const population = currentYear[d.properties.NAME + ' County']['population'];
+	const supplyPer100k = d3.format('.0f')(
+		currentYear[d.properties.NAME + ' County']['totalSupply'] / population * 100000);
+
 	return "<h4>"+d.properties.NAME+" County</h4><table>"+
 		"<tr><td>Supply/Need:</td><td>"+(supplyDemandRatio)+"</td></tr>"+
 		"<tr><td>Population:</td><td>"+(population)+"</td></tr>"+
+		"<tr><td>Supply/100K:</td><td>"+(supplyPer100k)+"</td></tr>"+
 		"</table>";
 }
 function mouseOver(d){
