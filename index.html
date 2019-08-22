@@ -150,9 +150,35 @@
 			<button onclick="update()">Update</button>
 			<div id="counties" style='height: 600px; overflow: auto;'>
 				<h1>Counties</h1>
+				<div>
+					<select id='countiesSortBy'>
+						<option value="0">Name</option>
+						<option value="3" selected>Gap</option>
+						<option value="2">Need</option>
+						<option value="1">Supply</option>
+					</select>
+					<select id='countiesSortDirection'>
+						<option value="ascending" selected>Ascending</option>
+						<option value="descending">Descending</option>
+					</select>
+					<button id='countiesSortButton'>Sort</button>
+				</div>
 			</div>
 			<div id="professions">
 				<h1>Professions</h1>
+				<div>
+					<select id='professionsSortBy'>
+						<option value="0">Name</option>
+						<option value="3" selected>Gap</option>
+						<option value="2">Need</option>
+						<option value="1">Supply</option>
+					</select>
+					<select id='professionsSortDirection'>
+						<option value="ascending" selected>Ascending</option>
+						<option value="descending">Descending</option>
+					</select>
+					<button id='professionsSortButton'>Sort</button>
+				</div>
 			</div>
 		</div>
 	</div>

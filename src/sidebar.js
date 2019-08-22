@@ -14,8 +14,38 @@ var xScale = d3.scaleLinear()
 	.domain([0, domainMax])
 	.range([0, barWidth]);
 
-	drawText(countiesSvg, Object.keys(currentYear), 20);
-	draw1DScatterPlot(countiesSvg, Object.values(currentYear).map(d => [d.totalSupply, d.totalDemand]), xScale);
+	let countiesData = [];
+	for (let county in currentYear) {
+		let d = currentYear[county];
+		countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
+	};
+
+	var groups = countiesSvg.append('g')
+		.selectAll('g')
+		.data(countiesData)
+		.enter()
+		.append('g')
+		.attr('transform', (d, i) => `translate(0, ${i * barHeight + barHeight / 2})`);
+
+	groups.call(drawText);
+	groups.call(draw1DScatterPlot, xScale, barWidth, 1, 2);
+
+	d3.select('#countiesSortButton')
+		.on('click', () => {
+			const sortingFunction = getSortingOptions('countiesSortBy',
+				'countiesSortDirection');
+
+			groups.sort(sortingFunction)
+				.transition()
+				.delay(function(d, i) {
+					return i * 50;
+				})
+				.duration(1000)
+				.attr("transform", function(d, i) {
+					let y = i * barHeight + barHeight / 2;
+					return "translate(" + 0 + ", " + y + ")";
+				});
+		});
 
 
 	currentYear[selectedCounty].totalSupply = 0;
@@ -23,8 +53,6 @@ var xScale = d3.scaleLinear()
 
 	professionsSvg.selectAll('*').remove();
 	var professions = Object.keys(currentYear[selectedCounty]['supply']);
-	drawText(professionsSvg, professions, 20);
-
 
 	var stats = {}
 		for (let prof of professions) {
@@ -38,12 +66,42 @@ var xScale = d3.scaleLinear()
 		}
 	//}
 
-	var data = Object.values(stats).map(d => [d.totalSupply, d.totalDemand]);
+	var data = Object.values(stats).map(d => [d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
 	var xScale = d3.scaleLinear()
 		.domain([0, d3.max(data, (d) => d3.max(d))])
 		.range([0, barWidth])
 
-	draw1DScatterPlot(professionsSvg, data, xScale);
+	var professionsData = [];
+
+	for (let i in data) {
+		professionsData.push([professions[i], ...data[i]]);
+	};
+
+	var professionsGroups = professionsSvg.append('g')
+		.selectAll('g')
+		.data(professionsData)
+		.enter()
+		.append('g')
+		.attr('transform', (d, i) => `translate(0, ${i * barHeight + barHeight / 2})`);
+
+	professionsGroups.call(drawText);
+	professionsGroups.call(draw1DScatterPlot, xScale, barWidth, 1, 2);
+	d3.select('#professionsSortButton')
+		.on('click', () => {
+			const sortingFunction = getSortingOptions('professionsSortBy',
+				'professionsSortDirection');
+
+			professionsGroups.sort(sortingFunction)
+				.transition()
+				.delay(function(d, i) {
+					return i * 50;
+				})
+				.duration(1000)
+				.attr("transform", function(d, i) {
+					let y = i * barHeight + barHeight / 2;
+					return "translate(" + 0 + ", " + y + ")";
+				});
+		});
 }
 
 function totalSupplyDemandByCounty(currentYear) {
@@ -58,15 +116,13 @@ function totalSupplyDemandByCounty(currentYear) {
 const barHeight = 30;
 const barWidth = 120;
 
-
-function drawText(svg, data, dy = 0) {
-	svg.append('g')
-		.selectAll('rect')
-		.data(data)
-		.enter()
+function drawText(selection, i = 0, dy = 0) {
+		var groups = selection.append('g');
+		
+		groups
 		.append('text')
-		.attr('y', (d, i) => i * barHeight + barHeight / 2 + 5 + dy)
-		.text(d => d);
+		.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
+		.text(d => d[i]);
 }
 
 function drawStackedBar(svg, data, xScale) {
@@ -100,55 +156,49 @@ function drawStackedBar(svg, data, xScale) {
 		.text(d => d[1])
 }
 
-function draw1DScatterPlot(svg, data, xScale) {
+function draw1DScatterPlot(svg, xScale, x = 0, i = 0, j = 1) {
 	const radius = 6;
-
-	var groups = svg.append('g')
-		.selectAll('g')
-		.data(data)
-		.enter()
-		.append('g')
-		.attr('transform', `translate(${barWidth}, 20)`)
 
 	var xAxis = g => g
 		.attr("transform", `translate(${barWidth},${20})`)
 		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 
-	svg.append('g')
-		.call(xAxis)
+	//svg.append('g')
+	//	.call(xAxis)
+	var groups = svg.append('g');
 	groups
 		.append('line')
 		.attr('stroke', '#000000')
-		.attr('x1', 0)
-		.attr('x2', barWidth)
-		.attr('y1', (d, i) => i * barHeight + barHeight / 2)
-		.attr('y2', (d, i) => i * barHeight + barHeight / 2)
+		.attr('x1', x)
+		.attr('x2', x + barWidth)
+		.attr('y1', (d, i) => 0 * barHeight + barHeight / 2)
+		.attr('y2', (d, i) => 0 * barHeight + barHeight / 2)
 
 	groups
 		.append('rect')
 		.attr('height', 6)
-		.attr('width', d => Math.abs(xScale(d[0]) - xScale(d[1])))
-		.attr('x', d => xScale(d3.min(d)))
-		.attr('y', (d, i) => i * barHeight + barHeight / 2 - radius / 2)
-		.attr('fill', d => d[0] > d[1] ? '#086fad' : '#c7001e');
+		.attr('width', d => Math.abs(xScale(d[i]) - xScale(d[j])))
+		.attr('x', d => {return x + xScale(d3.min([d[i], d[j]]))})
+		.attr('y', (d, i) => 0 * barHeight + barHeight / 2 - radius / 2)
+		.attr('fill', d => d[i] > d[j] ? '#086fad' : '#c7001e');
 
 	groups
 		.append('circle')
 		.attr('r', 6)
 		.attr('stroke', '#086fad')
 		.attr('fill', '#086fad')
-		.attr('cx', d => xScale(d[0]))
-		.attr('cy', (d, i) => i * barHeight + barHeight / 2)
+		.attr('cx', d => x + xScale(d[i]))
+		.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
 		.append('title')
-		.text(d => d[0])
+		.text(d => d[i])
 
 	groups
 		.append('circle')
 		.attr('r', 6)
 		.attr('stroke', '#c7001e')
 		.attr('fill', '#c7001e')
-		.attr('cx', d => xScale(d[1]))
-		.attr('cy', (d, i) => i * barHeight + barHeight / 2)
+		.attr('cx', d => x + xScale(d[j]))
+		.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
 		.append('title')
-		.text(d => d[1])
+		.text(d => d[j])
 }

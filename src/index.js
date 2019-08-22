@@ -21,6 +21,22 @@ var projection = d3.geoAlbersUsa()
 projection = d3.geoMercator().scale(4000).translate([600/2, 600/2])
 var path = d3.geoPath(projection);
 
+function getSortingOptions(sortIndexId, sortDirectionId) {
+	const index =  Number(document.getElementById(sortIndexId).value);
+	const direction =  document.getElementById(sortDirectionId).value;
+
+	if (direction == 'ascending') {
+		const sortingFunction = function(a, b) {
+			return d3.ascending(a[index], b[index]);
+		}
+		return sortingFunction;
+	} else {
+		const sortingFunction = function(a, b) {
+			return d3.descending(a[index], b[index]);
+		}
+		return sortingFunction;
+	}
+}
 
 var currentYear;
 var globalResults;
