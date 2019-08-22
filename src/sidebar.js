@@ -19,10 +19,12 @@ var xScale = d3.scaleLinear()
 		let d = currentYear[county];
 		countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
 	};
+	var sortingFunction = getSortingOptions('countiesSortBy',
+		'countiesSortDirection');
 
 	var groups = countiesSvg.append('g')
 		.selectAll('g')
-		.data(countiesData)
+		.data(countiesData.sort(sortingFunction))
 		.enter()
 		.append('g')
 		.attr('transform', (d, i) => `translate(0, ${i * barHeight + barHeight / 2})`);
@@ -82,9 +84,12 @@ var xScale = d3.scaleLinear()
 		professionsData.push([professions[i], ...data[i]]);
 	};
 
+	sortingFunction = getSortingOptions('professionsSortBy',
+		'professionsSortDirection');
+
 	var professionsGroups = professionsSvg.append('g')
 		.selectAll('g')
-		.data(professionsData)
+		.data(professionsData.sort(sortingFunction))
 		.enter()
 		.append('g')
 		.attr('transform', (d, i) => `translate(0, ${i * barHeight + barHeight / 2})`);
