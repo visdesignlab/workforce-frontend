@@ -27,6 +27,11 @@ var xScale = d3.scaleLinear()
 		.append('g')
 		.attr('transform', (d, i) => `translate(0, ${i * barHeight + barHeight / 2})`);
 
+	groups.append('rect')
+		.attr('width', 2 * barWidth)
+		.attr('height', barHeight)
+		.attr('fill', (d) => d[0] == selectedCounty ? '#cccccc' : 'none')
+
 	groups.call(drawText);
 	groups.call(draw1DScatterPlot, xScale, barWidth, 1, 2);
 
