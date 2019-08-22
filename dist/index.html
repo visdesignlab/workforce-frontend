@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>UMEC Gap Analysis Tool</title>
+		<link rel="stylesheet" href="/styles/styles.css">
+	</head>
+
+<body>
+	<div style='margin: 10px;'>
+		<ul>
+			<li><a class="active" href="#">UMEC Gap Analysis Tool</a></li>
+		</ul>
+	</div>
+	<div id="tooltip"></div><!-- div to hold tooltip. -->
+	<div class='container'>
+		<div>
+			<div id='map' class='fixed'></div>
+			<div id='linechart' class='fixed'></div>
+		</div>
+		<div id="sidebar" class='flex-item'>
+			<select id='year'>
+				<option value="2014">2014</option>
+				<option value="2015">2015</option>
+				<option value="2016">2016</option>
+				<option value="2017">2017</option>
+				<option value="2018">2018</option>
+				<option value="2019" selected>2019</option>
+				<option value="2020">2020</option>
+				<option value="2021">2021</option>
+				<option value="2022">2022</option>
+				<option value="2022">2023</option>
+				<option value="2022">2024</option>
+			</select>
+			<select id='mapData'>
+				<option value="supply_need" selected>Supply/Need</option>
+				<option value="population">Population</option>
+				<option value="supply_per_100k">Supply per 100K</option>
+			</select>
+			<button onclick="update()">Update</button>
+			<div id="counties" style='height: 600px; overflow: auto;'>
+				<h1>Counties</h1>
+			</div>
+			<div id="professions">
+				<h1>Professions</h1>
+			</div>
+		</div>
+	</div>
+
+
+	<script src="bundle.js"></script>
+	<script>
+		update()
+	</script>
+</body>
+</html>

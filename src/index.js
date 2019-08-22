@@ -1,3 +1,8 @@
+import * as d3 from 'd3';
+import * as topojson from 'topojson-client';
+import {legendColor} from 'd3-svg-legend'
+import {initSideBar} from './sidebar';
+import {initLineChart} from './linechart'
 window.selectedCounty = 'State of Utah';
 var  supplyScore = {};
 var svg = d3.select("#map")
@@ -9,7 +14,7 @@ var linear = d3.scaleOrdinal()
 	.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 	.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
 
-var legendLinear = d3.legendColor()
+var legendLinear = legendColor()
 	.shapeWidth(120)
 	.orient('horizontal')
 	.scale(linear);
@@ -24,7 +29,7 @@ var path = d3.geoPath(projection);
 
 var currentYear;
 var globalResults;
-function update() {
+window.update = function () {
 	let year = document.getElementById('year').value;
 	let mapData = document.getElementById('mapData').value;
 	d3.json('../data/model-results.json').then(function(results) {
@@ -56,7 +61,7 @@ function update() {
 				.range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
 		}
 
-		var legendLinear = d3.legendColor()
+		var legendLinear = legendColor()
 			.shapeWidth(115)
 			.labelFormat(d3.format(".0f"))
 			.orient('horizontal')

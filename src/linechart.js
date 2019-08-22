@@ -1,3 +1,4 @@
+import * as d3 from 'd3';
 var data = {dates: {}, series: {}};
 var width = 200;
 var height = 200
@@ -99,3 +100,4 @@ function createLineChart(results, supply, demand, profession, max, xi = 0, yi = 
 		.style("mix-blend-mode", "multiply")
 		.attr("d", d => line(d));
 }
+export {initLineChart};

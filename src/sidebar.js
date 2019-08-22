@@ -1,3 +1,4 @@
+import * as d3 from 'd3';
 var countiesSvg = d3.select('#counties')
 	.append('svg')
 	.attr('height', 1120)
@@ -152,3 +153,4 @@ function draw1DScatterPlot(svg, data, xScale) {
 		.append('title')
 		.text(d => d[1])
 }
+export {initSideBar};
