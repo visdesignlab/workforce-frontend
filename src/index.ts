@@ -26,26 +26,9 @@ var projection = d3.geoAlbersUsa()
 projection = d3.geoMercator().scale(4000).translate([600/2, 600/2])
 var path = d3.geoPath(projection);
 
-function getSortingOptions(sortIndexId, sortDirectionId) {
-	const index =  Number(document.getElementById(sortIndexId).value);
-	const direction =  document.getElementById(sortDirectionId).value;
-
-	if (direction == 'ascending') {
-		const sortingFunction = function(a, b) {
-			return d3.ascending(a[index], b[index]);
-		}
-		return sortingFunction;
-	} else {
-		const sortingFunction = function(a, b) {
-			return d3.descending(a[index], b[index]);
-		}
-		return sortingFunction;
-	}
-}
 
 var currentYear;
 var globalResults;
-var selectedProfessions = {};
 window.update = function () {
 	let year = document.getElementById('year').value;
 	let mapData = document.getElementById('mapData').value;
@@ -53,17 +36,9 @@ window.update = function () {
 		svg.selectAll('*').remove();
 		globalResults = results;
 		currentYear = results[year];
-		var professions = Object.keys(currentYear['State of Utah']['supply']);
 		for (let county in currentYear) {
-			let totalSupply = 0;
-			let totalDemand = 0;
-			for (let profession of professions) {
-				if (!selectedProfessions.hasOwnProperty(profession)
-					|| selectedProfessions[profession]) {
-					totalSupply += currentYear[county]['supply'][profession];
-					totalDemand += currentYear[county]['demand'][profession];
-				}
-			}
+			let totalSupply = d3.sum(Object.values(currentYear[county]['supply']));
+			let totalDemand = d3.sum(Object.values(currentYear[county]['demand']));
 			currentYear[county]['totalSupply'] = totalSupply;
 			supplyScore[county] = (totalSupply / totalDemand) / 2;
 		}
