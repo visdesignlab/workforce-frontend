@@ -3,6 +3,12 @@ import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
 import {initSideBar} from './sidebar';
 import {initLineChart} from './linechart'
+declare global {
+	interface Window {
+		selectedCounty: string;
+		update: any;
+	}
+}
 window.selectedCounty = 'State of Utah';
 var  supplyScore = {};
 var svg = d3.select("#map")
@@ -30,16 +36,16 @@ var path = d3.geoPath(projection);
 var currentYear;
 var globalResults;
 window.update = function () {
-	let year = document.getElementById('year').value;
-	let mapData = document.getElementById('mapData').value;
+	let year = (document.getElementById('year') as HTMLInputElement).value;
+	let mapData = (document.getElementById('mapData') as HTMLInputElement).value;
 	d3.json('../data/model-results.json').then(function(results) {
 		svg.selectAll('*').remove();
 		globalResults = results;
 		currentYear = results[year];
 		for (let county in currentYear) {
-			let totalSupply = d3.sum(Object.values(currentYear[county]['supply']));
-			let totalDemand = d3.sum(Object.values(currentYear[county]['demand']));
-			currentYear[county]['totalSupply'] = totalSupply;
+			let totalSupply = d3.sum(Object.keys(currentYear[county]['supply']).map(d=>currentYear[county]['supply'][d]));
+			let totalDemand = d3.sum(Object.keys(currentYear[county]['demand']).map(d=>currentYear[county]['demand'][d]));
+		currentYear[county]['totalSupply'] = totalSupply;
 			supplyScore[county] = (totalSupply / totalDemand) / 2;
 		}
 
@@ -48,9 +54,9 @@ window.update = function () {
 				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 				.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
 		} else if (mapData == 'supply_per_100k') {
-			let max = d3.max(Object.values(results[year]), d => {
-				return d['totalSupply'] / d['population'] * 100000;
-			});
+			let max = d3.max(Object.keys(results[year]).map( d => 
+				results[year][d]['totalSupply'] / results[year][d]['population'] * 100000
+			));
 
 			var linear = d3.scaleLinear()
 				.domain([0, max])
@@ -72,17 +78,17 @@ window.update = function () {
 			.attr("transform", "translate(20,20)");
 		svg.select(".legendLinear")
 			.call(legendLinear);
-
+		function getSupplyPer100k(county) {
+			return county['totalSupply'] / county['population'] * 100000;
+		};
 		let colorScale = function(d) {
 			let county = d.properties.NAME + ' County';
 			if (mapData == 'supply_need') {
 				return d3.interpolateRdBu(supplyScore[county]);
 			} else if (mapData == 'supply_per_100k') {
-				function getSupplyPer100k(county) {
-					return county['totalSupply'] / county['population'] * 100000;
-				};
+				
 
-				let max = d3.max(Object.values(results[year]), d => getSupplyPer100k(d))
+				let max = d3.max(Object.keys(results[year]).map(d => getSupplyPer100k(results[year][d])));
 
 				const scale = d3.scaleLinear()
 					.domain([0, max])

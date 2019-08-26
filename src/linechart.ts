@@ -17,12 +17,12 @@ function initLineChart(results, selectedCounty = 'State of Utah') {
 		demand = [];
 		let profession = professions[k];
 
-		for (let i of Object.values(results)) {
-			supply.push(i[selectedCounty]['supply'][profession]);
+		for (let i of Object.keys(results)) {
+			supply.push(results[i][selectedCounty]['supply'][profession]);
 		}
 
-		for (let i of Object.values(results)) {
-			demand.push(i[selectedCounty]['demand'][profession]);
+		for (let i of Object.keys(results)) {
+			demand.push(results[i][selectedCounty]['demand'][profession]);
 		}
 		supply_demand.push([supply, demand, profession]);
 
@@ -31,7 +31,7 @@ function initLineChart(results, selectedCounty = 'State of Utah') {
 	}
 
 	for (let i in supply_demand) {
-		createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, i % 4, Math.floor(i / 4));
+		createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 4, Math.floor(+i / 4));
 	}
 }
 

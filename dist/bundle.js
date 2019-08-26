@@ -35836,11 +35836,14 @@ window.update = function () {
         svg.selectAll('*').remove();
         globalResults = results;
         currentYear = results[year];
-        for (var county in currentYear) {
-            var totalSupply = d3.sum(Object.values(currentYear[county]['supply']));
-            var totalDemand = d3.sum(Object.values(currentYear[county]['demand']));
+        var _loop_1 = function (county) {
+            var totalSupply = d3.sum(Object.keys(currentYear[county]['supply']).map(function (d) { return currentYear[county]['supply'][d]; }));
+            var totalDemand = d3.sum(Object.keys(currentYear[county]['demand']).map(function (d) { return currentYear[county]['demand'][d]; }));
             currentYear[county]['totalSupply'] = totalSupply;
             supplyScore[county] = (totalSupply / totalDemand) / 2;
+        };
+        for (var county in currentYear) {
+            _loop_1(county);
         }
         if (mapData == 'supply_need') {
             var linear = d3.scaleOrdinal()
@@ -35848,9 +35851,9 @@ window.update = function () {
                 .range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
         }
         else if (mapData == 'supply_per_100k') {
-            var max = d3.max(Object.values(results[year]), function (d) {
-                return d['totalSupply'] / d['population'] * 100000;
-            });
+            var max = d3.max(Object.keys(results[year]).map(function (d) {
+                return results[year][d]['totalSupply'] / results[year][d]['population'] * 100000;
+            }));
             var linear = d3.scaleLinear()
                 .domain([0, max])
                 .range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
@@ -35870,17 +35873,17 @@ window.update = function () {
             .attr("transform", "translate(20,20)");
         svg.select(".legendLinear")
             .call(legendLinear);
+        function getSupplyPer100k(county) {
+            return county['totalSupply'] / county['population'] * 100000;
+        }
+        ;
         var colorScale = function (d) {
             var county = d.properties.NAME + ' County';
             if (mapData == 'supply_need') {
                 return d3.interpolateRdBu(supplyScore[county]);
             }
             else if (mapData == 'supply_per_100k') {
-                function getSupplyPer100k(county) {
-                    return county['totalSupply'] / county['population'] * 100000;
-                }
-                ;
-                var max = d3.max(Object.values(results[year]), function (d) { return getSupplyPer100k(d); });
+                var max = d3.max(Object.keys(results[year]).map(function (d) { return getSupplyPer100k(results[year][d]); }));
                 var scale = d3.scaleLinear()
                     .domain([0, max])
                     .range([0, 1]);
@@ -35971,19 +35974,19 @@ function initLineChart(results, selectedCounty) {
         supply = [];
         demand = [];
         var profession = professions[k];
-        for (var _i = 0, _a = Object.values(results); _i < _a.length; _i++) {
+        for (var _i = 0, _a = Object.keys(results); _i < _a.length; _i++) {
             var i = _a[_i];
-            supply.push(i[selectedCounty]['supply'][profession]);
+            supply.push(results[i][selectedCounty]['supply'][profession]);
         }
-        for (var _b = 0, _c = Object.values(results); _b < _c.length; _b++) {
+        for (var _b = 0, _c = Object.keys(results); _b < _c.length; _b++) {
             var i = _c[_b];
-            demand.push(i[selectedCounty]['demand'][profession]);
+            demand.push(results[i][selectedCounty]['demand'][profession]);
         }
         supply_demand.push([supply, demand, profession]);
         max = d3.max([d3.max(demand), d3.max(supply), max]);
     }
     for (var i in supply_demand) {
-        createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, i % 4, Math.floor(i / 4));
+        createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 4, Math.floor(+i / 4));
     }
 }
 exports.initLineChart = initLineChart;
@@ -36064,13 +36067,13 @@ var professionsSvg = d3.select('#professions')
 function initSideBar(currentYear, selectedCounty) {
     if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
     countiesSvg.selectAll('*').remove();
-    totalSupplyDemandByCounty(currentYear);
-    var domainMax = d3.max(Object.values(currentYear), function (d) { return Math.max(d.totalSupply, d.totalDemand); });
+    currentYear = totalSupplyDemandByCounty(currentYear);
+    var domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d].totalSupply, currentYear[d].totalDemand); });
     var xScale = d3.scaleLinear()
         .domain([0, domainMax])
         .range([0, barWidth]);
     drawText(countiesSvg, Object.keys(currentYear), 20);
-    draw1DScatterPlot(countiesSvg, Object.values(currentYear).map(function (d) { return [d.totalSupply, d.totalDemand]; }), xScale);
+    draw1DScatterPlot(countiesSvg, Object.keys(currentYear).map(function (d) { return [currentYear[d].totalSupply, currentYear[d].totalDemand]; }), xScale);
     currentYear[selectedCounty].totalSupply = 0;
     currentYear[selectedCounty].totalDemand = 0;
     professionsSvg.selectAll('*').remove();
@@ -36088,7 +36091,7 @@ function initSideBar(currentYear, selectedCounty) {
         stats[prof].totalDemand += currentYear[selectedCounty]['demand'][prof];
     }
     //}
-    var data = Object.values(stats).map(function (d) { return [d.totalSupply, d.totalDemand]; });
+    var data = Object.keys(stats).map(function (d) { return [stats[d].totalSupply, stats[d].totalDemand]; });
     var xScale = d3.scaleLinear()
         .domain([0, d3.max(data, function (d) { return d3.max(d); })])
         .range([0, barWidth]);
@@ -36096,12 +36099,16 @@ function initSideBar(currentYear, selectedCounty) {
 }
 exports.initSideBar = initSideBar;
 function totalSupplyDemandByCounty(currentYear) {
-    for (var county in currentYear) {
-        var totalSupply = d3.sum(Object.values(currentYear[county]['supply']));
-        var totalDemand = d3.sum(Object.values(currentYear[county]['demand']));
+    var _loop_1 = function (county) {
+        var totalSupply = d3.sum(Object.keys(currentYear[county]['supply']).map(function (d) { return currentYear[county]['supply'][d]; }));
+        var totalDemand = d3.sum(Object.keys(currentYear[county]['demand']).map(function (d) { return currentYear[county]['demand'][d]; }));
         currentYear[county]['totalSupply'] = totalSupply;
         currentYear[county]['totalDemand'] = totalDemand;
+    };
+    for (var county in currentYear) {
+        _loop_1(county);
     }
+    return currentYear;
 }
 var barHeight = 30;
 var barWidth = 120;
@@ -36116,7 +36123,7 @@ function drawText(svg, data, dy) {
         .text(function (d) { return d; });
 }
 function drawStackedBar(svg, data, xScale) {
-    var xScale = function (d) {
+    xScale = function (d) {
         return barWidth * d[0] / (d[0] + d[1]) || 0;
     };
     var groups = svg.append('g')

@@ -8,15 +8,14 @@ var countiesSvg = d3.select('#counties')
 function initSideBar(currentYear, selectedCounty = 'State of Utah') {
 	countiesSvg.selectAll('*').remove();
 
-	totalSupplyDemandByCounty(currentYear);
-	const domainMax = d3.max(Object.values(currentYear), d => Math.max(d.totalSupply, d.totalDemand));
-
+	currentYear = totalSupplyDemandByCounty(currentYear);
+	const domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d].totalSupply, currentYear[d].totalDemand));
 var xScale = d3.scaleLinear()
 	.domain([0, domainMax])
 	.range([0, barWidth]);
 
 	drawText(countiesSvg, Object.keys(currentYear), 20);
-	draw1DScatterPlot(countiesSvg, Object.values(currentYear).map(d => [d.totalSupply, d.totalDemand]), xScale);
+	draw1DScatterPlot(countiesSvg, Object.keys(currentYear).map(d => [currentYear[d].totalSupply, currentYear[d].totalDemand]), xScale);
 
 
 	currentYear[selectedCounty].totalSupply = 0;
@@ -39,7 +38,7 @@ var xScale = d3.scaleLinear()
 		}
 	//}
 
-	var data = Object.values(stats).map(d => [d.totalSupply, d.totalDemand]);
+	var data = Object.keys(stats).map(d => [stats[d].totalSupply, stats[d].totalDemand]);
 	var xScale = d3.scaleLinear()
 		.domain([0, d3.max(data, (d) => d3.max(d))])
 		.range([0, barWidth])
@@ -49,11 +48,12 @@ var xScale = d3.scaleLinear()
 
 function totalSupplyDemandByCounty(currentYear) {
 	for (let county in currentYear) {
-		let totalSupply = d3.sum(Object.values(currentYear[county]['supply']));
-		let totalDemand = d3.sum(Object.values(currentYear[county]['demand']));
+		let totalSupply = d3.sum(Object.keys(currentYear[county]['supply']).map(d=>currentYear[county]['supply'][d]));
+		let totalDemand = d3.sum(Object.keys(currentYear[county]['demand']).map(d=>currentYear[county]['demand'][d]));
 		currentYear[county]['totalSupply'] = totalSupply;
 		currentYear[county]['totalDemand'] = totalDemand;
 	}
+	return currentYear;
 }
 
 const barHeight = 30;
@@ -71,7 +71,7 @@ function drawText(svg, data, dy = 0) {
 }
 
 function drawStackedBar(svg, data, xScale) {
-	var xScale = function(d) {
+	xScale = function(d) {
 		return barWidth * d[0] / (d[0] + d[1]) || 0;
 	}
 	var groups = svg.append('g')
