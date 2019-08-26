@@ -35829,6 +35829,7 @@ projection = d3.geoMercator().scale(4000).translate([600 / 2, 600 / 2]);
 var path = d3.geoPath(projection);
 var currentYear;
 var globalResults;
+window.selectedProfessions = {};
 window.update = function () {
     var year = document.getElementById('year').value;
     var mapData = document.getElementById('mapData').value;
@@ -35836,14 +35837,20 @@ window.update = function () {
         svg.selectAll('*').remove();
         globalResults = results;
         currentYear = results[year];
-        var _loop_1 = function (county) {
-            var totalSupply = d3.sum(Object.keys(currentYear[county]['supply']).map(function (d) { return currentYear[county]['supply'][d]; }));
-            var totalDemand = d3.sum(Object.keys(currentYear[county]['demand']).map(function (d) { return currentYear[county]['demand'][d]; }));
+        var professions = Object.keys(currentYear['State of Utah']['supply']);
+        for (var county in currentYear) {
+            var totalSupply = 0;
+            var totalDemand = 0;
+            for (var _i = 0, professions_1 = professions; _i < professions_1.length; _i++) {
+                var profession = professions_1[_i];
+                if (!window.selectedProfessions.hasOwnProperty(profession)
+                    || window.selectedProfessions[profession]) {
+                    totalSupply += currentYear[county]['supply'][profession];
+                    totalDemand += currentYear[county]['demand'][profession];
+                }
+            }
             currentYear[county]['totalSupply'] = totalSupply;
             supplyScore[county] = (totalSupply / totalDemand) / 2;
-        };
-        for (var county in currentYear) {
-            _loop_1(county);
         }
         if (mapData == 'supply_need') {
             var linear = d3.scaleOrdinal()
@@ -35883,7 +35890,9 @@ window.update = function () {
                 return d3.interpolateRdBu(supplyScore[county]);
             }
             else if (mapData == 'supply_per_100k') {
-                var max = d3.max(Object.keys(results[year]).map(function (d) { return getSupplyPer100k(results[year][d]); }));
+                var max = d3.max(Object.keys(results[year]).map(function (d) {
+                    return results[year][d]['totalSupply'] / results[year][d]['population'] * 100000;
+                }));
                 var scale = d3.scaleLinear()
                     .domain([0, max])
                     .range([0, 1]);
@@ -36058,6 +36067,22 @@ function createLineChart(results, supply, demand, profession, max, xi, yi) {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
+function getSortingOptions(sortIndexId, sortDirectionId) {
+    var index = Number(document.getElementById(sortIndexId).value);
+    var direction = document.getElementById(sortDirectionId).value;
+    if (direction == 'ascending') {
+        var sortingFunction = function (a, b) {
+            return d3.ascending(a[index], b[index]);
+        };
+        return sortingFunction;
+    }
+    else {
+        var sortingFunction = function (a, b) {
+            return d3.descending(a[index], b[index]);
+        };
+        return sortingFunction;
+    }
+}
 var countiesSvg = d3.select('#counties')
     .append('svg')
     .attr('height', 1120);
@@ -36067,18 +36092,48 @@ var professionsSvg = d3.select('#professions')
 function initSideBar(currentYear, selectedCounty) {
     if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
     countiesSvg.selectAll('*').remove();
-    currentYear = totalSupplyDemandByCounty(currentYear);
+    totalSupplyDemandByCounty(currentYear);
     var domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d].totalSupply, currentYear[d].totalDemand); });
     var xScale = d3.scaleLinear()
         .domain([0, domainMax])
         .range([0, barWidth]);
-    drawText(countiesSvg, Object.keys(currentYear), 20);
-    draw1DScatterPlot(countiesSvg, Object.keys(currentYear).map(function (d) { return [currentYear[d].totalSupply, currentYear[d].totalDemand]; }), xScale);
+    var countiesData = [];
+    for (var county in currentYear) {
+        var d = currentYear[county];
+        countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
+    }
+    ;
+    var sortingFunction = getSortingOptions('countiesSortBy', 'countiesSortDirection');
+    var groups = countiesSvg.append('g')
+        .selectAll('g')
+        .data(countiesData.sort(sortingFunction))
+        .enter()
+        .append('g')
+        .attr('transform', function (d, i) { return "translate(0, " + (i * barHeight + barHeight / 2) + ")"; });
+    groups.append('rect')
+        .attr('width', 2 * barWidth)
+        .attr('height', barHeight)
+        .attr('fill', function (d) { return d[0] == selectedCounty ? '#cccccc' : 'none'; });
+    groups.call(drawText);
+    groups.call(draw1DScatterPlot, xScale, barWidth, 1, 2);
+    d3.select('#countiesSortButton')
+        .on('click', function () {
+        var sortingFunction = getSortingOptions('countiesSortBy', 'countiesSortDirection');
+        groups.sort(sortingFunction)
+            .transition()
+            .delay(function (d, i) {
+            return i * 50;
+        })
+            .duration(1000)
+            .attr("transform", function (d, i) {
+            var y = i * barHeight + barHeight / 2;
+            return "translate(" + 0 + ", " + y + ")";
+        });
+    });
     currentYear[selectedCounty].totalSupply = 0;
     currentYear[selectedCounty].totalDemand = 0;
     professionsSvg.selectAll('*').remove();
     var professions = Object.keys(currentYear[selectedCounty]['supply']);
-    drawText(professionsSvg, professions, 20);
     var stats = {};
     for (var _i = 0, professions_1 = professions; _i < professions_1.length; _i++) {
         var prof = professions_1[_i];
@@ -36091,11 +36146,64 @@ function initSideBar(currentYear, selectedCounty) {
         stats[prof].totalDemand += currentYear[selectedCounty]['demand'][prof];
     }
     //}
-    var data = Object.keys(stats).map(function (d) { return [stats[d].totalSupply, stats[d].totalDemand]; });
+    var data = Object.keys(stats).map(function (d) { return [stats[d].totalSupply, stats[d].totalDemand, stats[d].totalDemand - stats[d].totalSupply]; });
     var xScale = d3.scaleLinear()
         .domain([0, d3.max(data, function (d) { return d3.max(d); })])
         .range([0, barWidth]);
-    draw1DScatterPlot(professionsSvg, data, xScale);
+    var professionsData = [];
+    for (var i in data) {
+        professionsData.push([professions[i]].concat(data[i]));
+    }
+    ;
+    sortingFunction = getSortingOptions('professionsSortBy', 'professionsSortDirection');
+    var professionsGroups = professionsSvg.append('g')
+        .selectAll('g')
+        .data(professionsData.sort(sortingFunction))
+        .enter()
+        .append('g')
+        .attr('transform', function (d, i) { return "translate(0, " + (i * barHeight + barHeight / 2) + ")"; });
+    professionsGroups.append('rect')
+        .attr('width', 2 * barWidth)
+        .attr('height', barHeight - 4)
+        .attr('fill', function (d) {
+        if (!window.selectedProfessions.hasOwnProperty(d[0])
+            || window.selectedProfessions[d[0]]) {
+            return '#cccccc';
+        }
+        return '#ffffff';
+    })
+        .attr('fill-opacity', 0.8);
+    professionsGroups.on('click', function (d, i, j) {
+        if (!window.selectedProfessions.hasOwnProperty(d[0])
+            || window.selectedProfessions[d[0]]) {
+            window.selectedProfessions[d[0]] = false;
+            d3.select(this)
+                .select('rect')
+                .attr('fill', '#ffffff');
+        }
+        else {
+            window.selectedProfessions[d[0]] = true;
+            d3.select(this)
+                .select('rect')
+                .attr('fill', '#cccccc');
+        }
+    });
+    professionsGroups.call(drawText);
+    professionsGroups.call(draw1DScatterPlot, xScale, barWidth, 1, 2);
+    d3.select('#professionsSortButton')
+        .on('click', function () {
+        var sortingFunction = getSortingOptions('professionsSortBy', 'professionsSortDirection');
+        professionsGroups.sort(sortingFunction)
+            .transition()
+            .delay(function (d, i) {
+            return i * 50;
+        })
+            .duration(1000)
+            .attr("transform", function (d, i) {
+            var y = i * barHeight + barHeight / 2;
+            return "translate(" + 0 + ", " + y + ")";
+        });
+    });
 }
 exports.initSideBar = initSideBar;
 function totalSupplyDemandByCounty(currentYear) {
@@ -36108,19 +36216,17 @@ function totalSupplyDemandByCounty(currentYear) {
     for (var county in currentYear) {
         _loop_1(county);
     }
-    return currentYear;
 }
 var barHeight = 30;
 var barWidth = 120;
-function drawText(svg, data, dy) {
+function drawText(selection, i, dy) {
+    if (i === void 0) { i = 0; }
     if (dy === void 0) { dy = 0; }
-    svg.append('g')
-        .selectAll('rect')
-        .data(data)
-        .enter()
+    var groups = selection.append('g');
+    groups
         .append('text')
-        .attr('y', function (d, i) { return i * barHeight + barHeight / 2 + 5 + dy; })
-        .text(function (d) { return d; });
+        .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 + 5 + dy; })
+        .text(function (d) { return d[i]; });
 }
 function drawStackedBar(svg, data, xScale) {
     xScale = function (d) {
@@ -36150,51 +36256,49 @@ function drawStackedBar(svg, data, xScale) {
         .append('title')
         .text(function (d) { return d[1]; });
 }
-function draw1DScatterPlot(svg, data, xScale) {
+function draw1DScatterPlot(svg, xScale, x, i, j) {
+    if (x === void 0) { x = 0; }
+    if (i === void 0) { i = 0; }
+    if (j === void 0) { j = 1; }
     var radius = 6;
-    var groups = svg.append('g')
-        .selectAll('g')
-        .data(data)
-        .enter()
-        .append('g')
-        .attr('transform', "translate(" + barWidth + ", 20)");
     var xAxis = function (g) { return g
         .attr("transform", "translate(" + barWidth + "," + 20 + ")")
         .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
-    svg.append('g')
-        .call(xAxis);
+    //svg.append('g')
+    //	.call(xAxis)
+    var groups = svg.append('g');
     groups
         .append('line')
         .attr('stroke', '#000000')
-        .attr('x1', 0)
-        .attr('x2', barWidth)
-        .attr('y1', function (d, i) { return i * barHeight + barHeight / 2; })
-        .attr('y2', function (d, i) { return i * barHeight + barHeight / 2; });
+        .attr('x1', x)
+        .attr('x2', x + barWidth)
+        .attr('y1', function (d, i) { return 0 * barHeight + barHeight / 2; })
+        .attr('y2', function (d, i) { return 0 * barHeight + barHeight / 2; });
     groups
         .append('rect')
         .attr('height', 6)
-        .attr('width', function (d) { return Math.abs(xScale(d[0]) - xScale(d[1])); })
-        .attr('x', function (d) { return xScale(d3.min(d)); })
-        .attr('y', function (d, i) { return i * barHeight + barHeight / 2 - radius / 2; })
-        .attr('fill', function (d) { return d[0] > d[1] ? '#086fad' : '#c7001e'; });
+        .attr('width', function (d) { return Math.abs(xScale(d[i]) - xScale(d[j])); })
+        .attr('x', function (d) { return x + xScale(d3.min([d[i], d[j]])); })
+        .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 - radius / 2; })
+        .attr('fill', function (d) { return d[i] > d[j] ? '#086fad' : '#c7001e'; });
     groups
         .append('circle')
         .attr('r', 6)
         .attr('stroke', '#086fad')
         .attr('fill', '#086fad')
-        .attr('cx', function (d) { return xScale(d[0]); })
-        .attr('cy', function (d, i) { return i * barHeight + barHeight / 2; })
+        .attr('cx', function (d) { return x + xScale(d[i]); })
+        .attr('cy', function (d, i) { return 0 * barHeight + barHeight / 2; })
         .append('title')
-        .text(function (d) { return d[0]; });
+        .text(function (d) { return d[i]; });
     groups
         .append('circle')
         .attr('r', 6)
         .attr('stroke', '#c7001e')
         .attr('fill', '#c7001e')
-        .attr('cx', function (d) { return xScale(d[1]); })
-        .attr('cy', function (d, i) { return i * barHeight + barHeight / 2; })
+        .attr('cx', function (d) { return x + xScale(d[j]); })
+        .attr('cy', function (d, i) { return 0 * barHeight + barHeight / 2; })
         .append('title')
-        .text(function (d) { return d[1]; });
+        .text(function (d) { return d[j]; });
 }
 
 

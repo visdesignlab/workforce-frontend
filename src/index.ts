@@ -7,6 +7,7 @@ declare global {
 	interface Window {
 		selectedCounty: string;
 		update: any;
+		selectedProfessions: any;
 	}
 }
 window.selectedCounty = 'State of Utah';
@@ -33,19 +34,29 @@ projection = d3.geoMercator().scale(4000).translate([600/2, 600/2])
 var path = d3.geoPath(projection);
 
 
+
 var currentYear;
 var globalResults;
-window.update = function () {
+window.selectedProfessions = {};
+window.update = function() {
 	let year = (document.getElementById('year') as HTMLInputElement).value;
 	let mapData = (document.getElementById('mapData') as HTMLInputElement).value;
 	d3.json('../data/model-results.json').then(function(results) {
 		svg.selectAll('*').remove();
 		globalResults = results;
 		currentYear = results[year];
+		var professions = Object.keys(currentYear['State of Utah']['supply']);
 		for (let county in currentYear) {
-			let totalSupply = d3.sum(Object.keys(currentYear[county]['supply']).map(d=>currentYear[county]['supply'][d]));
-			let totalDemand = d3.sum(Object.keys(currentYear[county]['demand']).map(d=>currentYear[county]['demand'][d]));
-		currentYear[county]['totalSupply'] = totalSupply;
+			let totalSupply = 0;
+			let totalDemand = 0;
+			for (let profession of professions) {
+				if (!window.selectedProfessions.hasOwnProperty(profession)
+					|| window.selectedProfessions[profession]) {
+					totalSupply += currentYear[county]['supply'][profession];
+					totalDemand += currentYear[county]['demand'][profession];
+				}
+			}
+			currentYear[county]['totalSupply'] = totalSupply;
 			supplyScore[county] = (totalSupply / totalDemand) / 2;
 		}
 
@@ -88,8 +99,10 @@ window.update = function () {
 			} else if (mapData == 'supply_per_100k') {
 				
 
-				let max = d3.max(Object.keys(results[year]).map(d => getSupplyPer100k(results[year][d])));
-
+				let max = d3.max(Object.keys(results[year]).map( d => 
+					results[year][d]['totalSupply'] / results[year][d]['population'] * 100000
+				));
+	
 				const scale = d3.scaleLinear()
 					.domain([0, max])
 					.range([0, 1]);
