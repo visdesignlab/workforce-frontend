@@ -66,10 +66,10 @@ function createLineChart(results, supply, demand, profession, max, xi = 0, yi = 
 
 	lineChartGroup.append('text')
 		.attr("x", (width / 2))
-        .attr("y", (margin.top))
-        .attr("text-anchor", "middle")
-        .style("font-size", "16px")
-        .text(profession);
+		.attr("y", (margin.top))
+		.attr("text-anchor", "middle")
+		.style("font-size", "16px")
+		.text(profession);
 
 	data.dates = Object.keys(results);
 	data.series = supply;
