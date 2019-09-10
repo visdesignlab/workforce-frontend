@@ -32,7 +32,7 @@
 	display: flex;
 }
 .fixed{
-	width: 1200px;
+	width: 900px;
 	height: 600px;
 }
 .flex-item{
@@ -120,16 +120,14 @@
 	<div style='margin: 10px;'>
 		<ul>
 			<li><a class="active" href="#">UMEC Gap Analysis Tool</a></li>
+			<li style="float: right;"><a class="active" href="about.html">About</a></li>
 		</ul>
+
 	</div>
 	<div id="tooltip"></div><!-- div to hold tooltip. -->
 	<div class='container'>
 		<div>
-			<div id='map' class='fixed'></div>
-			<div id='linechart' class='fixed'></div>
-		</div>
-		<div id="sidebar" class='flex-item'>
-			<select id='year'>
+			<select id='year' style='margin-left: 10px;'>
 				<option value="2014">2014</option>
 				<option value="2015">2015</option>
 				<option value="2016">2016</option>
@@ -144,41 +142,26 @@
 			</select>
 			<select id='mapData'>
 				<option value="supply_need" selected>Supply/Need</option>
+				<option value="supply_need_per_100K">Supply/Need per 100K</option>
 				<option value="population">Population</option>
 				<option value="supply_per_100k">Supply per 100K</option>
+				<option value="demand_per_100k">Demand per 100K</option>
 			</select>
 			<button onclick="update()">Update</button>
-			<div id="counties" style='height: 600px; overflow: auto;'>
+			<div id='map' class='fixed'>
+			</div>
+			<div id='linechart' class='fixed'></div>
+		</div>
+		<div id="sidebar" class='flex-item'>
+			<div>
 				<h1>Counties</h1>
-				<div>
-					<select id='countiesSortBy'>
-						<option value="0">Name</option>
-						<option value="3" selected>Gap</option>
-						<option value="2">Need</option>
-						<option value="1">Supply</option>
-					</select>
-					<select id='countiesSortDirection'>
-						<option value="ascending" selected>Ascending</option>
-						<option value="descending">Descending</option>
-					</select>
-					<button id='countiesSortButton'>Sort</button>
+				<div id='countiesHeader'>
+				</div>
+				<div id="counties" style='height: 600px; overflow: auto;'>
 				</div>
 			</div>
 			<div id="professions">
 				<h1>Professions</h1>
-				<div>
-					<select id='professionsSortBy'>
-						<option value="0">Name</option>
-						<option value="3" selected>Gap</option>
-						<option value="2">Need</option>
-						<option value="1">Supply</option>
-					</select>
-					<select id='professionsSortDirection'>
-						<option value="ascending" selected>Ascending</option>
-						<option value="descending">Descending</option>
-					</select>
-					<button id='professionsSortButton'>Sort</button>
-				</div>
 			</div>
 		</div>
 	</div>

@@ -21,11 +21,9 @@ var projection = d3.geoAlbersUsa()
 projection = d3.geoMercator().scale(4000).translate([600/2, 600/2])
 var path = d3.geoPath(projection);
 
-function getSortingOptions(sortIndexId, sortDirectionId) {
-	const index =  Number(document.getElementById(sortIndexId).value);
-	const direction =  document.getElementById(sortDirectionId).value;
+function getSortingOptions(index, ascending) {
 
-	if (direction == 'ascending') {
+	if (ascending) {
 		const sortingFunction = function(a, b) {
 			return d3.ascending(a[index], b[index]);
 		}
@@ -59,7 +57,11 @@ function update() {
 					totalDemand += currentYear[county]['demand'][profession];
 				}
 			}
+			let population = currentYear[county].population;
 			currentYear[county]['totalSupply'] = totalSupply;
+			currentYear[county]['totalDemand'] = totalDemand;
+			currentYear[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
+			currentYear[county]['totalDemandPer100K'] = totalDemand / population * 100000;
 			supplyScore[county] = (totalSupply / totalDemand) / 2;
 		}
 
@@ -67,6 +69,10 @@ function update() {
 			var linear = d3.scaleOrdinal()
 				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 				.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
+		} else if (mapData == 'supply_need_per_100K') {
+			var linear = d3.scaleOrdinal()
+				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
+				.range([d3.interpolatePuOr(1), d3.interpolatePuOr(0.5), d3.interpolatePuOr(0)]);
 		} else if (mapData == 'supply_per_100k') {
 			let max = d3.max(Object.values(results[year]), d => {
 				return d['totalSupply'] / d['population'] * 100000;
@@ -74,7 +80,15 @@ function update() {
 
 			var linear = d3.scaleLinear()
 				.domain([0, max])
-				.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
+				.range([d3.interpolatePurples(0), d3.interpolatePurples(1)]);
+		} else if (mapData == 'demand_per_100k') {
+			let max = d3.max(Object.values(results[year]), d => {
+				return d['totalDemand'] / d['population'] * 100000;
+			});
+
+			var linear = d3.scaleLinear()
+				.domain([0, max])
+				.range([d3.interpolateOranges(0), d3.interpolateOranges(1)]);
 		} else {
 			var linear = d3.scaleLinear()
 				.domain([1000, 1000000])
@@ -97,6 +111,8 @@ function update() {
 			let county = d.properties.NAME + ' County';
 			if (mapData == 'supply_need') {
 				return d3.interpolateRdBu(supplyScore[county]);
+			} else if (mapData == 'supply_need_per_100K') {
+				return d3.interpolatePuOr(1 - supplyScore[county]);
 			} else if (mapData == 'supply_per_100k') {
 				function getSupplyPer100k(county) {
 					return county['totalSupply'] / county['population'] * 100000;
@@ -108,7 +124,19 @@ function update() {
 					.domain([0, max])
 					.range([0, 1]);
 
-				return d3.interpolateBlues(scale(getSupplyPer100k(results[year][county])));
+				return d3.interpolatePurples(scale(getSupplyPer100k(results[year][county])));
+			} else if (mapData == 'demand_per_100k') {
+				function getDemandPer100k(county) {
+					return county['totalDemand'] / county['population'] * 100000;
+				};
+
+				let max = d3.max(Object.values(results[year]), d => getDemandPer100k(d))
+
+				const scale = d3.scaleLinear()
+					.domain([0, max])
+					.range([0, 1]);
+
+				return d3.interpolateOranges(scale(getDemandPer100k(results[year][county])));
 			}
 			return d3.interpolateGreens(results[year][county]['population'] / 1000000);
 		}
@@ -155,11 +183,14 @@ function toolTip(d){
 	const population = currentYear[d.properties.NAME + ' County']['population'];
 	const supplyPer100k = d3.format('.0f')(
 		currentYear[d.properties.NAME + ' County']['totalSupply'] / population * 100000);
+	const demandPer100k = d3.format('.0f')(
+		currentYear[d.properties.NAME + ' County']['totalDemand'] / population * 100000);
 
 	return "<h4>"+d.properties.NAME+" County</h4><table>"+
 		"<tr><td>Supply/Need:</td><td>"+(supplyDemandRatio)+"</td></tr>"+
 		"<tr><td>Population:</td><td>"+(population)+"</td></tr>"+
 		"<tr><td>Supply/100K:</td><td>"+(supplyPer100k)+"</td></tr>"+
+		"<tr><td>Demand/100K:</td><td>"+(demandPer100k)+"</td></tr>"+
 		"</table>";
 }
 function mouseOver(d){
