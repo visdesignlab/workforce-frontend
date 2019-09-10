@@ -35793,9 +35793,263 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./src/Linechart.ts":
+/***/ "./src/Main.ts":
+/*!*********************!*\
+  !*** ./src/Main.ts ***!
+  \*********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Map_1 = __webpack_require__(/*! ./Map */ "./src/Map.ts");
+var MapEvents_1 = __webpack_require__(/*! ./MapEvents */ "./src/MapEvents.ts");
+var myMap = new Map_1.Map("supply_need");
+var myMapEvents = new MapEvents_1.MapEvents(myMap);
+
+
+/***/ }),
+
+/***/ "./src/Map.ts":
+/*!********************!*\
+  !*** ./src/Map.ts ***!
+  \********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
+var topojson = __webpack_require__(/*! topojson-client */ "./node_modules/topojson-client/index.js");
+var d3_svg_legend_1 = __webpack_require__(/*! d3-svg-legend */ "./node_modules/d3-svg-legend/indexRollupNext.js");
+var sidebar_1 = __webpack_require__(/*! ./sidebar */ "./src/sidebar.ts");
+var linechart_1 = __webpack_require__(/*! ./linechart */ "./src/linechart.ts");
+var Map = /** @class */ (function () {
+    function Map(mapData) {
+        this.linechart = new linechart_1.Linechart();
+        this.selectedCounty = 'State of Utah';
+        this.mapData = mapData;
+        this.yearSelected = document.getElementById('year').value;
+        this.currentYearData = {};
+        this.supplyScore = {};
+        this.selectedProfessions = {};
+        this.sidebar = new sidebar_1.Sidebar(this.selectedProfessions);
+        this.svg = d3.select("#map")
+            .append('svg')
+            .attr('width', 600)
+            .attr('height', 600);
+        this.drawMap();
+        //based on map data choose color scale.
+        //append svg
+    }
+    Map.prototype.drawMap = function () {
+        var _this = this;
+        var that = this;
+        d3.json('../data/model-results.json').then(function (results) {
+            _this.svg.selectAll('*').remove();
+            _this.currentYearData = results[_this.yearSelected];
+            var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
+            for (var county in _this.currentYearData) {
+                var totalSupply = 0;
+                var totalDemand = 0;
+                for (var _i = 0, professions_1 = professions; _i < professions_1.length; _i++) {
+                    var profession = professions_1[_i];
+                    if (!_this.selectedProfessions.hasOwnProperty(profession)
+                        || _this.selectedProfessions[profession]) {
+                        totalSupply += _this.currentYearData[county]['supply'][profession];
+                        totalDemand += _this.currentYearData[county]['demand'][profession];
+                    }
+                }
+                _this.currentYearData[county]['totalSupply'] = totalSupply;
+                _this.supplyScore[county] = (totalSupply / totalDemand) / 2;
+            }
+            if (_this.mapData == 'supply_need') {
+                var linear = d3.scaleOrdinal()
+                    .domain(['Undersupplied', 'Balanced', 'Oversupplied'])
+                    .range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
+            }
+            else if (_this.mapData == 'supply_per_100k') {
+                var max = d3.max(Object.keys(results[_this.yearSelected]).map(function (d) {
+                    return results[_this.yearSelected][d]['totalSupply'] / results[_this.yearSelected][d]['population'] * 100000;
+                }));
+                var linear = d3.scaleLinear()
+                    .domain([0, max])
+                    .range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
+            }
+            else {
+                var linear = d3.scaleLinear()
+                    .domain([1000, 1000000])
+                    .range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
+            }
+            var legendLinear = d3_svg_legend_1.legendColor()
+                .shapeWidth(115)
+                .labelFormat(d3.format(".0f"))
+                .orient('horizontal')
+                .scale(linear);
+            _this.svg.append("g")
+                .attr("class", "legendLinear")
+                .attr("transform", "translate(20,20)");
+            _this.svg.select(".legendLinear")
+                .call(legendLinear);
+            function getSupplyPer100k(county) {
+                return county['totalSupply'] / county['population'] * 100000;
+            }
+            ;
+            var colorScale = function (d) {
+                var county = d.properties.NAME + ' County';
+                if (_this.mapData == 'supply_need') {
+                    return d3.interpolateRdBu(_this.supplyScore[county]);
+                }
+                else if (_this.mapData == 'supply_per_100k') {
+                    var max = d3.max(Object.keys(results[_this.yearSelected]).map(function (d) {
+                        return results[_this.yearSelected][d]['totalSupply'] / results[_this.yearSelected][d]['population'] * 100000;
+                    }));
+                    var scale = d3.scaleLinear()
+                        .domain([0, max])
+                        .range([0, 1]);
+                    return d3.interpolateBlues(scale(getSupplyPer100k(results[_this.yearSelected][county])));
+                }
+                return d3.interpolateGreens(results[_this.yearSelected][county]['population'] / 1000000);
+            };
+            d3.json("../data/UT-49-utah-counties.json").then(function (us) {
+                var topojsonFeatures = topojson.feature(us, us.objects.cb_2015_utah_county_20m);
+                var mapCenter = d3.geoCentroid(topojsonFeatures);
+                var projection = d3.geoAlbersUsa()
+                    .scale(200)
+                    .translate(300, 300);
+                projection = d3.geoMercator().scale(4000).translate([600 / 2, 600 / 2]);
+                projection.center(mapCenter);
+                var path = d3.geoPath(projection);
+                _this.svg.append("g")
+                    .attr("class", "counties")
+                    .attr("transform", "translate(20,40)")
+                    .selectAll("path")
+                    .data(topojson.feature(us, us.objects.cb_2015_utah_county_20m).features)
+                    .enter().append("path")
+                    .attr("d", path)
+                    .attr('fill', colorScale)
+                    .attr('stroke', 'black')
+                    .on('click', function (d) {
+                    console.log(d);
+                    d3.selectAll('path').classed('selected', false);
+                    d3.select(this).classed('selected', true);
+                    that.selectedCounty = d.properties.NAME + ' County';
+                    that.linechart.initLineChart(results, that.selectedCounty);
+                    that.sidebar.initSideBar(that.selectedProfessions, that.currentYearData, this.selectedCounty);
+                })
+                    .on("mouseover", function (d) {
+                    var f = d3.format(".2f");
+                    var supplyDemandRatio = f(2 * _this.supplyScore[d.properties.NAME + ' County']);
+                    var population = _this.currentYearData[d.properties.NAME + ' County']['population'];
+                    var supplyPer100k = d3.format('.0f')(_this.currentYearData[d.properties.NAME + ' County']['totalSupply'] / population * 100000);
+                    var toolTip = "<h4>" + d.properties.NAME + " County</h4><table>" +
+                        "<tr><td>Supply/Need:</td><td>" + (supplyDemandRatio) + "</td></tr>" +
+                        "<tr><td>Population:</td><td>" + (population) + "</td></tr>" +
+                        "<tr><td>Supply/100K:</td><td>" + (supplyPer100k) + "</td></tr>" +
+                        "</table>";
+                    d3.select("#tooltip").transition().duration(200).style("opacity", .9);
+                    d3.select("#tooltip").html(toolTip)
+                        .style("left", (d3.event.pageX) + "px")
+                        .style("top", (d3.event.pageY - 28) + "px");
+                })
+                    .on("mouseout", _this.mouseOut);
+                _this.svg.append("path")
+                    .attr("class", "county-borders")
+                    .attr("transform", "translate(20,40)")
+                    .attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function (a, b) { return a !== b; })));
+                _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYearData);
+                _this.linechart.initLineChart(results);
+            });
+        });
+    };
+    Map.prototype.updateMapType = function (mapData) {
+        var _this = this;
+        this.mapData = mapData;
+        var that = this;
+        var colorScale = function (d) {
+            var county = d.properties.NAME + ' County';
+            if (that.mapData == 'supply_need') {
+                return d3.interpolateRdBu(that.supplyScore[county]);
+            }
+            else if (that.mapData == 'supply_per_100k') {
+                var max = d3.max(Object.keys(that.currentYearData).map(function (d) {
+                    return that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000;
+                }));
+                var scale = d3.scaleLinear()
+                    .domain([0, max])
+                    .range([0, 1]);
+                return d3.interpolateBlues(scale(that.currentYearData[county]['totalSupply'] / that.currentYearData[county]['population'] * 100000));
+            }
+            return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
+        };
+        d3.json("../data/UT-49-utah-counties.json").then(function (us) {
+            _this.svg.select('g.counties').selectAll('path').each(function (d) {
+                var selectedCounty = d.properties.NAME + ' County';
+                d3.select(this).transition().duration(1000).attr('fill', colorScale(d));
+            });
+        });
+    };
+    Map.prototype.updateMapYear = function (year) {
+        this.currentYearData = year;
+    };
+    Map.prototype.mouseOut = function () {
+        d3.select("#tooltip").transition().duration(500).style("opacity", 0);
+    };
+    return Map;
+}());
+exports.Map = Map;
+
+
+/***/ }),
+
+/***/ "./src/MapEvents.ts":
 /*!**************************!*\
-  !*** ./src/Linechart.ts ***!
+  !*** ./src/MapEvents.ts ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
+var MapEvents = /** @class */ (function () {
+    function MapEvents(map) {
+        //based on map data choose color scale.
+        //append svg
+        this.map = map;
+        this.updateYear();
+        this.updateType();
+    }
+    MapEvents.prototype.updateYear = function () {
+        var _this = this;
+        d3.select("#year").on('change', function () {
+            var year = document.getElementById('year').value;
+            _this.map.updateMapYear(year);
+            //update year of map
+        });
+    };
+    MapEvents.prototype.updateType = function () {
+        var _this = this;
+        d3.select("#mapData").on('change', function () {
+            var mapData = document.getElementById('mapData').value;
+            console.log(mapData);
+            _this.map.updateMapType(mapData);
+            //update type of map
+        });
+    };
+    return MapEvents;
+}());
+exports.MapEvents = MapEvents;
+
+
+/***/ }),
+
+/***/ "./src/linechart.ts":
+/*!**************************!*\
+  !*** ./src/linechart.ts ***!
   \**************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
@@ -35900,239 +36154,9 @@ exports.Linechart = Linechart;
 
 /***/ }),
 
-/***/ "./src/Main.ts":
-/*!*********************!*\
-  !*** ./src/Main.ts ***!
-  \*********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var Map_1 = __webpack_require__(/*! ./Map */ "./src/Map.ts");
-var MapEvents_1 = __webpack_require__(/*! ./MapEvents */ "./src/MapEvents.ts");
-var myMap = new Map_1.Map("supply_need");
-var myMapEvents = new MapEvents_1.MapEvents(myMap);
-
-
-/***/ }),
-
-/***/ "./src/Map.ts":
-/*!********************!*\
-  !*** ./src/Map.ts ***!
-  \********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
-var topojson = __webpack_require__(/*! topojson-client */ "./node_modules/topojson-client/index.js");
-var d3_svg_legend_1 = __webpack_require__(/*! d3-svg-legend */ "./node_modules/d3-svg-legend/indexRollupNext.js");
-var Sidebar_1 = __webpack_require__(/*! ./Sidebar */ "./src/Sidebar.ts");
-var Linechart_1 = __webpack_require__(/*! ./Linechart */ "./src/Linechart.ts");
-var Map = /** @class */ (function () {
-    function Map(mapData) {
-        this.linechart = new Linechart_1.Linechart();
-        this.selectedCounty = 'State of Utah';
-        this.mapData = mapData;
-        this.yearSelected = document.getElementById('year').value;
-        this.currentYear = {};
-        this.supplyScore = {};
-        this.selectedProfessions = {};
-        this.sidebar = new Sidebar_1.Sidebar(this.selectedProfessions);
-        this.svg = d3.select("#map")
-            .append('svg')
-            .attr('width', 600)
-            .attr('height', 600);
-        this.drawMap();
-        //based on map data choose color scale.
-        //append svg
-    }
-    Map.prototype.drawMap = function () {
-        var _this = this;
-        d3.json('../data/model-results.json').then(function (results) {
-            _this.svg.selectAll('*').remove();
-            _this.currentYear = results[_this.yearSelected];
-            var professions = Object.keys(_this.currentYear['State of Utah']['supply']);
-            for (var county in _this.currentYear) {
-                var totalSupply = 0;
-                var totalDemand = 0;
-                for (var _i = 0, professions_1 = professions; _i < professions_1.length; _i++) {
-                    var profession = professions_1[_i];
-                    if (!_this.selectedProfessions.hasOwnProperty(profession)
-                        || _this.selectedProfessions[profession]) {
-                        totalSupply += _this.currentYear[county]['supply'][profession];
-                        totalDemand += _this.currentYear[county]['demand'][profession];
-                    }
-                }
-                _this.currentYear[county]['totalSupply'] = totalSupply;
-                _this.supplyScore[county] = (totalSupply / totalDemand) / 2;
-            }
-            if (_this.mapData == 'supply_need') {
-                var linear = d3.scaleOrdinal()
-                    .domain(['Undersupplied', 'Balanced', 'Oversupplied'])
-                    .range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
-            }
-            else if (_this.mapData == 'supply_per_100k') {
-                var max = d3.max(Object.keys(results[_this.yearSelected]).map(function (d) {
-                    return results[_this.yearSelected][d]['totalSupply'] / results[_this.yearSelected][d]['population'] * 100000;
-                }));
-                var linear = d3.scaleLinear()
-                    .domain([0, max])
-                    .range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
-            }
-            else {
-                var linear = d3.scaleLinear()
-                    .domain([1000, 1000000])
-                    .range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
-            }
-            var legendLinear = d3_svg_legend_1.legendColor()
-                .shapeWidth(115)
-                .labelFormat(d3.format(".0f"))
-                .orient('horizontal')
-                .scale(linear);
-            _this.svg.append("g")
-                .attr("class", "legendLinear")
-                .attr("transform", "translate(20,20)");
-            _this.svg.select(".legendLinear")
-                .call(legendLinear);
-            function getSupplyPer100k(county) {
-                return county['totalSupply'] / county['population'] * 100000;
-            }
-            ;
-            var colorScale = function (d) {
-                var county = d.properties.NAME + ' County';
-                if (_this.mapData == 'supply_need') {
-                    return d3.interpolateRdBu(_this.supplyScore[county]);
-                }
-                else if (_this.mapData == 'supply_per_100k') {
-                    var max = d3.max(Object.keys(results[_this.yearSelected]).map(function (d) {
-                        return results[_this.yearSelected][d]['totalSupply'] / results[_this.yearSelected][d]['population'] * 100000;
-                    }));
-                    var scale = d3.scaleLinear()
-                        .domain([0, max])
-                        .range([0, 1]);
-                    return d3.interpolateBlues(scale(getSupplyPer100k(results[_this.yearSelected][county])));
-                }
-                return d3.interpolateGreens(results[_this.yearSelected][county]['population'] / 1000000);
-            };
-            d3.json("../data/UT-49-utah-counties.json").then(function (us) {
-                var topojsonFeatures = topojson.feature(us, us.objects.cb_2015_utah_county_20m);
-                var mapCenter = d3.geoCentroid(topojsonFeatures);
-                var projection = d3.geoAlbersUsa()
-                    .scale(200)
-                    .translate(300, 300);
-                projection = d3.geoMercator().scale(4000).translate([600 / 2, 600 / 2]);
-                projection.center(mapCenter);
-                var path = d3.geoPath(projection);
-                _this.svg.append("g")
-                    .attr("class", "counties")
-                    .attr("transform", "translate(20,40)")
-                    .selectAll("path")
-                    .data(topojson.feature(us, us.objects.cb_2015_utah_county_20m).features)
-                    .enter().append("path")
-                    .attr("d", path)
-                    .attr('fill', colorScale)
-                    .attr('stroke', 'black')
-                    .on('click', function (d) {
-                    console.log(d);
-                    d3.selectAll('path').classed('selected', false);
-                    d3.select("#" + d.properties.NAME).classed('selected', true);
-                    _this.selectedCounty = d.properties.NAME + ' County';
-                    _this.linechart.initLineChart(results, _this.selectedCounty);
-                    _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYear, _this.selectedCounty);
-                })
-                    .on("mouseover", function (d) {
-                    var f = d3.format(".2f");
-                    var supplyDemandRatio = f(2 * _this.supplyScore[d.properties.NAME + ' County']);
-                    var population = _this.currentYear[d.properties.NAME + ' County']['population'];
-                    var supplyPer100k = d3.format('.0f')(_this.currentYear[d.properties.NAME + ' County']['totalSupply'] / population * 100000);
-                    var toolTip = "<h4>" + d.properties.NAME + " County</h4><table>" +
-                        "<tr><td>Supply/Need:</td><td>" + (supplyDemandRatio) + "</td></tr>" +
-                        "<tr><td>Population:</td><td>" + (population) + "</td></tr>" +
-                        "<tr><td>Supply/100K:</td><td>" + (supplyPer100k) + "</td></tr>" +
-                        "</table>";
-                    d3.select("#tooltip").transition().duration(200).style("opacity", .9);
-                    d3.select("#tooltip").html(toolTip)
-                        .style("left", (d3.event.pageX) + "px")
-                        .style("top", (d3.event.pageY - 28) + "px");
-                })
-                    .on("mouseout", _this.mouseOut);
-                _this.svg.append("path")
-                    .attr("class", "county-borders")
-                    .attr("transform", "translate(20,40)")
-                    .attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function (a, b) { return a !== b; })));
-                _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYear);
-                _this.linechart.initLineChart(results);
-            });
-        });
-    };
-    Map.prototype.updateMapType = function (mapData) {
-        this.mapData = mapData;
-        this.drawMap();
-    };
-    Map.prototype.updateMapYear = function (year) {
-        this.currentYear = year;
-    };
-    Map.prototype.mouseOut = function () {
-        d3.select("#tooltip").transition().duration(500).style("opacity", 0);
-    };
-    return Map;
-}());
-exports.Map = Map;
-
-
-/***/ }),
-
-/***/ "./src/MapEvents.ts":
-/*!**************************!*\
-  !*** ./src/MapEvents.ts ***!
-  \**************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
-var MapEvents = /** @class */ (function () {
-    function MapEvents(map) {
-        //based on map data choose color scale.
-        //append svg
-        this.map = map;
-        this.updateYear();
-        this.updateType();
-    }
-    MapEvents.prototype.updateYear = function () {
-        var _this = this;
-        d3.select("#year").on('change', function () {
-            var year = document.getElementById('year').value;
-            _this.map.updateMapYear(year);
-            //update year of map
-        });
-    };
-    MapEvents.prototype.updateType = function () {
-        var _this = this;
-        d3.select("#mapData").on('change', function () {
-            var mapData = document.getElementById('mapData').value;
-            console.log(mapData);
-            _this.map.updateMapType(mapData);
-            //update type of map
-        });
-    };
-    return MapEvents;
-}());
-exports.MapEvents = MapEvents;
-
-
-/***/ }),
-
-/***/ "./src/Sidebar.ts":
+/***/ "./src/sidebar.ts":
 /*!************************!*\
-  !*** ./src/Sidebar.ts ***!
+  !*** ./src/sidebar.ts ***!
   \************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
