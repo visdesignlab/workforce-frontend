@@ -35935,8 +35935,10 @@ var Map = /** @class */ (function () {
                     d3.selectAll('path').classed('selected', false);
                     d3.select(this).classed('selected', true);
                     that.selectedCounty = d.properties.NAME + ' County';
+                    //TODO
+                    //update sidebar/linechart when we click on a county
                     that.linechart.initLineChart(results, that.selectedCounty);
-                    that.sidebar.initSideBar(that.selectedProfessions, that.currentYearData, this.selectedCounty);
+                    that.sidebar.initSideBar(that.currentYearData, this.selectedCounty);
                 })
                     .on("mouseover", function (d) {
                     var f = d3.format(".2f");
@@ -35958,7 +35960,7 @@ var Map = /** @class */ (function () {
                     .attr("class", "county-borders")
                     .attr("transform", "translate(20,40)")
                     .attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function (a, b) { return a !== b; })));
-                _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYearData);
+                _this.sidebar.initSideBar(_this.currentYearData);
                 _this.linechart.initLineChart(results);
             });
         });
@@ -35967,8 +35969,6 @@ var Map = /** @class */ (function () {
         var _this = this;
         this.mapData = mapData;
         var that = this;
-        console.log(that.yearSelected);
-        console.log(that.currentYearData);
         var colorScale = function (d) {
             var county = d.properties.NAME + ' County';
             if (that.mapData == 'supply_need') {
@@ -36012,7 +36012,6 @@ var Map = /** @class */ (function () {
         d3.json("../data/UT-49-utah-counties.json").then(function (us) {
             _this.svg.select('g.counties').selectAll('path').each(function (d) {
                 var selectedCounty = d.properties.NAME + ' County';
-                console.log(selectedCounty);
                 d3.select(this).transition().duration(1000).attr('fill', colorScale(d));
             });
         });
@@ -36220,11 +36219,14 @@ var Sidebar = /** @class */ (function () {
             .append('svg')
             .attr('height', 1000);
     }
-    Sidebar.prototype.initSideBar = function (selectedProfessions, currentYear, selectedCounty) {
+    Sidebar.prototype.updateSideBarSelections = function (selectedProfessions) {
+    };
+    Sidebar.prototype.changeSelectedCounty = function (selectedCounty) {
+    };
+    Sidebar.prototype.initSideBar = function (currentYear, selectedCounty) {
         var _this = this;
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
         this.countiesSvg.selectAll('*').remove();
-        this.selectedProfessions = selectedProfessions;
         var barWidth = 120;
         var barHeight = 30;
         this.totalSupplyDemandByCounty(currentYear);
@@ -36251,8 +36253,22 @@ var Sidebar = /** @class */ (function () {
             .attr('fill', function (d) { return d[0] == selectedCounty ? '#cccccc' : 'none'; });
         groups.call(this.drawText);
         groups.call(this.draw1DScatterPlot, xScale, barWidth, 1, 2);
-        d3.select('#countiesSortButton')
-            .on('click', function () {
+        d3.select('#countiesSortBy')
+            .on('change', function () {
+            var sortingFunction = _this.getSortingOptions('countiesSortBy', 'countiesSortDirection');
+            groups.sort(sortingFunction)
+                .transition()
+                .delay(function (d, i) {
+                return i * 50;
+            })
+                .duration(1000)
+                .attr("transform", function (d, i) {
+                var y = i * barHeight + barHeight / 2;
+                return "translate(" + 0 + ", " + y + ")";
+            });
+        });
+        d3.select('#countiesSortDirection')
+            .on('change', function () {
             var sortingFunction = _this.getSortingOptions('countiesSortBy', 'countiesSortDirection');
             groups.sort(sortingFunction)
                 .transition()
@@ -36296,7 +36312,8 @@ var Sidebar = /** @class */ (function () {
             .data(professionsData.sort(sortingFunction))
             .enter()
             .append('g')
-            .attr('transform', function (d, i) { return "translate(0, " + (i * barHeight + barHeight / 2) + ")"; });
+            .attr('transform', function (d, i) { return "translate(0, " + (i * barHeight + barHeight / 2) + ")"; })
+            .attr('id', function (d) { return d[0]; });
         professionsGroups.append('rect')
             .attr('width', 2 * barWidth)
             .attr('height', barHeight - 4)
@@ -36312,21 +36329,36 @@ var Sidebar = /** @class */ (function () {
             if (!_this.selectedProfessions.hasOwnProperty(d[0])
                 || _this.selectedProfessions[d[0]]) {
                 _this.selectedProfessions[d[0]] = false;
-                professionsGroups
+                console.log(d[0]);
+                d3.select("#" + d[0])
                     .select('rect')
                     .attr('fill', '#ffffff');
             }
             else {
                 _this.selectedProfessions[d[0]] = true;
-                professionsGroups
+                d3.select("#" + d[0])
                     .select('rect')
                     .attr('fill', '#cccccc');
             }
         });
         professionsGroups.call(this.drawText);
         professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, 1, 2);
-        d3.select('#professionsSortButton')
-            .on('click', function () {
+        d3.select('#professionsSortBy')
+            .on('change', function () {
+            var sortingFunction = _this.getSortingOptions('professionsSortBy', 'professionsSortDirection');
+            professionsGroups.sort(sortingFunction)
+                .transition()
+                .delay(function (d, i) {
+                return i * 50;
+            })
+                .duration(1000)
+                .attr("transform", function (d, i) {
+                var y = i * barHeight + barHeight / 2;
+                return "translate(" + 0 + ", " + y + ")";
+            });
+        });
+        d3.select('#professionsSortDirection')
+            .on('change', function () {
             var sortingFunction = _this.getSortingOptions('professionsSortBy', 'professionsSortDirection');
             professionsGroups.sort(sortingFunction)
                 .transition()
