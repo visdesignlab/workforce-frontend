@@ -23,8 +23,6 @@ class MapEvents{
 	updateType():void{
 		d3.select("#mapData").on('change',()=>{
 			let mapData:string = (document.getElementById('mapData') as HTMLInputElement).value;
-
-			console.log(mapData)
 			this.map.updateMapType(mapData)
 
 		//update type of map

@@ -127,12 +127,13 @@ class Map{
 						.attr('fill', colorScale)
 						.attr('stroke', 'black')
 						.on('click', function(d){
-							console.log(d)
 						d3.selectAll('path').classed('selected', false);
 							d3.select(this).classed('selected', true);
 							that.selectedCounty = d.properties.NAME + ' County';
+							//TODO
+							//update sidebar/linechart when we click on a county
 							that.linechart.initLineChart(results, that.selectedCounty);
-							that.sidebar.initSideBar(that.selectedProfessions,that.currentYearData, this.selectedCounty);
+							that.sidebar.initSideBar(that.currentYearData, this.selectedCounty);
 						}) 
 						.on("mouseover", (d)=>{
 		
@@ -161,7 +162,7 @@ class Map{
 						.attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function(a, b) { return a !== b; })));
 		
 		
-					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData);
+					this.sidebar.initSideBar(this.currentYearData);
 					this.linechart.initLineChart(results);
 				});
 		
@@ -172,7 +173,6 @@ class Map{
 	updateMapType(mapData:string):void{
 		this.mapData = mapData;
 		let that = this;
-		
 		let colorScale = function(d){
 			let county = d.properties.NAME + ' County';
 			if (that.mapData == 'supply_need') {
@@ -189,23 +189,63 @@ class Map{
 			}
 			return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
 		
-	};
-	d3.json("../data/UT-49-utah-counties.json").then((us)=> {
-		this.svg.select('g.counties').selectAll('path').each(function(d){
-			var selectedCounty:string = d.properties.NAME + ' County'
+		};
+		
+		if (this.mapData == 'supply_need') {
+			var linear = d3.scaleOrdinal()
+				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
+				.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
+		} else if (this.mapData == 'supply_per_100k') {
+			let max = d3.max(Object.keys(that.currentYearData).map( d => 
+				that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000
+			));
 
-			d3.select(this).transition().duration(1000).attr('fill',colorScale(d));
+			var linear = d3.scaleLinear()
+				.domain([0, max])
+				.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
+		} else {
+			var linear = d3.scaleLinear()
+				.domain([1000, 1000000])
+				.range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
+		}
+		var legendLinear = legendColor()
+					.shapeWidth(115)
+					.labelFormat(d3.format(".0f"))
+					.orient('horizontal')
+					.scale(linear);
+		
+		d3.select('g.legendLinear').call(legendLinear)	
+		d3.json("../data/UT-49-utah-counties.json").then((us)=> {
+			this.svg.select('g.counties').selectAll('path').each(function(d){
+				var selectedCounty:string = d.properties.NAME + ' County'
+				d3.select(this).transition().duration(1000).attr('fill',colorScale(d));
+			});
 		});
-	});
+	}
+	
+	updateMapYear(year:string):void{
+		this.yearSelected = year;
+		d3.json('../data/model-results.json').then((results)=> {
+			this.currentYearData = results[this.yearSelected]
+			var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
+			for (let county in this.currentYearData) {
+				let totalSupply = 0;
+				let totalDemand = 0;
+				for (let profession of professions) {
+					if (!this.selectedProfessions.hasOwnProperty(profession)
+						|| this.selectedProfessions[profession]) {
+						totalSupply += this.currentYearData[county]['supply'][profession];
+						totalDemand += this.currentYearData[county]['demand'][profession];
+					}
+				}
+				this.currentYearData[county]['totalSupply'] = totalSupply;
+				this.supplyScore[county] = (totalSupply / totalDemand) / 2;
+			}
+		});
+		this.updateMapType(this.mapData);
+	}
 	
 
-	}
-	updateMapYear(year:string):void{
-		this.currentYearData = year;
-	}
-	
-	
-	
 	mouseOut(){
 		d3.select("#tooltip").transition().duration(500).style("opacity", 0);      
 	}

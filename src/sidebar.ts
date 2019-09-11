@@ -13,10 +13,9 @@ class Sidebar{
 			.append('svg')
 			.attr('height', 1000)
 		}
-	
-	initSideBar(selectedProfessions,currentYear, selectedCounty = 'State of Utah') {
+	update
+	initSideBar(currentYear, selectedCounty = 'State of Utah') {
 		this.countiesSvg.selectAll('*').remove();
-		this.selectedProfessions = selectedProfessions;
 		let barWidth:number = 120;
 		let barHeight:number = 30;
 		this.totalSupplyDemandByCounty(currentYear);

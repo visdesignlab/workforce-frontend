@@ -35932,7 +35932,6 @@ var Map = /** @class */ (function () {
                     .attr('fill', colorScale)
                     .attr('stroke', 'black')
                     .on('click', function (d) {
-                    console.log(d);
                     d3.selectAll('path').classed('selected', false);
                     d3.select(this).classed('selected', true);
                     that.selectedCounty = d.properties.NAME + ' County';
@@ -35968,6 +35967,8 @@ var Map = /** @class */ (function () {
         var _this = this;
         this.mapData = mapData;
         var that = this;
+        console.log(that.yearSelected);
+        console.log(that.currentYearData);
         var colorScale = function (d) {
             var county = d.properties.NAME + ' County';
             if (that.mapData == 'supply_need') {
@@ -35984,15 +35985,60 @@ var Map = /** @class */ (function () {
             }
             return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
         };
+        if (this.mapData == 'supply_need') {
+            var linear = d3.scaleOrdinal()
+                .domain(['Undersupplied', 'Balanced', 'Oversupplied'])
+                .range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
+        }
+        else if (this.mapData == 'supply_per_100k') {
+            var max = d3.max(Object.keys(that.currentYearData).map(function (d) {
+                return that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000;
+            }));
+            var linear = d3.scaleLinear()
+                .domain([0, max])
+                .range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
+        }
+        else {
+            var linear = d3.scaleLinear()
+                .domain([1000, 1000000])
+                .range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
+        }
+        var legendLinear = d3_svg_legend_1.legendColor()
+            .shapeWidth(115)
+            .labelFormat(d3.format(".0f"))
+            .orient('horizontal')
+            .scale(linear);
+        d3.select('g.legendLinear').call(legendLinear);
         d3.json("../data/UT-49-utah-counties.json").then(function (us) {
             _this.svg.select('g.counties').selectAll('path').each(function (d) {
                 var selectedCounty = d.properties.NAME + ' County';
+                console.log(selectedCounty);
                 d3.select(this).transition().duration(1000).attr('fill', colorScale(d));
             });
         });
     };
     Map.prototype.updateMapYear = function (year) {
-        this.currentYearData = year;
+        var _this = this;
+        this.yearSelected = year;
+        d3.json('../data/model-results.json').then(function (results) {
+            _this.currentYearData = results[_this.yearSelected];
+            var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
+            for (var county in _this.currentYearData) {
+                var totalSupply = 0;
+                var totalDemand = 0;
+                for (var _i = 0, professions_2 = professions; _i < professions_2.length; _i++) {
+                    var profession = professions_2[_i];
+                    if (!_this.selectedProfessions.hasOwnProperty(profession)
+                        || _this.selectedProfessions[profession]) {
+                        totalSupply += _this.currentYearData[county]['supply'][profession];
+                        totalDemand += _this.currentYearData[county]['demand'][profession];
+                    }
+                }
+                _this.currentYearData[county]['totalSupply'] = totalSupply;
+                _this.supplyScore[county] = (totalSupply / totalDemand) / 2;
+            }
+        });
+        this.updateMapType(this.mapData);
     };
     Map.prototype.mouseOut = function () {
         d3.select("#tooltip").transition().duration(500).style("opacity", 0);
@@ -36035,7 +36081,6 @@ var MapEvents = /** @class */ (function () {
         var _this = this;
         d3.select("#mapData").on('change', function () {
             var mapData = document.getElementById('mapData').value;
-            console.log(mapData);
             _this.map.updateMapType(mapData);
             //update type of map
         });
