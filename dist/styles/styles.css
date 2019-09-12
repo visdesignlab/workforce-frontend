@@ -1,4 +1,7 @@
 
+nav{
+	background-color: #91B4CA;
+}
 .counties :hover {
 	opacity: 0.7;
 }

@@ -21,8 +21,7 @@ class Map{
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
 		this.supplyScore = {};
-		this.selectedProfessions= {} ;
-		this.sidebar = new Sidebar(this.selectedProfessions);
+		this.sidebar = new Sidebar();
 		this.svg = d3.select("#map")
 			.append('svg')
 			.attr('width', 600)
@@ -44,8 +43,8 @@ class Map{
 					let totalSupply = 0;
 					let totalDemand = 0;
 					for (let profession of professions) {
-						if (!this.selectedProfessions.hasOwnProperty(profession)
-							|| this.selectedProfessions[profession]) {
+						if (!this.sidebar.selectedProfessions.hasOwnProperty(profession)
+							|| this.sidebar.selectedProfessions[profession]) {
 							totalSupply += this.currentYearData[county]['supply'][profession];
 							totalDemand += this.currentYearData[county]['demand'][profession];
 						}
@@ -133,7 +132,7 @@ class Map{
 							//TODO
 							//update sidebar/linechart when we click on a county
 							that.linechart.initLineChart(results, that.selectedCounty);
-							that.sidebar.initSideBar(that.currentYearData, this.selectedCounty);
+							that.sidebar.initSideBar({},that.currentYearData, that.selectedCounty);
 						}) 
 						.on("mouseover", (d)=>{
 		
@@ -162,7 +161,7 @@ class Map{
 						.attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function(a, b) { return a !== b; })));
 		
 		
-					this.sidebar.initSideBar(this.currentYearData);
+					this.sidebar.initSideBar({},this.currentYearData);
 					this.linechart.initLineChart(results);
 				});
 		
@@ -232,8 +231,8 @@ class Map{
 				let totalSupply = 0;
 				let totalDemand = 0;
 				for (let profession of professions) {
-					if (!this.selectedProfessions.hasOwnProperty(profession)
-						|| this.selectedProfessions[profession]) {
+					if (!this.sidebar.selectedProfessions.hasOwnProperty(profession)
+						|| this.sidebar.selectedProfessions[profession]) {
 						totalSupply += this.currentYearData[county]['supply'][profession];
 						totalDemand += this.currentYearData[county]['demand'][profession];
 					}

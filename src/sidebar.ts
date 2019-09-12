@@ -4,8 +4,8 @@ class Sidebar {
 	professionsSvg: any;
 	selectedProfessions: any;
 
-	constructor(selectedProfessions: any) {
-		this.selectedProfessions = selectedProfessions;
+	constructor() {
+		this.selectedProfessions = {};
 		this.countiesSvg = d3.select('#counties')
 			.append('svg')
 			.attr('height', 1120)
@@ -14,14 +14,8 @@ class Sidebar {
 			.attr('height', 1000)
 	}
 
-	updateSideBarSelections(selectedProfessions) {
-
-	}
-
-	changeSelectedCounty(selectedCounty) {
-
-	}
-	initSideBar(currentYear, selectedCounty = 'State of Utah') {
+	initSideBar(selectedProfessions,currentYear, selectedCounty = 'State of Utah') {
+		this.selectedProfessions = selectedProfessions;
 		this.countiesSvg.selectAll('*').remove();
 		let barWidth: number = 120;
 		let barHeight: number = 30;
@@ -311,6 +305,7 @@ class Sidebar {
 			return sortingFunction;
 		}
 	}
+
 }
 
 export { Sidebar };
