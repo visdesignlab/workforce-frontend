@@ -6371,7 +6371,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "format", function() { return format; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "formatPrefix", function() { return formatPrefix; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return defaultLocale; });
-/* harmony import */ var _locale__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./locale */ "./node_modules/d3-format/src/locale.js");
+/* harmony import */ var _locale_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./locale.js */ "./node_modules/d3-format/src/locale.js");
 
 
 var locale;
@@ -6382,11 +6382,12 @@ defaultLocale({
   decimal: ".",
   thousands: ",",
   grouping: [3],
-  currency: ["$", ""]
+  currency: ["$", ""],
+  minus: "-"
 });
 
 function defaultLocale(definition) {
-  locale = Object(_locale__WEBPACK_IMPORTED_MODULE_0__["default"])(definition);
+  locale = Object(_locale_js__WEBPACK_IMPORTED_MODULE_0__["default"])(definition);
   format = locale.format;
   formatPrefix = locale.formatPrefix;
   return locale;
@@ -6404,11 +6405,11 @@ function defaultLocale(definition) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _formatDecimal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formatDecimal */ "./node_modules/d3-format/src/formatDecimal.js");
+/* harmony import */ var _formatDecimal_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formatDecimal.js */ "./node_modules/d3-format/src/formatDecimal.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(x) {
-  return x = Object(_formatDecimal__WEBPACK_IMPORTED_MODULE_0__["default"])(Math.abs(x)), x ? x[1] : NaN;
+  return x = Object(_formatDecimal_js__WEBPACK_IMPORTED_MODULE_0__["default"])(Math.abs(x)), x ? x[1] : NaN;
 });
 
 
@@ -6502,13 +6503,13 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "prefixExponent", function() { return prefixExponent; });
-/* harmony import */ var _formatDecimal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formatDecimal */ "./node_modules/d3-format/src/formatDecimal.js");
+/* harmony import */ var _formatDecimal_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formatDecimal.js */ "./node_modules/d3-format/src/formatDecimal.js");
 
 
 var prefixExponent;
 
 /* harmony default export */ __webpack_exports__["default"] = (function(x, p) {
-  var d = Object(_formatDecimal__WEBPACK_IMPORTED_MODULE_0__["default"])(x, p);
+  var d = Object(_formatDecimal_js__WEBPACK_IMPORTED_MODULE_0__["default"])(x, p);
   if (!d) return x + "";
   var coefficient = d[0],
       exponent = d[1],
@@ -6517,7 +6518,7 @@ var prefixExponent;
   return i === n ? coefficient
       : i > n ? coefficient + new Array(i - n + 1).join("0")
       : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i)
-      : "0." + new Array(1 - i).join("0") + Object(_formatDecimal__WEBPACK_IMPORTED_MODULE_0__["default"])(x, Math.max(0, p + i - 1))[0]; // less than 1y!
+      : "0." + new Array(1 - i).join("0") + Object(_formatDecimal_js__WEBPACK_IMPORTED_MODULE_0__["default"])(x, Math.max(0, p + i - 1))[0]; // less than 1y!
 });
 
 
@@ -6532,11 +6533,11 @@ var prefixExponent;
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _formatDecimal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formatDecimal */ "./node_modules/d3-format/src/formatDecimal.js");
+/* harmony import */ var _formatDecimal_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formatDecimal.js */ "./node_modules/d3-format/src/formatDecimal.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(x, p) {
-  var d = Object(_formatDecimal__WEBPACK_IMPORTED_MODULE_0__["default"])(x, p);
+  var d = Object(_formatDecimal_js__WEBPACK_IMPORTED_MODULE_0__["default"])(x, p);
   if (!d) return x + "";
   var coefficient = d[0],
       exponent = d[1];
@@ -6552,34 +6553,46 @@ __webpack_require__.r(__webpack_exports__);
 /*!*******************************************************!*\
   !*** ./node_modules/d3-format/src/formatSpecifier.js ***!
   \*******************************************************/
-/*! exports provided: default */
+/*! exports provided: default, FormatSpecifier */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return formatSpecifier; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FormatSpecifier", function() { return FormatSpecifier; });
 // [[fill]align][sign][symbol][0][width][,][.precision][~][type]
 var re = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
 
 function formatSpecifier(specifier) {
-  return new FormatSpecifier(specifier);
+  if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
+  var match;
+  return new FormatSpecifier({
+    fill: match[1],
+    align: match[2],
+    sign: match[3],
+    symbol: match[4],
+    zero: match[5],
+    width: match[6],
+    comma: match[7],
+    precision: match[8] && match[8].slice(1),
+    trim: match[9],
+    type: match[10]
+  });
 }
 
 formatSpecifier.prototype = FormatSpecifier.prototype; // instanceof
 
 function FormatSpecifier(specifier) {
-  if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
-  var match;
-  this.fill = match[1] || " ";
-  this.align = match[2] || ">";
-  this.sign = match[3] || "-";
-  this.symbol = match[4] || "";
-  this.zero = !!match[5];
-  this.width = match[6] && +match[6];
-  this.comma = !!match[7];
-  this.precision = match[8] && +match[8].slice(1);
-  this.trim = !!match[9];
-  this.type = match[10] || "";
+  this.fill = specifier.fill === undefined ? " " : specifier.fill + "";
+  this.align = specifier.align === undefined ? ">" : specifier.align + "";
+  this.sign = specifier.sign === undefined ? "-" : specifier.sign + "";
+  this.symbol = specifier.symbol === undefined ? "" : specifier.symbol + "";
+  this.zero = !!specifier.zero;
+  this.width = specifier.width === undefined ? undefined : +specifier.width;
+  this.comma = !!specifier.comma;
+  this.precision = specifier.precision === undefined ? undefined : +specifier.precision;
+  this.trim = !!specifier.trim;
+  this.type = specifier.type === undefined ? "" : specifier.type + "";
 }
 
 FormatSpecifier.prototype.toString = function() {
@@ -6588,9 +6601,9 @@ FormatSpecifier.prototype.toString = function() {
       + this.sign
       + this.symbol
       + (this.zero ? "0" : "")
-      + (this.width == null ? "" : Math.max(1, this.width | 0))
+      + (this.width === undefined ? "" : Math.max(1, this.width | 0))
       + (this.comma ? "," : "")
-      + (this.precision == null ? "" : "." + Math.max(0, this.precision | 0))
+      + (this.precision === undefined ? "" : "." + Math.max(0, this.precision | 0))
       + (this.trim ? "~" : "")
       + this.type;
 };
@@ -6631,8 +6644,8 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _formatPrefixAuto__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formatPrefixAuto */ "./node_modules/d3-format/src/formatPrefixAuto.js");
-/* harmony import */ var _formatRounded__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./formatRounded */ "./node_modules/d3-format/src/formatRounded.js");
+/* harmony import */ var _formatPrefixAuto_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./formatPrefixAuto.js */ "./node_modules/d3-format/src/formatPrefixAuto.js");
+/* harmony import */ var _formatRounded_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./formatRounded.js */ "./node_modules/d3-format/src/formatRounded.js");
 
 
 
@@ -6645,9 +6658,9 @@ __webpack_require__.r(__webpack_exports__);
   "f": function(x, p) { return x.toFixed(p); },
   "g": function(x, p) { return x.toPrecision(p); },
   "o": function(x) { return Math.round(x).toString(8); },
-  "p": function(x, p) { return Object(_formatRounded__WEBPACK_IMPORTED_MODULE_1__["default"])(x * 100, p); },
-  "r": _formatRounded__WEBPACK_IMPORTED_MODULE_1__["default"],
-  "s": _formatPrefixAuto__WEBPACK_IMPORTED_MODULE_0__["default"],
+  "p": function(x, p) { return Object(_formatRounded_js__WEBPACK_IMPORTED_MODULE_1__["default"])(x * 100, p); },
+  "r": _formatRounded_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  "s": _formatPrefixAuto_js__WEBPACK_IMPORTED_MODULE_0__["default"],
   "X": function(x) { return Math.round(x).toString(16).toUpperCase(); },
   "x": function(x) { return Math.round(x).toString(16); }
 });
@@ -6675,32 +6688,34 @@ __webpack_require__.r(__webpack_exports__);
 /*!*********************************************!*\
   !*** ./node_modules/d3-format/src/index.js ***!
   \*********************************************/
-/*! exports provided: formatDefaultLocale, format, formatPrefix, formatLocale, formatSpecifier, precisionFixed, precisionPrefix, precisionRound */
+/*! exports provided: formatDefaultLocale, format, formatPrefix, formatLocale, formatSpecifier, FormatSpecifier, precisionFixed, precisionPrefix, precisionRound */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _defaultLocale__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./defaultLocale */ "./node_modules/d3-format/src/defaultLocale.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatDefaultLocale", function() { return _defaultLocale__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _defaultLocale_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./defaultLocale.js */ "./node_modules/d3-format/src/defaultLocale.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatDefaultLocale", function() { return _defaultLocale_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "format", function() { return _defaultLocale__WEBPACK_IMPORTED_MODULE_0__["format"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "format", function() { return _defaultLocale_js__WEBPACK_IMPORTED_MODULE_0__["format"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatPrefix", function() { return _defaultLocale__WEBPACK_IMPORTED_MODULE_0__["formatPrefix"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatPrefix", function() { return _defaultLocale_js__WEBPACK_IMPORTED_MODULE_0__["formatPrefix"]; });
 
-/* harmony import */ var _locale__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./locale */ "./node_modules/d3-format/src/locale.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatLocale", function() { return _locale__WEBPACK_IMPORTED_MODULE_1__["default"]; });
+/* harmony import */ var _locale_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./locale.js */ "./node_modules/d3-format/src/locale.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatLocale", function() { return _locale_js__WEBPACK_IMPORTED_MODULE_1__["default"]; });
 
-/* harmony import */ var _formatSpecifier__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./formatSpecifier */ "./node_modules/d3-format/src/formatSpecifier.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatSpecifier", function() { return _formatSpecifier__WEBPACK_IMPORTED_MODULE_2__["default"]; });
+/* harmony import */ var _formatSpecifier_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./formatSpecifier.js */ "./node_modules/d3-format/src/formatSpecifier.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatSpecifier", function() { return _formatSpecifier_js__WEBPACK_IMPORTED_MODULE_2__["default"]; });
 
-/* harmony import */ var _precisionFixed__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./precisionFixed */ "./node_modules/d3-format/src/precisionFixed.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "precisionFixed", function() { return _precisionFixed__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "FormatSpecifier", function() { return _formatSpecifier_js__WEBPACK_IMPORTED_MODULE_2__["FormatSpecifier"]; });
 
-/* harmony import */ var _precisionPrefix__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./precisionPrefix */ "./node_modules/d3-format/src/precisionPrefix.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "precisionPrefix", function() { return _precisionPrefix__WEBPACK_IMPORTED_MODULE_4__["default"]; });
+/* harmony import */ var _precisionFixed_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./precisionFixed.js */ "./node_modules/d3-format/src/precisionFixed.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "precisionFixed", function() { return _precisionFixed_js__WEBPACK_IMPORTED_MODULE_3__["default"]; });
 
-/* harmony import */ var _precisionRound__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./precisionRound */ "./node_modules/d3-format/src/precisionRound.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "precisionRound", function() { return _precisionRound__WEBPACK_IMPORTED_MODULE_5__["default"]; });
+/* harmony import */ var _precisionPrefix_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./precisionPrefix.js */ "./node_modules/d3-format/src/precisionPrefix.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "precisionPrefix", function() { return _precisionPrefix_js__WEBPACK_IMPORTED_MODULE_4__["default"]; });
+
+/* harmony import */ var _precisionRound_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./precisionRound.js */ "./node_modules/d3-format/src/precisionRound.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "precisionRound", function() { return _precisionRound_js__WEBPACK_IMPORTED_MODULE_5__["default"]; });
 
 
 
@@ -6721,14 +6736,14 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _exponent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./exponent */ "./node_modules/d3-format/src/exponent.js");
-/* harmony import */ var _formatGroup__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./formatGroup */ "./node_modules/d3-format/src/formatGroup.js");
-/* harmony import */ var _formatNumerals__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./formatNumerals */ "./node_modules/d3-format/src/formatNumerals.js");
-/* harmony import */ var _formatSpecifier__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./formatSpecifier */ "./node_modules/d3-format/src/formatSpecifier.js");
-/* harmony import */ var _formatTrim__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./formatTrim */ "./node_modules/d3-format/src/formatTrim.js");
-/* harmony import */ var _formatTypes__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./formatTypes */ "./node_modules/d3-format/src/formatTypes.js");
-/* harmony import */ var _formatPrefixAuto__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./formatPrefixAuto */ "./node_modules/d3-format/src/formatPrefixAuto.js");
-/* harmony import */ var _identity__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./identity */ "./node_modules/d3-format/src/identity.js");
+/* harmony import */ var _exponent_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./exponent.js */ "./node_modules/d3-format/src/exponent.js");
+/* harmony import */ var _formatGroup_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./formatGroup.js */ "./node_modules/d3-format/src/formatGroup.js");
+/* harmony import */ var _formatNumerals_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./formatNumerals.js */ "./node_modules/d3-format/src/formatNumerals.js");
+/* harmony import */ var _formatSpecifier_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./formatSpecifier.js */ "./node_modules/d3-format/src/formatSpecifier.js");
+/* harmony import */ var _formatTrim_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./formatTrim.js */ "./node_modules/d3-format/src/formatTrim.js");
+/* harmony import */ var _formatTypes_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./formatTypes.js */ "./node_modules/d3-format/src/formatTypes.js");
+/* harmony import */ var _formatPrefixAuto_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./formatPrefixAuto.js */ "./node_modules/d3-format/src/formatPrefixAuto.js");
+/* harmony import */ var _identity_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./identity.js */ "./node_modules/d3-format/src/identity.js");
 
 
 
@@ -6738,17 +6753,21 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z","Y"];
+var map = Array.prototype.map,
+    prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z","Y"];
 
 /* harmony default export */ __webpack_exports__["default"] = (function(locale) {
-  var group = locale.grouping && locale.thousands ? Object(_formatGroup__WEBPACK_IMPORTED_MODULE_1__["default"])(locale.grouping, locale.thousands) : _identity__WEBPACK_IMPORTED_MODULE_7__["default"],
-      currency = locale.currency,
-      decimal = locale.decimal,
-      numerals = locale.numerals ? Object(_formatNumerals__WEBPACK_IMPORTED_MODULE_2__["default"])(locale.numerals) : _identity__WEBPACK_IMPORTED_MODULE_7__["default"],
-      percent = locale.percent || "%";
+  var group = locale.grouping === undefined || locale.thousands === undefined ? _identity_js__WEBPACK_IMPORTED_MODULE_7__["default"] : Object(_formatGroup_js__WEBPACK_IMPORTED_MODULE_1__["default"])(map.call(locale.grouping, Number), locale.thousands + ""),
+      currencyPrefix = locale.currency === undefined ? "" : locale.currency[0] + "",
+      currencySuffix = locale.currency === undefined ? "" : locale.currency[1] + "",
+      decimal = locale.decimal === undefined ? "." : locale.decimal + "",
+      numerals = locale.numerals === undefined ? _identity_js__WEBPACK_IMPORTED_MODULE_7__["default"] : Object(_formatNumerals_js__WEBPACK_IMPORTED_MODULE_2__["default"])(map.call(locale.numerals, String)),
+      percent = locale.percent === undefined ? "%" : locale.percent + "",
+      minus = locale.minus === undefined ? "-" : locale.minus + "",
+      nan = locale.nan === undefined ? "NaN" : locale.nan + "";
 
   function newFormat(specifier) {
-    specifier = Object(_formatSpecifier__WEBPACK_IMPORTED_MODULE_3__["default"])(specifier);
+    specifier = Object(_formatSpecifier_js__WEBPACK_IMPORTED_MODULE_3__["default"])(specifier);
 
     var fill = specifier.fill,
         align = specifier.align,
@@ -6765,27 +6784,27 @@ var prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z",
     if (type === "n") comma = true, type = "g";
 
     // The "" type, and any invalid type, is an alias for ".12~g".
-    else if (!_formatTypes__WEBPACK_IMPORTED_MODULE_5__["default"][type]) precision == null && (precision = 12), trim = true, type = "g";
+    else if (!_formatTypes_js__WEBPACK_IMPORTED_MODULE_5__["default"][type]) precision === undefined && (precision = 12), trim = true, type = "g";
 
     // If zero fill is specified, padding goes after sign and before digits.
     if (zero || (fill === "0" && align === "=")) zero = true, fill = "0", align = "=";
 
     // Compute the prefix and suffix.
     // For SI-prefix, the suffix is lazily computed.
-    var prefix = symbol === "$" ? currency[0] : symbol === "#" && /[boxX]/.test(type) ? "0" + type.toLowerCase() : "",
-        suffix = symbol === "$" ? currency[1] : /[%p]/.test(type) ? percent : "";
+    var prefix = symbol === "$" ? currencyPrefix : symbol === "#" && /[boxX]/.test(type) ? "0" + type.toLowerCase() : "",
+        suffix = symbol === "$" ? currencySuffix : /[%p]/.test(type) ? percent : "";
 
     // What format function should we use?
     // Is this an integer type?
     // Can this type generate exponential notation?
-    var formatType = _formatTypes__WEBPACK_IMPORTED_MODULE_5__["default"][type],
+    var formatType = _formatTypes_js__WEBPACK_IMPORTED_MODULE_5__["default"][type],
         maybeSuffix = /[defgprs%]/.test(type);
 
     // Set the default precision if not specified,
     // or clamp the specified precision to the supported range.
     // For significant precision, it must be in [1, 21].
     // For fixed precision, it must be in [0, 20].
-    precision = precision == null ? 6
+    precision = precision === undefined ? 6
         : /[gprs]/.test(type) ? Math.max(1, Math.min(21, precision))
         : Math.max(0, Math.min(20, precision));
 
@@ -6802,17 +6821,18 @@ var prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z",
 
         // Perform the initial formatting.
         var valueNegative = value < 0;
-        value = formatType(Math.abs(value), precision);
+        value = isNaN(value) ? nan : formatType(Math.abs(value), precision);
 
         // Trim insignificant zeros.
-        if (trim) value = Object(_formatTrim__WEBPACK_IMPORTED_MODULE_4__["default"])(value);
+        if (trim) value = Object(_formatTrim_js__WEBPACK_IMPORTED_MODULE_4__["default"])(value);
 
         // If a negative value rounds to zero during formatting, treat as positive.
         if (valueNegative && +value === 0) valueNegative = false;
 
         // Compute the prefix and suffix.
-        valuePrefix = (valueNegative ? (sign === "(" ? sign : "-") : sign === "-" || sign === "(" ? "" : sign) + valuePrefix;
-        valueSuffix = (type === "s" ? prefixes[8 + _formatPrefixAuto__WEBPACK_IMPORTED_MODULE_6__["prefixExponent"] / 3] : "") + valueSuffix + (valueNegative && sign === "(" ? ")" : "");
+        valuePrefix = (valueNegative ? (sign === "(" ? sign : minus) : sign === "-" || sign === "(" ? "" : sign) + valuePrefix;
+
+        valueSuffix = (type === "s" ? prefixes[8 + _formatPrefixAuto_js__WEBPACK_IMPORTED_MODULE_6__["prefixExponent"] / 3] : "") + valueSuffix + (valueNegative && sign === "(" ? ")" : "");
 
         // Break the formatted value into the integer “value” part that can be
         // grouped, and fractional or exponential “suffix” part that is not.
@@ -6857,8 +6877,8 @@ var prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z",
   }
 
   function formatPrefix(specifier, value) {
-    var f = newFormat((specifier = Object(_formatSpecifier__WEBPACK_IMPORTED_MODULE_3__["default"])(specifier), specifier.type = "f", specifier)),
-        e = Math.max(-8, Math.min(8, Math.floor(Object(_exponent__WEBPACK_IMPORTED_MODULE_0__["default"])(value) / 3))) * 3,
+    var f = newFormat((specifier = Object(_formatSpecifier_js__WEBPACK_IMPORTED_MODULE_3__["default"])(specifier), specifier.type = "f", specifier)),
+        e = Math.max(-8, Math.min(8, Math.floor(Object(_exponent_js__WEBPACK_IMPORTED_MODULE_0__["default"])(value) / 3))) * 3,
         k = Math.pow(10, -e),
         prefix = prefixes[8 + e / 3];
     return function(value) {
@@ -6884,11 +6904,11 @@ var prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z",
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _exponent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./exponent */ "./node_modules/d3-format/src/exponent.js");
+/* harmony import */ var _exponent_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./exponent.js */ "./node_modules/d3-format/src/exponent.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(step) {
-  return Math.max(0, -Object(_exponent__WEBPACK_IMPORTED_MODULE_0__["default"])(Math.abs(step)));
+  return Math.max(0, -Object(_exponent_js__WEBPACK_IMPORTED_MODULE_0__["default"])(Math.abs(step)));
 });
 
 
@@ -6903,11 +6923,11 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _exponent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./exponent */ "./node_modules/d3-format/src/exponent.js");
+/* harmony import */ var _exponent_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./exponent.js */ "./node_modules/d3-format/src/exponent.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(step, value) {
-  return Math.max(0, Math.max(-8, Math.min(8, Math.floor(Object(_exponent__WEBPACK_IMPORTED_MODULE_0__["default"])(value) / 3))) * 3 - Object(_exponent__WEBPACK_IMPORTED_MODULE_0__["default"])(Math.abs(step)));
+  return Math.max(0, Math.max(-8, Math.min(8, Math.floor(Object(_exponent_js__WEBPACK_IMPORTED_MODULE_0__["default"])(value) / 3))) * 3 - Object(_exponent_js__WEBPACK_IMPORTED_MODULE_0__["default"])(Math.abs(step)));
 });
 
 
@@ -6922,12 +6942,12 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _exponent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./exponent */ "./node_modules/d3-format/src/exponent.js");
+/* harmony import */ var _exponent_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./exponent.js */ "./node_modules/d3-format/src/exponent.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(step, max) {
   step = Math.abs(step), max = Math.abs(max) - step;
-  return Math.max(0, Object(_exponent__WEBPACK_IMPORTED_MODULE_0__["default"])(max) - Object(_exponent__WEBPACK_IMPORTED_MODULE_0__["default"])(step)) + 1;
+  return Math.max(0, Object(_exponent_js__WEBPACK_IMPORTED_MODULE_0__["default"])(max) - Object(_exponent_js__WEBPACK_IMPORTED_MODULE_0__["default"])(step)) + 1;
 });
 
 
@@ -33996,7 +34016,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "devDependencies", function() { return devDependencies; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "dependencies", function() { return dependencies; });
 var name = "d3";
-var version = "5.11.0";
+var version = "5.12.0";
 var description = "Data-Driven Documents";
 var keywords = ["dom","visualization","svg","animation","canvas"];
 var homepage = "https://d3js.org";
@@ -34019,7 +34039,7 @@ var dependencies = {"d3-array":"1","d3-axis":"1","d3-brush":"1","d3-chord":"1","
 /*!**********************************!*\
   !*** ./node_modules/d3/index.js ***!
   \**********************************/
-/*! exports provided: version, bisect, bisectRight, bisectLeft, ascending, bisector, cross, descending, deviation, extent, histogram, thresholdFreedmanDiaconis, thresholdScott, thresholdSturges, max, mean, median, merge, min, pairs, permute, quantile, range, scan, shuffle, sum, ticks, tickIncrement, tickStep, transpose, variance, zip, axisTop, axisRight, axisBottom, axisLeft, brush, brushX, brushY, brushSelection, chord, ribbon, nest, set, map, keys, values, entries, color, rgb, hsl, lab, hcl, lch, gray, cubehelix, contours, contourDensity, dispatch, drag, dragDisable, dragEnable, dsvFormat, csvParse, csvParseRows, csvFormat, csvFormatBody, csvFormatRows, tsvParse, tsvParseRows, tsvFormat, tsvFormatBody, tsvFormatRows, autoType, easeLinear, easeQuad, easeQuadIn, easeQuadOut, easeQuadInOut, easeCubic, easeCubicIn, easeCubicOut, easeCubicInOut, easePoly, easePolyIn, easePolyOut, easePolyInOut, easeSin, easeSinIn, easeSinOut, easeSinInOut, easeExp, easeExpIn, easeExpOut, easeExpInOut, easeCircle, easeCircleIn, easeCircleOut, easeCircleInOut, easeBounce, easeBounceIn, easeBounceOut, easeBounceInOut, easeBack, easeBackIn, easeBackOut, easeBackInOut, easeElastic, easeElasticIn, easeElasticOut, easeElasticInOut, blob, buffer, dsv, csv, tsv, image, json, text, xml, html, svg, forceCenter, forceCollide, forceLink, forceManyBody, forceRadial, forceSimulation, forceX, forceY, formatDefaultLocale, format, formatPrefix, formatLocale, formatSpecifier, precisionFixed, precisionPrefix, precisionRound, geoArea, geoBounds, geoCentroid, geoCircle, geoClipAntimeridian, geoClipCircle, geoClipExtent, geoClipRectangle, geoContains, geoDistance, geoGraticule, geoGraticule10, geoInterpolate, geoLength, geoPath, geoAlbers, geoAlbersUsa, geoAzimuthalEqualArea, geoAzimuthalEqualAreaRaw, geoAzimuthalEquidistant, geoAzimuthalEquidistantRaw, geoConicConformal, geoConicConformalRaw, geoConicEqualArea, geoConicEqualAreaRaw, geoConicEquidistant, geoConicEquidistantRaw, geoEqualEarth, geoEqualEarthRaw, geoEquirectangular, geoEquirectangularRaw, geoGnomonic, geoGnomonicRaw, geoIdentity, geoProjection, geoProjectionMutator, geoMercator, geoMercatorRaw, geoNaturalEarth1, geoNaturalEarth1Raw, geoOrthographic, geoOrthographicRaw, geoStereographic, geoStereographicRaw, geoTransverseMercator, geoTransverseMercatorRaw, geoRotation, geoStream, geoTransform, cluster, hierarchy, pack, packSiblings, packEnclose, partition, stratify, tree, treemap, treemapBinary, treemapDice, treemapSlice, treemapSliceDice, treemapSquarify, treemapResquarify, interpolate, interpolateArray, interpolateBasis, interpolateBasisClosed, interpolateDate, interpolateDiscrete, interpolateHue, interpolateNumber, interpolateObject, interpolateRound, interpolateString, interpolateTransformCss, interpolateTransformSvg, interpolateZoom, interpolateRgb, interpolateRgbBasis, interpolateRgbBasisClosed, interpolateHsl, interpolateHslLong, interpolateLab, interpolateHcl, interpolateHclLong, interpolateCubehelix, interpolateCubehelixLong, piecewise, quantize, path, polygonArea, polygonCentroid, polygonHull, polygonContains, polygonLength, quadtree, randomUniform, randomNormal, randomLogNormal, randomBates, randomIrwinHall, randomExponential, scaleBand, scalePoint, scaleIdentity, scaleLinear, scaleLog, scaleSymlog, scaleOrdinal, scaleImplicit, scalePow, scaleSqrt, scaleQuantile, scaleQuantize, scaleThreshold, scaleTime, scaleUtc, scaleSequential, scaleSequentialLog, scaleSequentialPow, scaleSequentialSqrt, scaleSequentialSymlog, scaleSequentialQuantile, scaleDiverging, scaleDivergingLog, scaleDivergingPow, scaleDivergingSqrt, scaleDivergingSymlog, tickFormat, schemeCategory10, schemeAccent, schemeDark2, schemePaired, schemePastel1, schemePastel2, schemeSet1, schemeSet2, schemeSet3, schemeTableau10, interpolateBrBG, schemeBrBG, interpolatePRGn, schemePRGn, interpolatePiYG, schemePiYG, interpolatePuOr, schemePuOr, interpolateRdBu, schemeRdBu, interpolateRdGy, schemeRdGy, interpolateRdYlBu, schemeRdYlBu, interpolateRdYlGn, schemeRdYlGn, interpolateSpectral, schemeSpectral, interpolateBuGn, schemeBuGn, interpolateBuPu, schemeBuPu, interpolateGnBu, schemeGnBu, interpolateOrRd, schemeOrRd, interpolatePuBuGn, schemePuBuGn, interpolatePuBu, schemePuBu, interpolatePuRd, schemePuRd, interpolateRdPu, schemeRdPu, interpolateYlGnBu, schemeYlGnBu, interpolateYlGn, schemeYlGn, interpolateYlOrBr, schemeYlOrBr, interpolateYlOrRd, schemeYlOrRd, interpolateBlues, schemeBlues, interpolateGreens, schemeGreens, interpolateGreys, schemeGreys, interpolatePurples, schemePurples, interpolateReds, schemeReds, interpolateOranges, schemeOranges, interpolateCividis, interpolateCubehelixDefault, interpolateRainbow, interpolateWarm, interpolateCool, interpolateSinebow, interpolateTurbo, interpolateViridis, interpolateMagma, interpolateInferno, interpolatePlasma, create, creator, local, matcher, mouse, namespace, namespaces, clientPoint, select, selectAll, selection, selector, selectorAll, style, touch, touches, window, event, customEvent, arc, area, line, pie, areaRadial, radialArea, lineRadial, radialLine, pointRadial, linkHorizontal, linkVertical, linkRadial, symbol, symbols, symbolCircle, symbolCross, symbolDiamond, symbolSquare, symbolStar, symbolTriangle, symbolWye, curveBasisClosed, curveBasisOpen, curveBasis, curveBundle, curveCardinalClosed, curveCardinalOpen, curveCardinal, curveCatmullRomClosed, curveCatmullRomOpen, curveCatmullRom, curveLinearClosed, curveLinear, curveMonotoneX, curveMonotoneY, curveNatural, curveStep, curveStepAfter, curveStepBefore, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone, stackOffsetSilhouette, stackOffsetWiggle, stackOrderAppearance, stackOrderAscending, stackOrderDescending, stackOrderInsideOut, stackOrderNone, stackOrderReverse, timeInterval, timeMillisecond, timeMilliseconds, utcMillisecond, utcMilliseconds, timeSecond, timeSeconds, utcSecond, utcSeconds, timeMinute, timeMinutes, timeHour, timeHours, timeDay, timeDays, timeWeek, timeWeeks, timeSunday, timeSundays, timeMonday, timeMondays, timeTuesday, timeTuesdays, timeWednesday, timeWednesdays, timeThursday, timeThursdays, timeFriday, timeFridays, timeSaturday, timeSaturdays, timeMonth, timeMonths, timeYear, timeYears, utcMinute, utcMinutes, utcHour, utcHours, utcDay, utcDays, utcWeek, utcWeeks, utcSunday, utcSundays, utcMonday, utcMondays, utcTuesday, utcTuesdays, utcWednesday, utcWednesdays, utcThursday, utcThursdays, utcFriday, utcFridays, utcSaturday, utcSaturdays, utcMonth, utcMonths, utcYear, utcYears, timeFormatDefaultLocale, timeFormat, timeParse, utcFormat, utcParse, timeFormatLocale, isoFormat, isoParse, now, timer, timerFlush, timeout, interval, transition, active, interrupt, voronoi, zoom, zoomTransform, zoomIdentity */
+/*! exports provided: version, bisect, bisectRight, bisectLeft, ascending, bisector, cross, descending, deviation, extent, histogram, thresholdFreedmanDiaconis, thresholdScott, thresholdSturges, max, mean, median, merge, min, pairs, permute, quantile, range, scan, shuffle, sum, ticks, tickIncrement, tickStep, transpose, variance, zip, axisTop, axisRight, axisBottom, axisLeft, brush, brushX, brushY, brushSelection, chord, ribbon, nest, set, map, keys, values, entries, color, rgb, hsl, lab, hcl, lch, gray, cubehelix, contours, contourDensity, dispatch, drag, dragDisable, dragEnable, dsvFormat, csvParse, csvParseRows, csvFormat, csvFormatBody, csvFormatRows, tsvParse, tsvParseRows, tsvFormat, tsvFormatBody, tsvFormatRows, autoType, easeLinear, easeQuad, easeQuadIn, easeQuadOut, easeQuadInOut, easeCubic, easeCubicIn, easeCubicOut, easeCubicInOut, easePoly, easePolyIn, easePolyOut, easePolyInOut, easeSin, easeSinIn, easeSinOut, easeSinInOut, easeExp, easeExpIn, easeExpOut, easeExpInOut, easeCircle, easeCircleIn, easeCircleOut, easeCircleInOut, easeBounce, easeBounceIn, easeBounceOut, easeBounceInOut, easeBack, easeBackIn, easeBackOut, easeBackInOut, easeElastic, easeElasticIn, easeElasticOut, easeElasticInOut, blob, buffer, dsv, csv, tsv, image, json, text, xml, html, svg, forceCenter, forceCollide, forceLink, forceManyBody, forceRadial, forceSimulation, forceX, forceY, formatDefaultLocale, format, formatPrefix, formatLocale, formatSpecifier, FormatSpecifier, precisionFixed, precisionPrefix, precisionRound, geoArea, geoBounds, geoCentroid, geoCircle, geoClipAntimeridian, geoClipCircle, geoClipExtent, geoClipRectangle, geoContains, geoDistance, geoGraticule, geoGraticule10, geoInterpolate, geoLength, geoPath, geoAlbers, geoAlbersUsa, geoAzimuthalEqualArea, geoAzimuthalEqualAreaRaw, geoAzimuthalEquidistant, geoAzimuthalEquidistantRaw, geoConicConformal, geoConicConformalRaw, geoConicEqualArea, geoConicEqualAreaRaw, geoConicEquidistant, geoConicEquidistantRaw, geoEqualEarth, geoEqualEarthRaw, geoEquirectangular, geoEquirectangularRaw, geoGnomonic, geoGnomonicRaw, geoIdentity, geoProjection, geoProjectionMutator, geoMercator, geoMercatorRaw, geoNaturalEarth1, geoNaturalEarth1Raw, geoOrthographic, geoOrthographicRaw, geoStereographic, geoStereographicRaw, geoTransverseMercator, geoTransverseMercatorRaw, geoRotation, geoStream, geoTransform, cluster, hierarchy, pack, packSiblings, packEnclose, partition, stratify, tree, treemap, treemapBinary, treemapDice, treemapSlice, treemapSliceDice, treemapSquarify, treemapResquarify, interpolate, interpolateArray, interpolateBasis, interpolateBasisClosed, interpolateDate, interpolateDiscrete, interpolateHue, interpolateNumber, interpolateObject, interpolateRound, interpolateString, interpolateTransformCss, interpolateTransformSvg, interpolateZoom, interpolateRgb, interpolateRgbBasis, interpolateRgbBasisClosed, interpolateHsl, interpolateHslLong, interpolateLab, interpolateHcl, interpolateHclLong, interpolateCubehelix, interpolateCubehelixLong, piecewise, quantize, path, polygonArea, polygonCentroid, polygonHull, polygonContains, polygonLength, quadtree, randomUniform, randomNormal, randomLogNormal, randomBates, randomIrwinHall, randomExponential, scaleBand, scalePoint, scaleIdentity, scaleLinear, scaleLog, scaleSymlog, scaleOrdinal, scaleImplicit, scalePow, scaleSqrt, scaleQuantile, scaleQuantize, scaleThreshold, scaleTime, scaleUtc, scaleSequential, scaleSequentialLog, scaleSequentialPow, scaleSequentialSqrt, scaleSequentialSymlog, scaleSequentialQuantile, scaleDiverging, scaleDivergingLog, scaleDivergingPow, scaleDivergingSqrt, scaleDivergingSymlog, tickFormat, schemeCategory10, schemeAccent, schemeDark2, schemePaired, schemePastel1, schemePastel2, schemeSet1, schemeSet2, schemeSet3, schemeTableau10, interpolateBrBG, schemeBrBG, interpolatePRGn, schemePRGn, interpolatePiYG, schemePiYG, interpolatePuOr, schemePuOr, interpolateRdBu, schemeRdBu, interpolateRdGy, schemeRdGy, interpolateRdYlBu, schemeRdYlBu, interpolateRdYlGn, schemeRdYlGn, interpolateSpectral, schemeSpectral, interpolateBuGn, schemeBuGn, interpolateBuPu, schemeBuPu, interpolateGnBu, schemeGnBu, interpolateOrRd, schemeOrRd, interpolatePuBuGn, schemePuBuGn, interpolatePuBu, schemePuBu, interpolatePuRd, schemePuRd, interpolateRdPu, schemeRdPu, interpolateYlGnBu, schemeYlGnBu, interpolateYlGn, schemeYlGn, interpolateYlOrBr, schemeYlOrBr, interpolateYlOrRd, schemeYlOrRd, interpolateBlues, schemeBlues, interpolateGreens, schemeGreens, interpolateGreys, schemeGreys, interpolatePurples, schemePurples, interpolateReds, schemeReds, interpolateOranges, schemeOranges, interpolateCividis, interpolateCubehelixDefault, interpolateRainbow, interpolateWarm, interpolateCool, interpolateSinebow, interpolateTurbo, interpolateViridis, interpolateMagma, interpolateInferno, interpolatePlasma, create, creator, local, matcher, mouse, namespace, namespaces, clientPoint, select, selectAll, selection, selector, selectorAll, style, touch, touches, window, event, customEvent, arc, area, line, pie, areaRadial, radialArea, lineRadial, radialLine, pointRadial, linkHorizontal, linkVertical, linkRadial, symbol, symbols, symbolCircle, symbolCross, symbolDiamond, symbolSquare, symbolStar, symbolTriangle, symbolWye, curveBasisClosed, curveBasisOpen, curveBasis, curveBundle, curveCardinalClosed, curveCardinalOpen, curveCardinal, curveCatmullRomClosed, curveCatmullRomOpen, curveCatmullRom, curveLinearClosed, curveLinear, curveMonotoneX, curveMonotoneY, curveNatural, curveStep, curveStepAfter, curveStepBefore, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone, stackOffsetSilhouette, stackOffsetWiggle, stackOrderAppearance, stackOrderAscending, stackOrderDescending, stackOrderInsideOut, stackOrderNone, stackOrderReverse, timeInterval, timeMillisecond, timeMilliseconds, utcMillisecond, utcMilliseconds, timeSecond, timeSeconds, utcSecond, utcSeconds, timeMinute, timeMinutes, timeHour, timeHours, timeDay, timeDays, timeWeek, timeWeeks, timeSunday, timeSundays, timeMonday, timeMondays, timeTuesday, timeTuesdays, timeWednesday, timeWednesdays, timeThursday, timeThursdays, timeFriday, timeFridays, timeSaturday, timeSaturdays, timeMonth, timeMonths, timeYear, timeYears, utcMinute, utcMinutes, utcHour, utcHours, utcDay, utcDays, utcWeek, utcWeeks, utcSunday, utcSundays, utcMonday, utcMondays, utcTuesday, utcTuesdays, utcWednesday, utcWednesdays, utcThursday, utcThursdays, utcFriday, utcFridays, utcSaturday, utcSaturdays, utcMonth, utcMonths, utcYear, utcYears, timeFormatDefaultLocale, timeFormat, timeParse, utcFormat, utcParse, timeFormatLocale, isoFormat, isoParse, now, timer, timerFlush, timeout, interval, transition, active, interrupt, voronoi, zoom, zoomTransform, zoomIdentity */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -34308,6 +34328,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatLocale", function() { return d3_format__WEBPACK_IMPORTED_MODULE_14__["formatLocale"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "formatSpecifier", function() { return d3_format__WEBPACK_IMPORTED_MODULE_14__["formatSpecifier"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "FormatSpecifier", function() { return d3_format__WEBPACK_IMPORTED_MODULE_14__["FormatSpecifier"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "precisionFixed", function() { return d3_format__WEBPACK_IMPORTED_MODULE_14__["precisionFixed"]; });
 
@@ -35080,55 +35102,6 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./node_modules/topojson-client/index.js":
-/*!***********************************************!*\
-  !*** ./node_modules/topojson-client/index.js ***!
-  \***********************************************/
-/*! exports provided: bbox, feature, mesh, meshArcs, merge, mergeArcs, neighbors, quantize, transform, untransform */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _src_bbox__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./src/bbox */ "./node_modules/topojson-client/src/bbox.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "bbox", function() { return _src_bbox__WEBPACK_IMPORTED_MODULE_0__["default"]; });
-
-/* harmony import */ var _src_feature__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./src/feature */ "./node_modules/topojson-client/src/feature.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "feature", function() { return _src_feature__WEBPACK_IMPORTED_MODULE_1__["default"]; });
-
-/* harmony import */ var _src_mesh__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./src/mesh */ "./node_modules/topojson-client/src/mesh.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "mesh", function() { return _src_mesh__WEBPACK_IMPORTED_MODULE_2__["default"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "meshArcs", function() { return _src_mesh__WEBPACK_IMPORTED_MODULE_2__["meshArcs"]; });
-
-/* harmony import */ var _src_merge__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./src/merge */ "./node_modules/topojson-client/src/merge.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "merge", function() { return _src_merge__WEBPACK_IMPORTED_MODULE_3__["default"]; });
-
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "mergeArcs", function() { return _src_merge__WEBPACK_IMPORTED_MODULE_3__["mergeArcs"]; });
-
-/* harmony import */ var _src_neighbors__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./src/neighbors */ "./node_modules/topojson-client/src/neighbors.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "neighbors", function() { return _src_neighbors__WEBPACK_IMPORTED_MODULE_4__["default"]; });
-
-/* harmony import */ var _src_quantize__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./src/quantize */ "./node_modules/topojson-client/src/quantize.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "quantize", function() { return _src_quantize__WEBPACK_IMPORTED_MODULE_5__["default"]; });
-
-/* harmony import */ var _src_transform__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./src/transform */ "./node_modules/topojson-client/src/transform.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "transform", function() { return _src_transform__WEBPACK_IMPORTED_MODULE_6__["default"]; });
-
-/* harmony import */ var _src_untransform__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./src/untransform */ "./node_modules/topojson-client/src/untransform.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "untransform", function() { return _src_untransform__WEBPACK_IMPORTED_MODULE_7__["default"]; });
-
-
-
-
-
-
-
-
-
-
-
-/***/ }),
-
 /***/ "./node_modules/topojson-client/src/bbox.js":
 /*!**************************************************!*\
   !*** ./node_modules/topojson-client/src/bbox.js ***!
@@ -35306,6 +35279,55 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/topojson-client/src/index.js":
+/*!***************************************************!*\
+  !*** ./node_modules/topojson-client/src/index.js ***!
+  \***************************************************/
+/*! exports provided: bbox, feature, mesh, meshArcs, merge, mergeArcs, neighbors, quantize, transform, untransform */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _bbox_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./bbox.js */ "./node_modules/topojson-client/src/bbox.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "bbox", function() { return _bbox_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+
+/* harmony import */ var _feature_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./feature.js */ "./node_modules/topojson-client/src/feature.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "feature", function() { return _feature_js__WEBPACK_IMPORTED_MODULE_1__["default"]; });
+
+/* harmony import */ var _mesh_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./mesh.js */ "./node_modules/topojson-client/src/mesh.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "mesh", function() { return _mesh_js__WEBPACK_IMPORTED_MODULE_2__["default"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "meshArcs", function() { return _mesh_js__WEBPACK_IMPORTED_MODULE_2__["meshArcs"]; });
+
+/* harmony import */ var _merge_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./merge.js */ "./node_modules/topojson-client/src/merge.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "merge", function() { return _merge_js__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "mergeArcs", function() { return _merge_js__WEBPACK_IMPORTED_MODULE_3__["mergeArcs"]; });
+
+/* harmony import */ var _neighbors_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./neighbors.js */ "./node_modules/topojson-client/src/neighbors.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "neighbors", function() { return _neighbors_js__WEBPACK_IMPORTED_MODULE_4__["default"]; });
+
+/* harmony import */ var _quantize_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./quantize.js */ "./node_modules/topojson-client/src/quantize.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "quantize", function() { return _quantize_js__WEBPACK_IMPORTED_MODULE_5__["default"]; });
+
+/* harmony import */ var _transform_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./transform.js */ "./node_modules/topojson-client/src/transform.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "transform", function() { return _transform_js__WEBPACK_IMPORTED_MODULE_6__["default"]; });
+
+/* harmony import */ var _untransform_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./untransform.js */ "./node_modules/topojson-client/src/untransform.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "untransform", function() { return _untransform_js__WEBPACK_IMPORTED_MODULE_7__["default"]; });
+
+
+
+
+
+
+
+
+
+
+
+/***/ }),
+
 /***/ "./node_modules/topojson-client/src/merge.js":
 /*!***************************************************!*\
   !*** ./node_modules/topojson-client/src/merge.js ***!
@@ -35416,6 +35438,8 @@ function mergeArcs(topology, objects) {
       }
 
       return arcs;
+    }).filter(function(arcs) {
+      return arcs.length > 0;
     })
   };
 }
@@ -35804,7 +35828,7 @@ __webpack_require__.r(__webpack_exports__);
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
-var topojson = __webpack_require__(/*! topojson-client */ "./node_modules/topojson-client/index.js");
+var topojson = __webpack_require__(/*! topojson-client */ "./node_modules/topojson-client/src/index.js");
 var d3_svg_legend_1 = __webpack_require__(/*! d3-svg-legend */ "./node_modules/d3-svg-legend/indexRollupNext.js");
 var sidebar_1 = __webpack_require__(/*! ./sidebar */ "./src/sidebar.ts");
 var linechart_1 = __webpack_require__(/*! ./linechart */ "./src/linechart.ts");
@@ -35827,6 +35851,20 @@ var projection = d3.geoAlbersUsa()
 //projection = d3.geoAlbersUsa().scale([5240]).translate([1280, 430])
 projection = d3.geoMercator().scale(4000).translate([600 / 2, 600 / 2]);
 var path = d3.geoPath(projection);
+function getSortingOptions(index, ascending) {
+    if (ascending) {
+        var sortingFunction = function (a, b) {
+            return d3.ascending(a[index], b[index]);
+        };
+        return sortingFunction;
+    }
+    else {
+        var sortingFunction = function (a, b) {
+            return d3.descending(a[index], b[index]);
+        };
+        return sortingFunction;
+    }
+}
 var currentYear;
 var globalResults;
 window.selectedProfessions = {};
@@ -35849,13 +35887,22 @@ window.update = function () {
                     totalDemand += currentYear[county]['demand'][profession];
                 }
             }
+            var population = currentYear[county].population;
             currentYear[county]['totalSupply'] = totalSupply;
+            currentYear[county]['totalDemand'] = totalDemand;
+            currentYear[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
+            currentYear[county]['totalDemandPer100K'] = totalDemand / population * 100000;
             supplyScore[county] = (totalSupply / totalDemand) / 2;
         }
         if (mapData == 'supply_need') {
             var linear = d3.scaleOrdinal()
                 .domain(['Undersupplied', 'Balanced', 'Oversupplied'])
                 .range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
+        }
+        else if (mapData == 'supply_need_per_100K') {
+            var linear = d3.scaleOrdinal()
+                .domain(['Undersupplied', 'Balanced', 'Oversupplied'])
+                .range([d3.interpolatePuOr(1), d3.interpolatePuOr(0.5), d3.interpolatePuOr(0)]);
         }
         else if (mapData == 'supply_per_100k') {
             var max = d3.max(Object.keys(results[year]).map(function (d) {
@@ -35864,6 +35911,14 @@ window.update = function () {
             var linear = d3.scaleLinear()
                 .domain([0, max])
                 .range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
+        }
+        else if (mapData == 'demand_per_100k') {
+            var max = d3.max(Object.values(results[year]), function (d) {
+                return d['totalDemand'] / d['population'] * 100000;
+            });
+            var linear = d3.scaleLinear()
+                .domain([0, max])
+                .range([d3.interpolateOranges(0), d3.interpolateOranges(1)]);
         }
         else {
             var linear = d3.scaleLinear()
@@ -35884,10 +35939,17 @@ window.update = function () {
             return county['totalSupply'] / county['population'] * 100000;
         }
         ;
+        function getDemandPer100k(county) {
+            return county['totalDemand'] / county['population'] * 100000;
+        }
+        ;
         var colorScale = function (d) {
             var county = d.properties.NAME + ' County';
             if (mapData == 'supply_need') {
                 return d3.interpolateRdBu(supplyScore[county]);
+            }
+            else if (mapData == 'supply_need_per_100K') {
+                return d3.interpolatePuOr(1 - supplyScore[county]);
             }
             else if (mapData == 'supply_per_100k') {
                 var max = d3.max(Object.keys(results[year]).map(function (d) {
@@ -35896,7 +35958,14 @@ window.update = function () {
                 var scale = d3.scaleLinear()
                     .domain([0, max])
                     .range([0, 1]);
-                return d3.interpolateBlues(scale(getSupplyPer100k(results[year][county])));
+                return d3.interpolatePurples(scale(getSupplyPer100k(results[year][county])));
+            }
+            else if (mapData == 'demand_per_100k') {
+                var max = d3.max(Object.values(results[year]), function (d) { return getDemandPer100k(d); });
+                var scale = d3.scaleLinear()
+                    .domain([0, max])
+                    .range([0, 1]);
+                return d3.interpolateOranges(scale(getDemandPer100k(results[year][county])));
             }
             return d3.interpolateGreens(results[year][county]['population'] / 1000000);
         };
@@ -35936,10 +36005,12 @@ function toolTip(d) {
     var supplyDemandRatio = f(2 * supplyScore[d.properties.NAME + ' County']);
     var population = currentYear[d.properties.NAME + ' County']['population'];
     var supplyPer100k = d3.format('.0f')(currentYear[d.properties.NAME + ' County']['totalSupply'] / population * 100000);
+    var demandPer100k = d3.format('.0f')(currentYear[d.properties.NAME + ' County']['totalDemand'] / population * 100000);
     return "<h4>" + d.properties.NAME + " County</h4><table>" +
         "<tr><td>Supply/Need:</td><td>" + (supplyDemandRatio) + "</td></tr>" +
         "<tr><td>Population:</td><td>" + (population) + "</td></tr>" +
         "<tr><td>Supply/100K:</td><td>" + (supplyPer100k) + "</td></tr>" +
+        "<tr><td>Demand/100K:</td><td>" + (demandPer100k) + "</td></tr>" +
         "</table>";
 }
 function mouseOver(d) {
@@ -36065,12 +36136,18 @@ function createLineChart(results, supply, demand, profession, max, xi, yi) {
 
 "use strict";
 
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
-function getSortingOptions(sortIndexId, sortDirectionId) {
-    var index = Number(document.getElementById(sortIndexId).value);
-    var direction = document.getElementById(sortDirectionId).value;
-    if (direction == 'ascending') {
+;
+function getSortingOptions(index, ascending) {
+    if (ascending) {
         var sortingFunction = function (a, b) {
             return d3.ascending(a[index], b[index]);
         };
@@ -36085,40 +36162,87 @@ function getSortingOptions(sortIndexId, sortDirectionId) {
 }
 var countiesSvg = d3.select('#counties')
     .append('svg')
-    .attr('height', 1120);
+    .attr('height', 1120)
+    .attr('width', 600);
+var countiesHeaderSvg = d3.select('#countiesHeader')
+    .append('svg')
+    .attr('height', 50)
+    .attr('width', 600);
 var professionsSvg = d3.select('#professions')
     .append('svg')
-    .attr('height', 1000);
+    .attr('height', 1000)
+    .attr('width', 600);
 function initSideBar(currentYear, selectedCounty) {
     if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
     countiesSvg.selectAll('*').remove();
+    countiesHeaderSvg.selectAll('*').remove();
+    var mapData = document.getElementById('mapData').value;
+    var domainMax;
+    //totalSupplyDemandByCounty(currentYear);
+    if (mapData.includes('100')) {
+        domainMax = d3.max(Object.values(currentYear), function (d) { return Math.max(Number(d.totalSupplyPer100K), d.totalDemandPer100K); });
+    }
+    else {
+        domainMax = d3.max(Object.values(currentYear), function (d) { return Math.max(d.totalSupply, d.totalDemand); });
+    }
+    var headers = [{ name: 'County', x: 0 },
+        { name: 'Supply', x: barWidth },
+        { name: 'Need', x: 2 * barWidth },
+        { name: 'Gap', x: 3 * barWidth }];
     totalSupplyDemandByCounty(currentYear);
-    var domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d].totalSupply, currentYear[d].totalDemand); });
     var xScale = d3.scaleLinear()
         .domain([0, domainMax])
         .range([0, barWidth]);
     var countiesData = [];
     for (var county in currentYear) {
         var d = currentYear[county];
-        countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
+        if (mapData.includes('100')) {
+            countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K]);
+        }
+        else {
+            countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
+        }
     }
     ;
-    var sortingFunction = getSortingOptions('countiesSortBy', 'countiesSortDirection');
+    var sortingFunction = getSortingOptions(0, true);
     var groups = countiesSvg.append('g')
         .selectAll('g')
         .data(countiesData.sort(sortingFunction))
         .enter()
         .append('g')
-        .attr('transform', function (d, i) { return "translate(0, " + (i * barHeight + barHeight / 2) + ")"; });
+        .attr('transform', function (d, i) { return "translate(0, " + i * barHeight + ")"; });
     groups.append('rect')
-        .attr('width', 2 * barWidth)
+        .attr('width', 4 * barWidth)
         .attr('height', barHeight)
         .attr('fill', function (d) { return d[0] == selectedCounty ? '#cccccc' : 'none'; });
+    var groupsHeaders = countiesHeaderSvg
+        .append('g')
+        .attr('id', 'sortCounties')
+        .selectAll('g')
+        .data(headers)
+        .enter()
+        .append('g');
+    groupsHeaders.call(drawHeaders);
+    var axis = countiesHeaderSvg.append('g');
+    var xAxis = function (g) { return g
+        .attr("transform", "translate(" + 3 * barWidth + "," + 45 + ")")
+        .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
+    axis.call(xAxis);
     groups.call(drawText);
-    groups.call(draw1DScatterPlot, xScale, barWidth, 1, 2);
-    d3.select('#countiesSortButton')
-        .on('click', function () {
-        var sortingFunction = getSortingOptions('countiesSortBy', 'countiesSortDirection');
+    groups.call(drawText, 1, 50 + barWidth);
+    groups.call(drawText, 2, 2 * barWidth);
+    if (mapData.includes('100')) {
+        groups.call(draw1DScatterPlot, xScale, 3 * barWidth, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+    }
+    else {
+        groups.call(draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
+    }
+    var countiesSortDirection = [true];
+    d3.select('#sortCounties')
+        .selectAll('g')
+        .on('click', function (d, i) {
+        countiesSortDirection[i] = !countiesSortDirection[i];
+        var sortingFunction = getSortingOptions(i, countiesSortDirection[i]);
         groups.sort(sortingFunction)
             .transition()
             .delay(function (d, i) {
@@ -36126,7 +36250,7 @@ function initSideBar(currentYear, selectedCounty) {
         })
             .duration(1000)
             .attr("transform", function (d, i) {
-            var y = i * barHeight + barHeight / 2;
+            var y = i * barHeight;
             return "translate(" + 0 + ", " + y + ")";
         });
     });
@@ -36134,36 +36258,47 @@ function initSideBar(currentYear, selectedCounty) {
     currentYear[selectedCounty].totalDemand = 0;
     professionsSvg.selectAll('*').remove();
     var professions = Object.keys(currentYear[selectedCounty]['supply']);
+    var population = currentYear[selectedCounty]['population'];
     var stats = {};
     for (var _i = 0, professions_1 = professions; _i < professions_1.length; _i++) {
         var prof = professions_1[_i];
         stats[prof] = { totalSupply: 0, totalDemand: 0 };
     }
     //for (let county in currentYear) {
+    var f = d3.format('.0f');
     for (var _a = 0, professions_2 = professions; _a < professions_2.length; _a++) {
         var prof = professions_2[_a];
         stats[prof].totalSupply += currentYear[selectedCounty]['supply'][prof];
         stats[prof].totalDemand += currentYear[selectedCounty]['demand'][prof];
+        stats[prof].totalSupplyPer100K = Number(f(stats[prof].totalSupply / population * 100000));
+        stats[prof].totalDemandPer100K = Number(f(stats[prof].totalDemand / population * 100000));
     }
     //}
-    var data = Object.keys(stats).map(function (d) { return [stats[d].totalSupply, stats[d].totalDemand, stats[d].totalDemand - stats[d].totalSupply]; });
+    var data = Object.values(stats).map(function (d) {
+        if (mapData.includes('100')) {
+            return [d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K];
+        }
+        else {
+            return [d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply];
+        }
+    });
     var xScale = d3.scaleLinear()
         .domain([0, d3.max(data, function (d) { return d3.max(d); })])
         .range([0, barWidth]);
     var professionsData = [];
     for (var i in data) {
-        professionsData.push([professions[i]].concat(data[i]));
+        professionsData.push(__spreadArrays([professions[i]], data[i]));
     }
     ;
-    sortingFunction = getSortingOptions('professionsSortBy', 'professionsSortDirection');
+    sortingFunction = getSortingOptions(0, true);
     var professionsGroups = professionsSvg.append('g')
         .selectAll('g')
         .data(professionsData.sort(sortingFunction))
         .enter()
         .append('g')
-        .attr('transform', function (d, i) { return "translate(0, " + (i * barHeight + barHeight / 2) + ")"; });
+        .attr('transform', function (d, i) { return "translate(0, " + (i * barHeight + 1.4 * barHeight) + ")"; });
     professionsGroups.append('rect')
-        .attr('width', 2 * barWidth)
+        .attr('width', 4 * barWidth)
         .attr('height', barHeight - 4)
         .attr('fill', function (d) {
         if (!window.selectedProfessions.hasOwnProperty(d[0])
@@ -36187,12 +36322,37 @@ function initSideBar(currentYear, selectedCounty) {
                 .select('rect')
                 .attr('fill', '#cccccc');
         }
+        window.update();
     });
+    var professionsHeaders = professionsSvg
+        .append('g')
+        .attr('id', 'sortProfessions')
+        .selectAll('g')
+        .data(headers)
+        .enter()
+        .append('g');
+    headers[0].name = 'Profession';
+    professionsHeaders.call(drawHeaders);
+    var axis = professionsSvg.append('g');
+    var xAxis = function (g) { return g
+        .attr("transform", "translate(" + 3 * barWidth + "," + 42 + ")")
+        .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
+    axis.call(xAxis);
     professionsGroups.call(drawText);
-    professionsGroups.call(draw1DScatterPlot, xScale, barWidth, 1, 2);
-    d3.select('#professionsSortButton')
-        .on('click', function () {
-        var sortingFunction = getSortingOptions('professionsSortBy', 'professionsSortDirection');
+    professionsGroups.call(drawText, 1, barWidth);
+    professionsGroups.call(drawText, 2, 2 * barWidth);
+    if (mapData.includes('100')) {
+        professionsGroups.call(draw1DScatterPlot, xScale, 3 * barWidth, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+    }
+    else {
+        professionsGroups.call(draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
+    }
+    var professionsSortDirection = [true];
+    d3.select('#sortProfessions')
+        .selectAll('g')
+        .on('click', function (d, i) {
+        professionsSortDirection[i] = !professionsSortDirection[i];
+        var sortingFunction = getSortingOptions(i, professionsSortDirection[i]);
         professionsGroups.sort(sortingFunction)
             .transition()
             .delay(function (d, i) {
@@ -36200,13 +36360,14 @@ function initSideBar(currentYear, selectedCounty) {
         })
             .duration(1000)
             .attr("transform", function (d, i) {
-            var y = i * barHeight + barHeight / 2;
+            var y = i * barHeight + 1.4 * barHeight;
             return "translate(" + 0 + ", " + y + ")";
         });
     });
 }
 exports.initSideBar = initSideBar;
 function totalSupplyDemandByCounty(currentYear) {
+    var professions = Object.keys(currentYear['State of Utah']['supply']);
     var _loop_1 = function (county) {
         var totalSupply = d3.sum(Object.keys(currentYear[county]['supply']).map(function (d) { return currentYear[county]['supply'][d]; }));
         var totalDemand = d3.sum(Object.keys(currentYear[county]['demand']).map(function (d) { return currentYear[county]['demand'][d]; }));
@@ -36219,14 +36380,34 @@ function totalSupplyDemandByCounty(currentYear) {
 }
 var barHeight = 30;
 var barWidth = 120;
-function drawText(selection, i, dy) {
+function drawText(selection, i, dx, dy) {
     if (i === void 0) { i = 0; }
+    if (dx === void 0) { dx = 0; }
     if (dy === void 0) { dy = 0; }
     var groups = selection.append('g');
+    var f = d3.format('.0f');
     groups
         .append('text')
         .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 + 5 + dy; })
-        .text(function (d) { return d[i]; });
+        .attr('x', dx)
+        .text(function (d) { return isNaN(d[i]) ? d[i] : f(d[i]); });
+}
+function drawHeaders(groups, i, dx, dy) {
+    if (i === void 0) { i = 0; }
+    if (dx === void 0) { dx = 0; }
+    if (dy === void 0) { dy = 0; }
+    groups
+        .append('rect')
+        .attr('height', barHeight)
+        .attr('width', barWidth)
+        .attr('x', function (d, i) { return d.x; })
+        .attr('fill', '#aabbcc');
+    groups
+        .append('text')
+        .attr('font-weight', 'bold')
+        .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 + 5 + dy; })
+        .attr('x', function (d, i) { return d.x; })
+        .text(function (d) { return d.name; });
 }
 function drawStackedBar(svg, data, xScale) {
     xScale = function (d) {
@@ -36256,10 +36437,12 @@ function drawStackedBar(svg, data, xScale) {
         .append('title')
         .text(function (d) { return d[1]; });
 }
-function draw1DScatterPlot(svg, xScale, x, i, j) {
+function draw1DScatterPlot(svg, xScale, x, i, j, iColor, jColor) {
     if (x === void 0) { x = 0; }
     if (i === void 0) { i = 0; }
     if (j === void 0) { j = 1; }
+    if (iColor === void 0) { iColor = '#086fad'; }
+    if (jColor === void 0) { jColor = '#c7001e'; }
     var radius = 6;
     var xAxis = function (g) { return g
         .attr("transform", "translate(" + barWidth + "," + 20 + ")")
@@ -36280,12 +36463,12 @@ function draw1DScatterPlot(svg, xScale, x, i, j) {
         .attr('width', function (d) { return Math.abs(xScale(d[i]) - xScale(d[j])); })
         .attr('x', function (d) { return x + xScale(d3.min([d[i], d[j]])); })
         .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 - radius / 2; })
-        .attr('fill', function (d) { return d[i] > d[j] ? '#086fad' : '#c7001e'; });
+        .attr('fill', function (d) { return d[i] > d[j] ? iColor : jColor; });
     groups
         .append('circle')
         .attr('r', 6)
-        .attr('stroke', '#086fad')
-        .attr('fill', '#086fad')
+        .attr('stroke', iColor)
+        .attr('fill', iColor)
         .attr('cx', function (d) { return x + xScale(d[i]); })
         .attr('cy', function (d, i) { return 0 * barHeight + barHeight / 2; })
         .append('title')
@@ -36293,8 +36476,8 @@ function draw1DScatterPlot(svg, xScale, x, i, j) {
     groups
         .append('circle')
         .attr('r', 6)
-        .attr('stroke', '#c7001e')
-        .attr('fill', '#c7001e')
+        .attr('stroke', jColor)
+        .attr('fill', jColor)
         .attr('cx', function (d) { return x + xScale(d[j]); })
         .attr('cy', function (d, i) { return 0 * barHeight + barHeight / 2; })
         .append('title')

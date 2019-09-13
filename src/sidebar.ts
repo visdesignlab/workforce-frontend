@@ -1,9 +1,14 @@
 import * as d3 from 'd3';
-function getSortingOptions(sortIndexId, sortDirectionId) {
-	const index =  Number((document.getElementById(sortIndexId) as HTMLInputElement).value);
-	const direction =  (document.getElementById(sortDirectionId)as HTMLInputElement).value;
+interface Options {
+  totalSupplyPer100K?: number
+  totalDemandPer100K?: number
+  totalSupply?: number
+  totalDemand?: number
+ };
 
-	if (direction == 'ascending') {
+function getSortingOptions(index, ascending) {
+
+	if (ascending) {
 		const sortingFunction = function(a, b) {
 			return d3.ascending(a[index], b[index]);
 		}
@@ -33,11 +38,11 @@ function initSideBar(currentYear, selectedCounty = 'State of Utah') {
 	countiesSvg.selectAll('*').remove();
 	countiesHeaderSvg.selectAll('*').remove();
 
-	let mapData = document.getElementById('mapData').value;
+	let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;
 	let domainMax;
 	//totalSupplyDemandByCounty(currentYear);
 	if (mapData.includes('100')) {
-		domainMax = d3.max(Object.values(currentYear), d => Math.max(d.totalSupplyPer100K, d.totalDemandPer100K));
+		domainMax = d3.max(Object.values(currentYear), d => Math.max(Number(d.totalSupplyPer100K), d.totalDemandPer100K));
 	} else {
 		domainMax = d3.max(Object.values(currentYear), d => Math.max(d.totalSupply, d.totalDemand));
 	}
@@ -47,7 +52,6 @@ var headers = [{name: 'County', x: 0},
 	{name: 'Need', x: 2 * barWidth},
 	{name: 'Gap', x: 3 * barWidth}];
 	totalSupplyDemandByCounty(currentYear);
-	const domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d].totalSupply, currentYear[d].totalDemand));
 
 var xScale = d3.scaleLinear()
 	.domain([0, domainMax])
@@ -100,7 +104,7 @@ var xScale = d3.scaleLinear()
 	} else {
 		groups.call(draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
 	}
-	countiesSortDirection = [true];
+	var countiesSortDirection = [true];
 
 	d3.select('#sortCounties')
 		.selectAll('g')
@@ -145,9 +149,9 @@ var xScale = d3.scaleLinear()
 
 	var data = Object.values(stats).map(d => {
 		if (mapData.includes('100')) {
-			return [d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K];
+		return [(<Options>d).totalSupplyPer100K, (<Options>d).totalDemandPer100K, (<Options>d).totalDemandPer100K - (<Options>d).totalSupplyPer100K];
 		} else {
-			return [d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply];
+		return [(<Options>d).totalSupply, (<Options>d).totalDemand, (<Options>d).totalDemand- (<Options>d).totalSupply];
 		}
 	});
 
@@ -196,7 +200,7 @@ var xScale = d3.scaleLinear()
 				.select('rect')
 				.attr('fill', '#cccccc');
 		}
-		update();
+		window.update();
 	})
 
 
@@ -226,7 +230,7 @@ var xScale = d3.scaleLinear()
 	} else {
 		professionsGroups.call(draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
 	}
-	professionsSortDirection = [true];
+	var professionsSortDirection = [true];
 	d3.select('#sortProfessions')
 		.selectAll('g')
 		.on('click', (d, i) => {

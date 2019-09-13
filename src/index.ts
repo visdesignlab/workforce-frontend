@@ -92,7 +92,7 @@ window.update = function() {
 
 			var linear = d3.scaleLinear()
 				.domain([0, max])
-				.range([d3.interpolatePurples(0), d3.interpolatePurples(1)]);
+				.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
 		} else if (mapData == 'demand_per_100k') {
 			let max = d3.max(Object.values(results[year]), d => {
 				return d['totalDemand'] / d['population'] * 100000;
@@ -121,6 +121,9 @@ window.update = function() {
 		function getSupplyPer100k(county) {
 			return county['totalSupply'] / county['population'] * 100000;
 		};
+		function getDemandPer100k(county) {
+			return county['totalDemand'] / county['population'] * 100000;
+		};
 		let colorScale = function(d) {
 			let county = d.properties.NAME + ' County';
 			if (mapData == 'supply_need') {
@@ -140,9 +143,6 @@ window.update = function() {
 
 				return d3.interpolatePurples(scale(getSupplyPer100k(results[year][county])));
 			} else if (mapData == 'demand_per_100k') {
-				function getDemandPer100k(county) {
-					return county['totalDemand'] / county['population'] * 100000;
-				};
 
 				let max = d3.max(Object.values(results[year]), d => getDemandPer100k(d))
 
