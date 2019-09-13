@@ -1,0 +1,34 @@
+{
+  "name": "workfront",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "dependencies": {
+    "awesome-typescript-loader": "^5.2.1",
+    "d3": "^5.11.0",
+    "d3-svg-legend": "^2.25.6",
+    "express": "^4.17.1",
+    "source-map-loader": "^0.2.4",
+    "topojson-client": "^3.0.0",
+    "webpack": "^4.39.2",
+    "webpack-cli": "^3.3.7"
+  },
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  },
+  "scripts": {
+    "build": "webpack",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/visdesignlab/workforce-frontend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/visdesignlab/workforce-frontend/issues"
+  },
+  "homepage": "https://github.com/visdesignlab/workforce-frontend#readme"
+}
