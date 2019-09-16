@@ -1,8 +1,10 @@
 import * as d3 from 'd3';
+
 class Sidebar {
 	countiesSvg: any;
 	professionsSvg: any;
 	selectedProfessions: any;
+	countiesHeaderSvg: any;
 
 	constructor() {
 		this.selectedProfessions = {};
@@ -12,135 +14,171 @@ class Sidebar {
 		this.professionsSvg = d3.select('#professions')
 			.append('svg')
 			.attr('height', 1000)
+		this.countiesHeaderSvg = d3.select('#countiesHeader')
+			.append('svg')
+			.attr('height', 50)
+			.attr('width', 600)
+
 	}
 
 	initSideBar(selectedProfessions,currentYear, selectedCounty = 'State of Utah') {
 		this.selectedProfessions = selectedProfessions;
-		this.countiesSvg.selectAll('*').remove();
 		let barWidth: number = 120;
 		let barHeight: number = 30;
+		this.countiesSvg.selectAll('*').remove();
+		this.countiesHeaderSvg.selectAll('*').remove();
+
+		let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;
+		let domainMax;
+		//totalSupplyDemandByCounty(currentYear);
+		if (mapData.includes('100')) {
+			domainMax = d3.max(Object.keys(currentYear), d => Math.max(Number(currentYear[d]['totalSupplyPer100K']), currentYear[d]['totalDemandPer100K']));
+		} else {
+			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']));
+		}
+
+		var headers = [{name: 'County', x: 0},
+		{name: 'Supply', x: barWidth},
+		{name: 'Need', x: 2 * barWidth},
+		{name: 'Gap', x: 3 * barWidth}];
 		this.totalSupplyDemandByCounty(currentYear);
-		const domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d].totalSupply, currentYear[d].totalDemand));
-
 		var xScale = d3.scaleLinear()
-			.domain([0, domainMax])
-			.range([0, barWidth]);
-
+		.domain([0, domainMax])
+		.range([0, barWidth]);
 		let countiesData = [];
 		for (let county in currentYear) {
 			let d = currentYear[county];
-			countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
+			if (mapData.includes('100')) {
+				countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K]);
+			} else {
+				countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
+			}
 		};
-		var sortingFunction = this.getSortingOptions('countiesSortBy',
-			'countiesSortDirection');
+		var sortingFunction = this.getSortingOptions(0, true);
 
 		var groups = this.countiesSvg.append('g')
 			.selectAll('g')
 			.data(countiesData.sort(sortingFunction))
 			.enter()
 			.append('g')
-			.attr('transform', (d, i) => `translate(0, ${i * barHeight + barHeight / 2})`);
+			.attr('transform', (d, i) => `translate(0, ${i * barHeight})`);
 
 		groups.append('rect')
-			.attr('width', 2 * barWidth)
+			.attr('width', 4 * barWidth)
 			.attr('height', barHeight)
 			.attr('fill', (d) => d[0] == selectedCounty ? '#cccccc' : 'none')
 
+		var groupsHeaders = this.countiesHeaderSvg
+			.append('g')
+			.attr('id', 'sortCounties')
+			.selectAll('g')
+			.data(headers)
+			.enter()
+			.append('g')
+
+		groupsHeaders.call(this.drawHeaders);
+		var axis = this.countiesHeaderSvg.append('g');
+
+		var xAxis = g => g
+			.attr("transform", `translate(${3*barWidth},${45})`)
+			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
+		axis.call(xAxis);
+
 		groups.call(this.drawText);
-		groups.call(this.draw1DScatterPlot, xScale, barWidth, 1, 2);
+		groups.call(this.drawText, 1,  50+barWidth);
+		groups.call(this.drawText, 2,  2 * barWidth);
+		if (mapData.includes('100')) {
+			groups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+		} else {
+			groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
+		}
+		var countiesSortDirection = [true];
 
-		d3.select('#countiesSortBy')
-			.on('change', () => {
-				const sortingFunction = this.getSortingOptions('countiesSortBy',
-					'countiesSortDirection');
+		d3.select('#sortCounties')
+		.selectAll('g')
+		.on('click', (d, i) => {
+			countiesSortDirection[i] = !countiesSortDirection[i];
+			const sortingFunction = this.getSortingOptions(i, countiesSortDirection[i]);
 
-				groups.sort(sortingFunction)
-					.transition()
-					.delay(function (d, i) {
-						return i * 50;
-					})
-					.duration(1000)
-					.attr("transform", function (d, i) {
-						let y = i * barHeight + barHeight / 2;
-						return "translate(" + 0 + ", " + y + ")";
-					});
-			});
-		d3.select('#countiesSortDirection')
-			.on('change', () => {
-				const sortingFunction = this.getSortingOptions('countiesSortBy',
-					'countiesSortDirection');
+			groups.sort(sortingFunction)
+				.transition()
+				.delay(function(d, i) {
+					return i * 50;
+				})
+				.duration(1000)
+				.attr("transform", function(d, i) {
+					let y = i * barHeight;
+					return "translate(" + 0 + ", " + y + ")";
+				});
+		});
 
-				groups.sort(sortingFunction)
-					.transition()
-					.delay(function (d, i) {
-						return i * 50;
-					})
-					.duration(1000)
-					.attr("transform", function (d, i) {
-						let y = i * barHeight + barHeight / 2;
-						return "translate(" + 0 + ", " + y + ")";
-					});
-			});
-	
 
 		currentYear[selectedCounty].totalSupply = 0;
 		currentYear[selectedCounty].totalDemand = 0;
 
 		this.professionsSvg.selectAll('*').remove();
 		var professions = Object.keys(currentYear[selectedCounty]['supply']);
+		var population = currentYear[selectedCounty]['population'];
 
 		var stats = {}
-		for (let prof of professions) {
-			stats[prof] = { totalSupply: 0, totalDemand: 0 };
-		}
+			for (let prof of professions) {
+				stats[prof] = {totalDemandPer100K:0,totalSupplyPer100K:0,totalSupply: 0, totalDemand: 0};
+			}
 
-		//for (let county in currentYear) {
+	//for (let county in currentYear) {
+		const f = d3.format('.0f');
 		for (let prof of professions) {
 			stats[prof].totalSupply += currentYear[selectedCounty]['supply'][prof];
 			stats[prof].totalDemand += currentYear[selectedCounty]['demand'][prof];
+			stats[prof].totalSupplyPer100K = Number(f(stats[prof].totalSupply / population * 100000));
+			stats[prof].totalDemandPer100K = Number(f(stats[prof].totalDemand / population * 100000));
 		}
-		//}
+	//}
 
-		var data = Object.keys(stats).map(d => [stats[d].totalSupply, stats[d].totalDemand, stats[d].totalDemand - stats[d].totalSupply]);
-		var xScale = d3.scaleLinear()
-			.domain([0, d3.max(data, (d) => d3.max(d))])
-			.range([0, barWidth])
+	var data = Object.keys(stats).map(d => {
+		if (mapData.includes('100')) {
+			console.log(d)
+		return [stats[d].totalSupplyPer100K, stats[d].totalDemandPer100K, stats[d].totalDemandPer100K - stats[d].totalSupplyPer100K];
+		} else {
+		return [stats[d].totalSupply, stats[d].totalDemand, stats[d].totalDemand- stats[d].totalSupply];
+		}
+	});
+	var xScale = d3.scaleLinear()
+		.domain([0, d3.max(data, (d) => d3.max(d))])
+		.range([0, barWidth])
 
-		var professionsData = [];
+	var professionsData = [];
 
-		for (let i in data) {
+	for (let i in data) {
 			professionsData.push([professions[i], ...data[i]]);
-		};
+	};
 
-		sortingFunction = this.getSortingOptions('professionsSortBy',
-			'professionsSortDirection');
+	sortingFunction = this.getSortingOptions(0, true);
 
-		var professionsGroups = this.professionsSvg.append('g')
-			.selectAll('g')
-			.data(professionsData.sort(sortingFunction))
-			.enter()
-			.append('g')
-			.attr('transform', (d, i) => `translate(0, ${i * barHeight + barHeight / 2})`)
-			.attr('id', (d) => d[0]);
+	var professionsGroups = this.professionsSvg.append('g')
+		.selectAll('g')
+		.data(professionsData.sort(sortingFunction))
+		.enter()
+		.append('g')
+		.attr('transform', (d, i) => `translate(0, ${i * barHeight + 1.4 * barHeight })`);
 
-		professionsGroups.append('rect')
-			.attr('width', 2 * barWidth)
-			.attr('height', barHeight - 4)
-			.attr('fill', (d) => {
-				if (!this.selectedProfessions.hasOwnProperty(d[0])
-					|| this.selectedProfessions[d[0]]) {
-					return '#cccccc';
-				}
-				return '#ffffff';
-			})
-			.attr('fill-opacity', 0.8)
-
-
-		professionsGroups.on('click', (d, i, j) => {
+	professionsGroups.append('rect')
+		.attr('width', 4 * barWidth)
+		.attr('height', barHeight - 4)
+		.attr('fill', (d) => {
 			if (!this.selectedProfessions.hasOwnProperty(d[0])
 				|| this.selectedProfessions[d[0]]) {
+				return '#cccccc';
+			}
+			return '#ffffff';
+		})
+		.attr('fill-opacity', 0.8)
+
+
+	professionsGroups.on('click', (d, i ,j)=> {
+		if (!this.selectedProfessions.hasOwnProperty(d[0])
+				|| this.selectedProfessions[d[0]]) {
 				this.selectedProfessions[d[0]] = false;
-				console.log(d[0])
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#ffffff');
@@ -150,52 +188,63 @@ class Sidebar {
 					.select('rect')
 					.attr('fill', '#cccccc');
 			}
-		})
-		professionsGroups.call(this.drawText);
-		professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, 1, 2);
-		d3.select('#professionsSortBy')
-			.on('change', () => {
-				const sortingFunction = this.getSortingOptions('professionsSortBy',
-					'professionsSortDirection');
+	})
 
-				professionsGroups.sort(sortingFunction)
-					.transition()
-					.delay(function (d, i) {
-						return i * 50;
-					})
-					.duration(1000)
-					.attr("transform", function (d, i) {
-						let y = i * barHeight + barHeight / 2;
-						return "translate(" + 0 + ", " + y + ")";
-					});
-			});
-			d3.select('#professionsSortDirection')
-			.on('change', () => {
-				const sortingFunction = this.getSortingOptions('professionsSortBy',
-					'professionsSortDirection');
 
-				professionsGroups.sort(sortingFunction)
-					.transition()
-					.delay(function (d, i) {
-						return i * 50;
-					})
-					.duration(1000)
-					.attr("transform", function (d, i) {
-						let y = i * barHeight + barHeight / 2;
-						return "translate(" + 0 + ", " + y + ")";
-					});
-			});
+	var professionsHeaders = this.professionsSvg
+		.append('g')
+		.attr('id', 'sortProfessions')
+		.selectAll('g')
+		.data(headers)
+		.enter()
+		.append('g')
+
+	headers[0].name = 'Profession';
+	professionsHeaders.call(this.drawHeaders);
+	var axis = this.professionsSvg.append('g');
+
+	var xAxis = g => g
+		.attr("transform", `translate(${3*barWidth},${42})`)
+		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
+	axis.call(xAxis);
+
+	professionsGroups.call(this.drawText);
+
+	professionsGroups.call(this.drawText, 1,  barWidth);
+	professionsGroups.call(this.drawText, 2,  2 * barWidth);
+	if (mapData.includes('100')) {
+		professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+	} else {
+		professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
+	}
+	var professionsSortDirection = [true];
+	d3.select('#sortProfessions')
+		.selectAll('g')
+		.on('click', (d, i) => {
+			professionsSortDirection[i] = !professionsSortDirection[i];
+			const sortingFunction = this.getSortingOptions(i, professionsSortDirection[i]);
+
+			professionsGroups.sort(sortingFunction)
+				.transition()
+				.delay(function(d, i) {
+					return i * 50;
+				})
+				.duration(1000)
+				.attr("transform", function(d, i) {
+					let y = i * barHeight + 1.4 * barHeight;
+					return "translate(" + 0 + ", " + y + ")";
+				});
+		});
 	}
 
-	draw1DScatterPlot(svg, xScale, x = 0, i = 0, j = 1) {
+	draw1DScatterPlot(svg, xScale, x = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
+		const radius = 6;
 		let barWidth: number = 120;
 		let barHeight: number = 30;
-		const radius = 6;
-
 		var xAxis = g => g
 			.attr("transform", `translate(${barWidth},${20})`)
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
-
+	
 		//svg.append('g')
 		//	.call(xAxis)
 		var groups = svg.append('g');
@@ -206,30 +255,30 @@ class Sidebar {
 			.attr('x2', x + barWidth)
 			.attr('y1', (d, i) => 0 * barHeight + barHeight / 2)
 			.attr('y2', (d, i) => 0 * barHeight + barHeight / 2)
-
+	
 		groups
 			.append('rect')
 			.attr('height', 6)
-			.attr('width', d => Math.abs(xScale(d[i]) - xScale(d[j])))
-			.attr('x', d => { return x + xScale(d3.min([d[i], d[j]])) })
+			.attr('width', (d)=>Math.abs(xScale(d[i]) - xScale(d[j])))
+			 .attr('x', (d) => x + xScale(d3.min([d[i], d[j]])))
 			.attr('y', (d, i) => 0 * barHeight + barHeight / 2 - radius / 2)
-			.attr('fill', d => d[i] > d[j] ? '#086fad' : '#c7001e');
-
+			.attr('fill', d => d[i] > d[j] ? iColor : jColor);
+	
 		groups
 			.append('circle')
 			.attr('r', 6)
-			.attr('stroke', '#086fad')
-			.attr('fill', '#086fad')
+			.attr('stroke', iColor)
+			.attr('fill', iColor)
 			.attr('cx', d => x + xScale(d[i]))
 			.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
 			.append('title')
 			.text(d => d[i])
-
+	
 		groups
 			.append('circle')
 			.attr('r', 6)
-			.attr('stroke', '#c7001e')
-			.attr('fill', '#c7001e')
+			.attr('stroke', jColor)
+			.attr('fill', jColor)
 			.attr('cx', d => x + xScale(d[j]))
 			.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
 			.append('title')
@@ -244,6 +293,23 @@ class Sidebar {
 			currentYear[county]['totalSupply'] = totalSupply;
 			currentYear[county]['totalDemand'] = totalDemand;
 		}
+	}
+	drawHeaders(groups, i = 0, dx = 0, dy = 0) {
+		let barWidth: number = 120;
+		let barHeight: number = 30;
+		groups
+			.append('rect')
+			.attr('height', barHeight)
+			.attr('width', barWidth)
+			.attr('x', (d, i) => d.x)
+			.attr('fill', '#aabbcc')
+	
+		groups
+			.append('text')
+			.attr('font-weight', 'bold')
+			.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
+			.attr('x', (d, i) => d.x)
+			.text(d => d.name);
 	}
 	drawStackedBar(svg, data, xScale) {
 		let barWidth: number = 120;
@@ -289,23 +355,20 @@ class Sidebar {
 			.text(d => d[i]);
 	}
 
-	getSortingOptions(sortIndexId, sortDirectionId) {
-		const index = Number((document.getElementById(sortIndexId) as HTMLInputElement).value);
-		const direction = (document.getElementById(sortDirectionId) as HTMLInputElement).value;
+	getSortingOptions(index, ascending) {
 
-		if (direction == 'ascending') {
-			const sortingFunction = function (a, b) {
+		if (ascending) {
+			const sortingFunction = function(a, b) {
 				return d3.ascending(a[index], b[index]);
 			}
 			return sortingFunction;
 		} else {
-			const sortingFunction = function (a, b) {
+			const sortingFunction = function(a, b) {
 				return d3.descending(a[index], b[index]);
 			}
 			return sortingFunction;
 		}
 	}
-
 }
 
 export { Sidebar };

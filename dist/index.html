@@ -11,75 +11,59 @@
 	<body>
 		
 		<nav class="navbar navbar-expand-lg navbar-light bg-light">
-			<a class="navbar-brand" href="#">UMEC Gap Analysis Tool</a>
+			<a class="navbar-brand" href="">UMEC Gap Analysis Tool</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
 			  <span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbarNavDropdown">
 			  <ul class="navbar-nav">
 				<li class="nav-item active">
-				  <a class="nav-link" href="#">About <span class="sr-only">(current)</span></a>
+				  <a class="nav-link"  href="about.html">About <span class="sr-only">(current)</span></a>
 				</li>
 			  </ul>
 			</div>
 		  </nav>
 		<div id="tooltip"></div><!-- div to hold tooltip. -->
 		<div class='container'>
-			<div>
-				<div id='map' class='fixed'></div>
-				<div id='linechart' class='fixed'></div>
-			</div>
-			<div id="sidebar" class='flex-item'>
-				<select id='year'>
-					<option value="2014">2014</option>
-					<option value="2015">2015</option>
-					<option value="2016">2016</option>
-					<option value="2017">2017</option>
-					<option value="2018">2018</option>
-					<option value="2019" selected>2019</option>
-					<option value="2020">2020</option>
-					<option value="2021">2021</option>
-					<option value="2022">2022</option>
-					<option value="2022">2023</option>
-					<option value="2022">2024</option>
-				</select>
-				<select id='mapData'>
-					<option value="supply_need" selected>Supply/Need</option>
-					<option value="population">Population</option>
-					<option value="supply_per_100k">Supply per 100K</option>
-				</select>
-				<div id="counties" style='height: 600px; overflow: auto;'>
-					<h1>Counties</h1>
-					<div>
-						<select id='countiesSortBy'>
-							<option value="0">Name</option>
-							<option value="3" selected>Gap</option>
-							<option value="2">Need</option>
-							<option value="1">Supply</option>
-						</select>
-						<select id='countiesSortDirection'>
-							<option value="ascending" selected>Ascending</option>
-							<option value="descending">Descending</option>
-						</select>
+				<div>
+					<select id='year' style='margin-left: 10px;'>
+						<option value="2014">2014</option>
+						<option value="2015">2015</option>
+						<option value="2016">2016</option>
+						<option value="2017">2017</option>
+						<option value="2018">2018</option>
+						<option value="2019" selected>2019</option>
+						<option value="2020">2020</option>
+						<option value="2021">2021</option>
+						<option value="2022">2022</option>
+						<option value="2022">2023</option>
+						<option value="2022">2024</option>
+					</select>
+					<select id='mapData'>
+						<option value="supply_need" selected>Supply/Need</option>
+						<option value="supply_need_per_100K">Supply/Need per 100K</option>
+						<option value="population">Population</option>
+						<option value="supply_per_100k">Supply per 100K</option>
+						<option value="demand_per_100k">Demand per 100K</option>
+					</select>
+					<div id='map' class='fixed'>
 					</div>
+					<div id='linechart' class='fixed'></div>
 				</div>
-				<div id="professions">
-					<h1>Professions</h1>
+				<div id="sidebar" class='flex-item'>
 					<div>
-						<select id='professionsSortBy'>
-							<option value="0">Name</option>
-							<option value="3" selected>Gap</option>
-							<option value="2">Need</option>
-							<option value="1">Supply</option>
-						</select>
-						<select id='professionsSortDirection'>
-							<option value="ascending" selected>Ascending</option>
-							<option value="descending">Descending</option>
-						</select>
+						<h1>Counties</h1>
+						<div id='countiesHeader'>
+						</div>
+						<div id="counties" style='height: 600px; overflow: auto;'>
+						</div>
+					</div>
+					<div id="professions">
+						<h1>Professions</h1>
 					</div>
 				</div>
 			</div>
-		</div>
+	
 	
 	<script src="bundle.js"></script>
 </body>

@@ -14,10 +14,10 @@ class Map{
 	linechart:Linechart;
 	sidebar:Sidebar;
 
-	constructor(mapData:any){
+	constructor(){
 		this.linechart = new Linechart()
 		this.selectedCounty = 'State of Utah'
-		this.mapData = mapData;
+		this.mapData = "supply_need";
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
 		this.supplyScore = {};
@@ -49,27 +49,18 @@ class Map{
 							totalDemand += this.currentYearData[county]['demand'][profession];
 						}
 					}
-					this.currentYearData[county]['totalSupply'] = totalSupply;
-					this.supplyScore[county] = (totalSupply / totalDemand) / 2;
+						let population = this.currentYearData[county].population;
+						this.currentYearData[county]['totalSupply'] = totalSupply;
+						this.currentYearData[county]['totalDemand'] = totalDemand;
+						this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
+						this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
+						this.supplyScore[county] = (totalSupply / totalDemand) / 2;
 				}
 		
-				if (this.mapData == 'supply_need') {
-					var linear = d3.scaleOrdinal()
-						.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
-						.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
-				} else if (this.mapData == 'supply_per_100k') {
-					let max = d3.max(Object.keys(results[this.yearSelected]).map( d => 
-						results[this.yearSelected][d]['totalSupply'] / results[this.yearSelected][d]['population'] * 100000
-					));
-		
-					var linear = d3.scaleLinear()
-						.domain([0, max])
-						.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
-				} else {
-					var linear = d3.scaleLinear()
-						.domain([1000, 1000000])
-						.range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
-				}
+				var linear = d3.scaleOrdinal()
+					.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
+					.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
+				
 		
 				var legendLinear = legendColor()
 					.shapeWidth(115)
@@ -85,26 +76,13 @@ class Map{
 				function getSupplyPer100k(county) {
 					return county['totalSupply'] / county['population'] * 100000;
 				};
-				let colorScale = (d)=> {
+				function getDemandPer100k(county) {
+					return county['totalDemand'] / county['population'] * 100000;
+				};
+				let colorScale = (d)=>{
 					let county = d.properties.NAME + ' County';
-					if (this.mapData == 'supply_need') {
-						return d3.interpolateRdBu(this.supplyScore[county]);
-					} else if (this.mapData == 'supply_per_100k') {
-						
-		
-						let max = d3.max(Object.keys(results[this.yearSelected]).map( d => 
-							results[this.yearSelected][d]['totalSupply'] / results[this.yearSelected][d]['population'] * 100000
-						));
-			
-						const scale = d3.scaleLinear()
-							.domain([0, max])
-							.range([0, 1]);
-		
-						return d3.interpolateBlues(scale(getSupplyPer100k(results[this.yearSelected][county])));
-					}
-					return d3.interpolateGreens(results[this.yearSelected][county]['population'] / 1000000);
+					return d3.interpolateRdBu(this.supplyScore[county]);
 				}
-		
 		
 				d3.json("../data/UT-49-utah-counties.json").then((us)=> {
 					var topojsonFeatures = topojson.feature(us, us.objects.cb_2015_utah_county_20m);
@@ -172,29 +150,48 @@ class Map{
 	updateMapType(mapData:string):void{
 		this.mapData = mapData;
 		let that = this;
-		let colorScale = function(d){
+		let colorScale = function(d) {
 			let county = d.properties.NAME + ' County';
-			if (that.mapData == 'supply_need') {
+			if (mapData == 'supply_need') {
 				return d3.interpolateRdBu(that.supplyScore[county]);
-			} else if (that.mapData == 'supply_per_100k') {
-				let max = d3.max(Object.keys(that.currentYearData).map( d =>
-					that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000));
+			} else if (mapData == 'supply_need_per_100K') {
+				return d3.interpolatePuOr(1 - that.supplyScore[county]);
+			} else if (mapData == 'supply_per_100k') {
 				
-				var scale: any = d3.scaleLinear()
+
+				let max = d3.max(Object.keys(that.currentYearData).map( d => 
+					that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000
+				));
+	
+				const scale = d3.scaleLinear()
 					.domain([0, max])
 					.range([0, 1]);
 
-				return d3.interpolateBlues(scale(that.currentYearData[county]['totalSupply'] / that.currentYearData[county]['population'] * 100000));
+				return d3.interpolatePurples(scale(that.currentYearData[county]['totalSupply']/that.currentYearData[county]['population']*100000));
+			} else if (mapData == 'demand_per_100k') {
+				
+				let max = d3.max(Object.keys(that.currentYearData), d => that.currentYearData[d]['totalDemand']/that.currentYearData[d]['population']*100000)
+
+				const scale = d3.scaleLinear()
+					.domain([0, max])
+					.range([0, 1]);
+
+				return d3.interpolateOranges(scale(that.currentYearData[county]['totalDemand']/that.currentYearData[county]['population']*100000));
+			}else{
+				return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
 			}
-			return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
-		
 		};
 		
-		if (this.mapData == 'supply_need') {
+		
+		if (mapData == 'supply_need') {
 			var linear = d3.scaleOrdinal()
 				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 				.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
-		} else if (this.mapData == 'supply_per_100k') {
+		} else if (mapData == 'supply_need_per_100K') {
+			var linear = d3.scaleOrdinal()
+				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
+				.range([d3.interpolatePuOr(1), d3.interpolatePuOr(0.5), d3.interpolatePuOr(0)]);
+		} else if (mapData == 'supply_per_100k') {
 			let max = d3.max(Object.keys(that.currentYearData).map( d => 
 				that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000
 			));
@@ -202,6 +199,14 @@ class Map{
 			var linear = d3.scaleLinear()
 				.domain([0, max])
 				.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
+		} else if (mapData == 'demand_per_100k') {
+			let max = d3.max(Object.keys(that.currentYearData), d => {
+				return that.currentYearData[d]['totalDemand'] / that.currentYearData[d]['population'] * 100000;
+			});
+
+			var linear = d3.scaleLinear()
+				.domain([0, max])
+				.range([d3.interpolateOranges(0), d3.interpolateOranges(1)]);
 		} else {
 			var linear = d3.scaleLinear()
 				.domain([1000, 1000000])
