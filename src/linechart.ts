@@ -71,7 +71,8 @@ class Linechart{
 	
 	
 		var lineChartGroup = this.lineChartSvg.append('g')
-			.attr('transform', `translate(${xi * this.width}, ${yi * this.height})`);
+			.attr('transform', `translate(${xi * this.width}, ${yi * this.height})`)
+			.attr('class','col-xs-6 col-md-4 col-lg-4');
 	
 		lineChartGroup.append('text')
 			.attr("x", (this.width / 2))

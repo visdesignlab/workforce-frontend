@@ -4,26 +4,12 @@
 }
 
 
-
 .selected {
 	stroke: #00ffcc;
 	stroke-width: 4px;
 	opacity: 0.8;
 }
 
-#sidebar {
-	float: right;
-}
-.container{
-	display: flex;
-}
-.fixed{
-	width: 1200px;
-	height: 600px;
-}
-.flex-item{
-	flex-grow: 1;
-}
 
 #tooltip {
 	position: absolute;
@@ -96,7 +82,17 @@
 		text-decoration: none;
 		font-weight: bold;
 	}
-
+	html {
+		overflow: hidden;
+		height: 100%;
+	}
+	
+	body {
+		height: 100%;
+		overflow: auto;
+		overflow-x: hidden;
+		
+	}
 	li :hover {
 		background-color: #91B4CA;
 	}
