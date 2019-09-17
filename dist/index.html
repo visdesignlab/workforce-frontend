@@ -4,8 +4,9 @@
 		<meta charset="UTF-8">
 		<title>UMEC Gap Analysis Tool</title>
 		<link rel="stylesheet" href="/styles/styles.css">
-		
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/css/bootstrap-select.min.css">
 		<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
 	</head>
 
 	<body>
@@ -26,7 +27,7 @@
 		<div id="tooltip"></div><!-- div to hold tooltip. -->
 		<div class='container'>
 				<div>
-					<select id='year' style='margin-left: 10px;'>
+					<select class = "selectpicker" id='year' style='margin-left: 10px;'>
 						<option value="2014">2014</option>
 						<option value="2015">2015</option>
 						<option value="2016">2016</option>
@@ -39,7 +40,7 @@
 						<option value="2022">2023</option>
 						<option value="2022">2024</option>
 					</select>
-					<select id='mapData'>
+					<select class = "selectpicker" id='mapData'>
 						<option value="supply_need" selected>Supply/Need</option>
 						<option value="supply_need_per_100K">Supply/Need per 100K</option>
 						<option value="population">Population</option>
@@ -50,6 +51,7 @@
 					</div>
 					<div id='linechart' class='fixed'></div>
 				</div>
+				
 				<div id="sidebar" class='flex-item'>
 					<div>
 						<h1>Counties</h1>
