@@ -26,24 +26,21 @@ class Sidebar {
 	}
 
 	initSideBar(selectedProfessions,currentYear, selectedCounty = 'State of Utah') {
-		console.log(selectedCounty)
+
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
 		this.selectedProfessions = selectedProfessions;
 		let barWidth: number = 120;
 		let barHeight: number = 30;
-
 		let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;
-		console.log(currentYear)
 		let domainMax;
-		//totalSupplyDemandByCounty(currentYear);
+
 		if (mapData.includes('100')) {
-			console.log("here")
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupplyPer100K'], currentYear[d]['totalDemandPer100K']));
 		} else {
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']));
 		}
-		console.log(domainMax)
+
 		var headers = [{name: 'County', x: 0},
 		{name: 'Supply', x: barWidth},
 		{name: 'Need', x: 2 * barWidth},
@@ -123,13 +120,12 @@ class Sidebar {
 		this.professionsSvg.selectAll('*').remove();
 		var professions = Object.keys(currentYear[selectedCounty]['supply']);
 		var population = currentYear[selectedCounty]['population'];
-
 		var stats = {}
-			for (let prof of professions) {
+
+		for (let prof of professions) {
 				stats[prof] = {totalDemandPer100K:0,totalSupplyPer100K:0,totalSupply: 0, totalDemand: 0};
 			}
 
-	//for (let county in currentYear) {
 		const f = d3.format('.0f');
 		for (let prof of professions) {
 			stats[prof].totalSupply += currentYear[selectedCounty]['supply'][prof];
@@ -249,8 +245,6 @@ class Sidebar {
 				.attr("transform", `translate(${barWidth},${20})`)
 				.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		
-			// svg.append('g')
-			// 	.call(xAxis)
 			var groups = svg.append('g');
 			groups
 				.append('line')
@@ -288,6 +282,7 @@ class Sidebar {
 				.append('title')
 				.text(d => d[j])
 		}
+	
 	totalSupplyDemandByCounty(currentYear) {
 		let barWidth: number = 120;
 		let barHeight: number = 30;
@@ -298,7 +293,9 @@ class Sidebar {
 			currentYear[county]['totalDemand'] = totalDemand;
 		}
 	}
+	
 	drawHeaders(groups, i = 0, dx = 0, dy = 0) {
+		
 		let barWidth: number = 120;
 		let barHeight: number = 30;
 		groups
@@ -315,38 +312,39 @@ class Sidebar {
 			.attr('x', (d, i) => d.x)
 			.text(d => d.name);
 	}
-	drawStackedBar(svg, data, xScale) {
-		let barWidth: number = 120;
-		let barHeight: number = 30;
-		xScale = function (d) {
-			return barWidth * d[0] / (d[0] + d[1]) || 0;
-		}
-		var groups = svg.append('g')
-			.selectAll('g')
-			.data(data)
-			.enter()
-			.append('g');
 
-		groups
-			.append('rect')
-			.attr('width', d => xScale(d))
-			.attr('height', barHeight - 4)
-			.attr('x', barWidth)
-			.attr('y', (d, i) => i * barHeight - 2)
-			.attr('fill', '#086fad')
-			.append('title')
-			.text(d => d[0])
+	// drawStackedBar(svg, data, xScale) {
+	// 	let barWidth: number = 120;
+	// 	let barHeight: number = 30;
+	// 	xScale = function (d) {
+	// 		return barWidth * d[0] / (d[0] + d[1]) || 0;
+	// 	}
+	// 	var groups = svg.append('g')
+	// 		.selectAll('g')
+	// 		.data(data)
+	// 		.enter()
+	// 		.append('g');
 
-		groups
-			.append('rect')
-			.attr('width', d => barWidth - xScale(d))
-			.attr('height', barHeight - 4)
-			.attr('x', d => barWidth + xScale(d))
-			.attr('y', (d, i) => i * barHeight - 2)
-			.attr('fill', '#c7001e')
-			.append('title')
-			.text(d => d[1])
-	}
+	// 	groups
+	// 		.append('rect')
+	// 		.attr('width', d => xScale(d))
+	// 		.attr('height', barHeight - 4)
+	// 		.attr('x', barWidth)
+	// 		.attr('y', (d, i) => i * barHeight - 2)
+	// 		.attr('fill', '#086fad')
+	// 		.append('title')
+	// 		.text(d => d[0])
+
+	// 	groups
+	// 		.append('rect')
+	// 		.attr('width', d => barWidth - xScale(d))
+	// 		.attr('height', barHeight - 4)
+	// 		.attr('x', d => barWidth + xScale(d))
+	// 		.attr('y', (d, i) => i * barHeight - 2)
+	// 		.attr('fill', '#c7001e')
+	// 		.append('title')
+	// 		.text(d => d[1])
+	// }
 
 	drawText(selection, i = 0, dx = 0, dy = 0) {
 		let barWidth: number = 120;

@@ -3,6 +3,9 @@ import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
 import {Sidebar} from './sidebar';
 import {Linechart} from './linechart'
+/**
+ * 
+ */
 class Map{
 	svg:any;
 	mapData:string;
@@ -14,6 +17,9 @@ class Map{
 	linechart:Linechart;
 	sidebar:Sidebar;
 
+	/**
+	 * 
+	 */
 	constructor(){
 		this.linechart = new Linechart()
 		this.selectedCounty = 'State of Utah'
@@ -27,11 +33,10 @@ class Map{
 			.attr('width', 600)
 			.attr('height', 600);
 		this.drawMap()
-		//based on map data choose color scale.
-		//append svg
-
 	}
-
+	/**
+	 * initial drawing of map.
+	 */
 	drawMap():void{
 			
 			d3.json('../data/model-results.json').then((results)=> {
@@ -148,88 +153,108 @@ class Map{
 
 		});
 	}
-	updateMapType(mapData:string):void{
-		this.mapData = mapData;
-		let that = this;
-
-		let colorScale = function(d) {
-			let county = d.properties.NAME + ' County';
-			if (mapData == 'supply_need') {
-				return d3.interpolateRdBu(that.supplyScore[county]);
-			} else if (mapData == 'supply_need_per_100K') {
-				return d3.interpolatePuOr(1 - that.supplyScore[county]);
-			} else if (mapData == 'supply_per_100k') {
-				
-
-				let max = d3.max(Object.keys(that.currentYearData).map( d => 
-					that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000
-				));
-	
-				const scale = d3.scaleLinear()
-					.domain([0, max])
-					.range([0, 1]);
-
-				return d3.interpolatePurples(scale(that.currentYearData[county]['totalSupply']/that.currentYearData[county]['population']*100000));
-			} else if (mapData == 'demand_per_100k') {
-				
-				let max = d3.max(Object.keys(that.currentYearData), d => that.currentYearData[d]['totalDemand']/that.currentYearData[d]['population']*100000)
-
-				const scale = d3.scaleLinear()
-					.domain([0, max])
-					.range([0, 1]);
-
-				return d3.interpolateOranges(scale(that.currentYearData[county]['totalDemand']/that.currentYearData[county]['population']*100000));
-			}else{
-				return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
-			}
-		};
-		
-		
+	/**
+	 * 
+	 * @param mapData current map type that is selected
+	 * @param currentYearData current results data
+	 */
+	getLinear(mapData,currentYearData){
 		if (mapData == 'supply_need') {
-			var linear = d3.scaleOrdinal()
+			return d3.scaleOrdinal()
 				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 				.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
 		} else if (mapData == 'supply_need_per_100K') {
-			var linear = d3.scaleOrdinal()
+			return d3.scaleOrdinal()
 				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 				.range([d3.interpolatePuOr(1), d3.interpolatePuOr(0.5), d3.interpolatePuOr(0)]);
 		} else if (mapData == 'supply_per_100k') {
+			let max = d3.max(Object.keys(currentYearData).map( d => 
+				currentYearData[d]['totalSupply'] / currentYearData[d]['population'] * 100000
+			));
+
+			return d3.scaleLinear()
+				.domain([0, max])
+				.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
+		} else if (mapData == 'demand_per_100k') {
+			let max = d3.max(Object.keys(currentYearData), d => {
+				return currentYearData[d]['totalDemand'] / currentYearData[d]['population'] * 100000;
+			});
+
+			return d3.scaleLinear()
+				.domain([0, max])
+				.range([d3.interpolateOranges(0), d3.interpolateOranges(1)]);
+		} else {
+			return d3.scaleLinear()
+				.domain([1000, 1000000])
+				.range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
+		}
+	}
+	/**
+	 * 
+	 * @param d the current county
+	 * @param that reference to this class calling the function
+	 * @param mapData current map type that is selected
+	 */
+	myColorScale(d,that,mapData){
+		let county = d.properties.NAME + ' County';
+		if (mapData == 'supply_need') {
+			return d3.interpolateRdBu(that.supplyScore[county]);
+		} else if (mapData == 'supply_need_per_100K') {
+			return d3.interpolatePuOr(1 - that.supplyScore[county]);
+		} else if (mapData == 'supply_per_100k') {
+			
+
 			let max = d3.max(Object.keys(that.currentYearData).map( d => 
 				that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000
 			));
 
-			var linear = d3.scaleLinear()
+			const scale = d3.scaleLinear()
 				.domain([0, max])
-				.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
-		} else if (mapData == 'demand_per_100k') {
-			let max = d3.max(Object.keys(that.currentYearData), d => {
-				return that.currentYearData[d]['totalDemand'] / that.currentYearData[d]['population'] * 100000;
-			});
+				.range([0, 1]);
 
-			var linear = d3.scaleLinear()
+			return d3.interpolatePurples(scale(that.currentYearData[county]['totalSupply']/that.currentYearData[county]['population']*100000));
+		} else if (mapData == 'demand_per_100k') {
+			
+			let max = d3.max(Object.keys(that.currentYearData), d => that.currentYearData[d]['totalDemand']/that.currentYearData[d]['population']*100000)
+
+			const scale = d3.scaleLinear()
 				.domain([0, max])
-				.range([d3.interpolateOranges(0), d3.interpolateOranges(1)]);
-		} else {
-			var linear = d3.scaleLinear()
-				.domain([1000, 1000000])
-				.range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
+				.range([0, 1]);
+
+			return d3.interpolateOranges(scale(that.currentYearData[county]['totalDemand']/that.currentYearData[county]['population']*100000));
+		}else{
+			return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
 		}
-		var legendLinear = legendColor()
+	};
+	/**
+	 * this updates the map when the user selects a new type of map
+	 * @param mapData this the selection of the new map type
+	 */
+	updateMapType(mapData:string):void{
+		this.mapData = mapData;
+		let that:any = this;
+		let colorScale:any = this.myColorScale; 
+		let linear:any =this.getLinear(this.mapData,this.currentYearData) 
+		var legendLinear:any = legendColor()
 					.shapeWidth(115)
 					.labelFormat(d3.format(".0f"))
 					.orient('horizontal')
 					.scale(linear);
+
 		d3.select('g.legendLinear').call(legendLinear)	
 		d3.json("../data/UT-49-utah-counties.json").then((us)=> {
 			this.svg.select('g.counties').selectAll('path').each(function(d){
 				var selectedCounty:string = d.properties.NAME + ' County'
-				d3.select(this).transition().duration(1000).attr('fill',colorScale(d));
+				d3.select(this).transition().duration(1000).attr('fill',colorScale(d,that,mapData));
 			});
 		this.sidebar.initSideBar({},this.currentYearData,this.selectedCounty);
 		});
 	
 	}
-	
+	/**
+	 * This handles when the user selects a new year
+	 * @param year this is the new year selected by the user
+	 */
 	updateMapYear(year:string):void{
 		this.yearSelected = year;
 		d3.json('../data/model-results.json').then((results)=> {
@@ -253,10 +278,11 @@ class Map{
 						this.supplyScore[county] = (totalSupply / totalDemand) / 2;
 				}
 		});
+		//after we update the year, we then update the map
 		this.updateMapType(this.mapData);
 	}
 	
-
+	
 	mouseOut(){
 		d3.select("#tooltip").transition().duration(500).style("opacity", 0);      
 	}
