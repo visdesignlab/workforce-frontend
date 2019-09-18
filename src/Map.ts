@@ -33,7 +33,6 @@ class Map{
 	}
 
 	drawMap():void{
-		let that:any = this;
 			
 			d3.json('../data/model-results.json').then((results)=> {
 				this.svg.selectAll('*').remove();
@@ -83,7 +82,7 @@ class Map{
 					let county = d.properties.NAME + ' County';
 					return d3.interpolateRdBu(this.supplyScore[county]);
 				}
-		
+				let that:any = this				
 				d3.json("../data/UT-49-utah-counties.json").then((us)=> {
 					var topojsonFeatures = topojson.feature(us, us.objects.cb_2015_utah_county_20m);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
@@ -119,12 +118,14 @@ class Map{
 							const population = this.currentYearData[d.properties.NAME + ' County']['population'];
 							const supplyPer100k = d3.format('.0f')(
 							this.currentYearData[d.properties.NAME + ' County']['totalSupply'] / population * 100000);
-							
+							const demandPer100k = d3.format('.0f')(
+								this.currentYearData[d.properties.NAME + ' County']['totalDemand'] / population * 100000);
 							var toolTip = "<h4>"+d.properties.NAME+" County</h4><table>"+
-								"<tr><td>Supply/Need:</td><td>"+(supplyDemandRatio)+"</td></tr>"+
-									"<tr><td>Population:</td><td>"+(population)+"</td></tr>"+
-									"<tr><td>Supply/100K:</td><td>"+(supplyPer100k)+"</td></tr>"+
-									"</table>";
+							"<tr><td>Supply/Need:</td><td>"+(supplyDemandRatio)+"</td></tr>"+
+							"<tr><td>Population:</td><td>"+(population)+"</td></tr>"+
+							"<tr><td>Supply/100K:</td><td>"+(supplyPer100k)+"</td></tr>"+
+							"<tr><td>Demand/100K:</td><td>"+(demandPer100k)+"</td></tr>"+
+							"</table>";
 							
 								d3.select("#tooltip").transition().duration(200).style("opacity", .9);     
 								d3.select("#tooltip").html(toolTip)  
@@ -150,6 +151,7 @@ class Map{
 	updateMapType(mapData:string):void{
 		this.mapData = mapData;
 		let that = this;
+
 		let colorScale = function(d) {
 			let county = d.properties.NAME + ' County';
 			if (mapData == 'supply_need') {
@@ -217,34 +219,39 @@ class Map{
 					.labelFormat(d3.format(".0f"))
 					.orient('horizontal')
 					.scale(linear);
-		
 		d3.select('g.legendLinear').call(legendLinear)	
 		d3.json("../data/UT-49-utah-counties.json").then((us)=> {
 			this.svg.select('g.counties').selectAll('path').each(function(d){
 				var selectedCounty:string = d.properties.NAME + ' County'
 				d3.select(this).transition().duration(1000).attr('fill',colorScale(d));
 			});
+		this.sidebar.initSideBar({},this.currentYearData,this.selectedCounty);
 		});
+	
 	}
 	
 	updateMapYear(year:string):void{
 		this.yearSelected = year;
 		d3.json('../data/model-results.json').then((results)=> {
 			this.currentYearData = results[this.yearSelected]
-			var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
-			for (let county in this.currentYearData) {
-				let totalSupply = 0;
-				let totalDemand = 0;
-				for (let profession of professions) {
-					if (!this.sidebar.selectedProfessions.hasOwnProperty(profession)
-						|| this.sidebar.selectedProfessions[profession]) {
-						totalSupply += this.currentYearData[county]['supply'][profession];
-						totalDemand += this.currentYearData[county]['demand'][profession];
+				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
+				for (let county in this.currentYearData) {
+					let totalSupply = 0;
+					let totalDemand = 0;
+					for (let profession of professions) {
+						if (!this.sidebar.selectedProfessions.hasOwnProperty(profession)
+							|| this.sidebar.selectedProfessions[profession]) {
+							totalSupply += this.currentYearData[county]['supply'][profession];
+							totalDemand += this.currentYearData[county]['demand'][profession];
+						}
 					}
+						let population = this.currentYearData[county].population;
+						this.currentYearData[county]['totalSupply'] = totalSupply;
+						this.currentYearData[county]['totalDemand'] = totalDemand;
+						this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
+						this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
+						this.supplyScore[county] = (totalSupply / totalDemand) / 2;
 				}
-				this.currentYearData[county]['totalSupply'] = totalSupply;
-				this.supplyScore[county] = (totalSupply / totalDemand) / 2;
-			}
 		});
 		this.updateMapType(this.mapData);
 	}

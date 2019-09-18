@@ -40,7 +40,7 @@ class Linechart{
 		}
 	
 		for (let i in supply_demand) {
-			this.createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 4, Math.floor(+i / 4));
+			this.createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
 		}
 	}
 	
@@ -72,7 +72,6 @@ class Linechart{
 	
 		var lineChartGroup = this.lineChartSvg.append('g')
 			.attr('transform', `translate(${xi * this.width}, ${yi * this.height})`)
-			.attr('class','col-xs-6 col-md-4 col-lg-4');
 	
 		lineChartGroup.append('text')
 			.attr("x", (this.width / 2))

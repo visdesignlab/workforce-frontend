@@ -56692,7 +56692,6 @@ var Map = /** @class */ (function () {
     }
     Map.prototype.drawMap = function () {
         var _this = this;
-        var that = this;
         d3.json('../data/model-results.json').then(function (results) {
             _this.svg.selectAll('*').remove();
             _this.currentYearData = results[_this.yearSelected];
@@ -56740,6 +56739,7 @@ var Map = /** @class */ (function () {
                 var county = d.properties.NAME + ' County';
                 return d3.interpolateRdBu(_this.supplyScore[county]);
             };
+            var that = _this;
             d3.json("../data/UT-49-utah-counties.json").then(function (us) {
                 var topojsonFeatures = topojson.feature(us, us.objects.cb_2015_utah_county_20m);
                 var mapCenter = d3.geoCentroid(topojsonFeatures);
@@ -56772,10 +56772,12 @@ var Map = /** @class */ (function () {
                     var supplyDemandRatio = f(2 * _this.supplyScore[d.properties.NAME + ' County']);
                     var population = _this.currentYearData[d.properties.NAME + ' County']['population'];
                     var supplyPer100k = d3.format('.0f')(_this.currentYearData[d.properties.NAME + ' County']['totalSupply'] / population * 100000);
+                    var demandPer100k = d3.format('.0f')(_this.currentYearData[d.properties.NAME + ' County']['totalDemand'] / population * 100000);
                     var toolTip = "<h4>" + d.properties.NAME + " County</h4><table>" +
                         "<tr><td>Supply/Need:</td><td>" + (supplyDemandRatio) + "</td></tr>" +
                         "<tr><td>Population:</td><td>" + (population) + "</td></tr>" +
                         "<tr><td>Supply/100K:</td><td>" + (supplyPer100k) + "</td></tr>" +
+                        "<tr><td>Demand/100K:</td><td>" + (demandPer100k) + "</td></tr>" +
                         "</table>";
                     d3.select("#tooltip").transition().duration(200).style("opacity", .9);
                     d3.select("#tooltip").html(toolTip)
@@ -56866,6 +56868,7 @@ var Map = /** @class */ (function () {
                 var selectedCounty = d.properties.NAME + ' County';
                 d3.select(this).transition().duration(1000).attr('fill', colorScale(d));
             });
+            _this.sidebar.initSideBar({}, _this.currentYearData, _this.selectedCounty);
         });
     };
     Map.prototype.updateMapYear = function (year) {
@@ -56885,7 +56888,11 @@ var Map = /** @class */ (function () {
                         totalDemand += _this.currentYearData[county]['demand'][profession];
                     }
                 }
+                var population = _this.currentYearData[county].population;
                 _this.currentYearData[county]['totalSupply'] = totalSupply;
+                _this.currentYearData[county]['totalDemand'] = totalDemand;
+                _this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
+                _this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
                 _this.supplyScore[county] = (totalSupply / totalDemand) / 2;
             }
         });
@@ -56986,7 +56993,7 @@ var Linechart = /** @class */ (function () {
             max = d3.max([d3.max(demand), d3.max(supply), max]);
         }
         for (var i in supply_demand) {
-            this.createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 4, Math.floor(+i / 4));
+            this.createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
         }
     };
     Linechart.prototype.createLineChart = function (results, supply, demand, profession, max, xi, yi) {
@@ -57011,8 +57018,7 @@ var Linechart = /** @class */ (function () {
             .x(function (d, i) { return x(_this.data.dates[i]); })
             .y(function (d) { return y(d); });
         var lineChartGroup = this.lineChartSvg.append('g')
-            .attr('transform', "translate(" + xi * this.width + ", " + yi * this.height + ")")
-            .attr('class', 'col-xs-6 col-md-4 col-lg-4');
+            .attr('transform', "translate(" + xi * this.width + ", " + yi * this.height + ")");
         lineChartGroup.append('text')
             .attr("x", (this.width / 2))
             .attr("y", (this.margin.top))
@@ -57067,10 +57073,12 @@ var Sidebar = /** @class */ (function () {
         this.selectedProfessions = {};
         this.countiesSvg = d3.select('#counties')
             .append('svg')
-            .attr('height', 1120);
+            .attr('height', 1120)
+            .attr("style", "width:100%;");
         this.professionsSvg = d3.select('#professions')
             .append('svg')
-            .attr('height', 1000);
+            .attr('height', 1000)
+            .attr("style", "width:100%;");
         this.countiesHeaderSvg = d3.select('#countiesHeader')
             .append('svg')
             .attr('height', 50)
@@ -57079,20 +57087,24 @@ var Sidebar = /** @class */ (function () {
     Sidebar.prototype.initSideBar = function (selectedProfessions, currentYear, selectedCounty) {
         var _this = this;
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
+        console.log(selectedCounty);
+        this.countiesSvg.selectAll('*').remove();
+        this.countiesHeaderSvg.selectAll('*').remove();
         this.selectedProfessions = selectedProfessions;
         var barWidth = 120;
         var barHeight = 30;
-        this.countiesSvg.selectAll('*').remove();
-        this.countiesHeaderSvg.selectAll('*').remove();
         var mapData = document.getElementById('mapData').value;
+        console.log(currentYear);
         var domainMax;
         //totalSupplyDemandByCounty(currentYear);
         if (mapData.includes('100')) {
-            domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(Number(currentYear[d]['totalSupplyPer100K']), currentYear[d]['totalDemandPer100K']); });
+            console.log("here");
+            domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d]['totalSupplyPer100K'], currentYear[d]['totalDemandPer100K']); });
         }
         else {
             domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']); });
         }
+        console.log(domainMax);
         var headers = [{ name: 'County', x: 0 },
             { name: 'Supply', x: barWidth },
             { name: 'Need', x: 2 * barWidth },
@@ -57162,8 +57174,6 @@ var Sidebar = /** @class */ (function () {
                 return "translate(" + 0 + ", " + y + ")";
             });
         });
-        currentYear[selectedCounty].totalSupply = 0;
-        currentYear[selectedCounty].totalDemand = 0;
         this.professionsSvg.selectAll('*').remove();
         var professions = Object.keys(currentYear[selectedCounty]['supply']);
         var population = currentYear[selectedCounty]['population'];
@@ -57184,7 +57194,6 @@ var Sidebar = /** @class */ (function () {
         //}
         var data = Object.keys(stats).map(function (d) {
             if (mapData.includes('100')) {
-                console.log(d);
                 return [stats[d].totalSupplyPer100K, stats[d].totalDemandPer100K, stats[d].totalDemandPer100K - stats[d].totalSupplyPer100K];
             }
             else {
@@ -57279,14 +57288,14 @@ var Sidebar = /** @class */ (function () {
         if (j === void 0) { j = 1; }
         if (iColor === void 0) { iColor = '#086fad'; }
         if (jColor === void 0) { jColor = '#c7001e'; }
-        var radius = 6;
         var barWidth = 120;
         var barHeight = 30;
+        var radius = 6;
         var xAxis = function (g) { return g
             .attr("transform", "translate(" + barWidth + "," + 20 + ")")
             .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
-        //svg.append('g')
-        //	.call(xAxis)
+        // svg.append('g')
+        // 	.call(xAxis)
         var groups = svg.append('g');
         groups
             .append('line')
@@ -57383,16 +57392,19 @@ var Sidebar = /** @class */ (function () {
             .append('title')
             .text(function (d) { return d[1]; });
     };
-    Sidebar.prototype.drawText = function (selection, i, dy) {
+    Sidebar.prototype.drawText = function (selection, i, dx, dy) {
         if (i === void 0) { i = 0; }
+        if (dx === void 0) { dx = 0; }
         if (dy === void 0) { dy = 0; }
         var barWidth = 120;
         var barHeight = 30;
         var groups = selection.append('g');
+        var f = d3.format('.0f');
         groups
             .append('text')
             .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 + 5 + dy; })
-            .text(function (d) { return d[i]; });
+            .attr('x', dx)
+            .text(function (d) { return isNaN(d[i]) ? d[i] : f(d[i]); });
     };
     Sidebar.prototype.getSortingOptions = function (index, ascending) {
         if (ascending) {

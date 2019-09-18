@@ -11,32 +11,39 @@ class Sidebar {
 		this.countiesSvg = d3.select('#counties')
 			.append('svg')
 			.attr('height', 1120)
+			.attr("style","width:100%;")
+
 		this.professionsSvg = d3.select('#professions')
 			.append('svg')
 			.attr('height', 1000)
+			.attr("style","width:100%;")
 		this.countiesHeaderSvg = d3.select('#countiesHeader')
 			.append('svg')
 			.attr('height', 50)
 			.attr('width', 600)
 
+
 	}
 
 	initSideBar(selectedProfessions,currentYear, selectedCounty = 'State of Utah') {
+		console.log(selectedCounty)
+		this.countiesSvg.selectAll('*').remove();
+		this.countiesHeaderSvg.selectAll('*').remove();
 		this.selectedProfessions = selectedProfessions;
 		let barWidth: number = 120;
 		let barHeight: number = 30;
-		this.countiesSvg.selectAll('*').remove();
-		this.countiesHeaderSvg.selectAll('*').remove();
 
 		let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;
+		console.log(currentYear)
 		let domainMax;
 		//totalSupplyDemandByCounty(currentYear);
 		if (mapData.includes('100')) {
-			domainMax = d3.max(Object.keys(currentYear), d => Math.max(Number(currentYear[d]['totalSupplyPer100K']), currentYear[d]['totalDemandPer100K']));
+			console.log("here")
+			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupplyPer100K'], currentYear[d]['totalDemandPer100K']));
 		} else {
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']));
 		}
-
+		console.log(domainMax)
 		var headers = [{name: 'County', x: 0},
 		{name: 'Supply', x: barWidth},
 		{name: 'Need', x: 2 * barWidth},
@@ -113,9 +120,6 @@ class Sidebar {
 		});
 
 
-		currentYear[selectedCounty].totalSupply = 0;
-		currentYear[selectedCounty].totalDemand = 0;
-
 		this.professionsSvg.selectAll('*').remove();
 		var professions = Object.keys(currentYear[selectedCounty]['supply']);
 		var population = currentYear[selectedCounty]['population'];
@@ -137,7 +141,6 @@ class Sidebar {
 
 	var data = Object.keys(stats).map(d => {
 		if (mapData.includes('100')) {
-			console.log(d)
 		return [stats[d].totalSupplyPer100K, stats[d].totalDemandPer100K, stats[d].totalDemandPer100K - stats[d].totalSupplyPer100K];
 		} else {
 		return [stats[d].totalSupply, stats[d].totalDemand, stats[d].totalDemand- stats[d].totalSupply];
@@ -238,52 +241,53 @@ class Sidebar {
 	}
 
 	draw1DScatterPlot(svg, xScale, x = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
-		const radius = 6;
 		let barWidth: number = 120;
-		let barHeight: number = 30;
-		var xAxis = g => g
-			.attr("transform", `translate(${barWidth},${20})`)
-			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
-	
-		//svg.append('g')
-		//	.call(xAxis)
-		var groups = svg.append('g');
-		groups
-			.append('line')
-			.attr('stroke', '#000000')
-			.attr('x1', x)
-			.attr('x2', x + barWidth)
-			.attr('y1', (d, i) => 0 * barHeight + barHeight / 2)
-			.attr('y2', (d, i) => 0 * barHeight + barHeight / 2)
-	
-		groups
-			.append('rect')
-			.attr('height', 6)
-			.attr('width', (d)=>Math.abs(xScale(d[i]) - xScale(d[j])))
-			 .attr('x', (d) => x + xScale(d3.min([d[i], d[j]])))
-			.attr('y', (d, i) => 0 * barHeight + barHeight / 2 - radius / 2)
-			.attr('fill', d => d[i] > d[j] ? iColor : jColor);
-	
-		groups
-			.append('circle')
-			.attr('r', 6)
-			.attr('stroke', iColor)
-			.attr('fill', iColor)
-			.attr('cx', d => x + xScale(d[i]))
-			.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
-			.append('title')
-			.text(d => d[i])
-	
-		groups
-			.append('circle')
-			.attr('r', 6)
-			.attr('stroke', jColor)
-			.attr('fill', jColor)
-			.attr('cx', d => x + xScale(d[j]))
-			.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
-			.append('title')
-			.text(d => d[j])
-	}
+		let barHeight: number = 30;	
+		const radius = 6;
+		
+			var xAxis = g => g
+				.attr("transform", `translate(${barWidth},${20})`)
+				.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
+		
+			// svg.append('g')
+			// 	.call(xAxis)
+			var groups = svg.append('g');
+			groups
+				.append('line')
+				.attr('stroke', '#000000')
+				.attr('x1', x)
+				.attr('x2', x + barWidth)
+				.attr('y1', (d, i) => 0 * barHeight + barHeight / 2)
+				.attr('y2', (d, i) => 0 * barHeight + barHeight / 2)
+		
+			groups
+				.append('rect')
+				.attr('height', 6)
+				.attr('width', d => Math.abs(xScale(d[i]) - xScale(d[j])))
+				.attr('x', d => {return x + xScale(d3.min([d[i], d[j]]))})
+				.attr('y', (d, i) => 0 * barHeight + barHeight / 2 - radius / 2)
+				.attr('fill', d => d[i] > d[j] ? iColor : jColor);
+		
+			groups
+				.append('circle')
+				.attr('r', 6)
+				.attr('stroke', iColor)
+				.attr('fill', iColor)
+				.attr('cx', d => x + xScale(d[i]))
+				.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
+				.append('title')
+				.text(d => d[i])
+		
+			groups
+				.append('circle')
+				.attr('r', 6)
+				.attr('stroke', jColor)
+				.attr('fill', jColor)
+				.attr('cx', d => x + xScale(d[j]))
+				.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
+				.append('title')
+				.text(d => d[j])
+		}
 	totalSupplyDemandByCounty(currentYear) {
 		let barWidth: number = 120;
 		let barHeight: number = 30;
@@ -344,16 +348,20 @@ class Sidebar {
 			.text(d => d[1])
 	}
 
-	drawText(selection, i = 0, dy = 0) {
+	drawText(selection, i = 0, dx = 0, dy = 0) {
 		let barWidth: number = 120;
 		let barHeight: number = 30;
 		var groups = selection.append('g');
-
+	
+		const f = d3.format('.0f');
+	
 		groups
 			.append('text')
 			.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
-			.text(d => d[i]);
+			.attr('x', dx)
+			.text(d => isNaN(d[i]) ? d[i] : f(d[i]));
 	}
+	
 
 	getSortingOptions(index, ascending) {
 

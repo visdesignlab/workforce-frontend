@@ -12,6 +12,7 @@
 
 
 #tooltip {
+	z-index: 1000;
 	position: absolute;
 	text-align: center;
 	padding: 20px;
@@ -69,7 +70,9 @@
 		overflow: hidden;
 		background-color: #91B4BA;
 	}
+	#tooltip{
 
+	}
 	li {
 		float: left;
 	}
