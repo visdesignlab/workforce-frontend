@@ -56774,7 +56774,7 @@ var Map = /** @class */ (function () {
                     //TODO
                     //update sidebar/linechart when we click on a county
                     that.linechart.initLineChart(results, that.selectedCounty);
-                    that.sidebar.initSideBar({}, that.currentYearData, that.selectedCounty);
+                    that.sidebar.initSideBar(that.currentYearData, that.selectedCounty);
                 })
                     .on("mouseover", function (d) {
                     var f = d3.format(".2f");
@@ -56798,7 +56798,7 @@ var Map = /** @class */ (function () {
                     .attr("class", "county-borders")
                     .attr("transform", "translate(20,40)")
                     .attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function (a, b) { return a !== b; })));
-                _this.sidebar.initSideBar({}, _this.currentYearData);
+                _this.sidebar.initSideBar(_this.currentYearData);
                 _this.linechart.initLineChart(results);
             });
         });
@@ -56897,7 +56897,7 @@ var Map = /** @class */ (function () {
                 var selectedCounty = d.properties.NAME + ' County';
                 d3.select(this).transition().duration(1000).attr('fill', colorScale(d, that, mapData));
             });
-            _this.sidebar.initSideBar({}, _this.currentYearData, _this.selectedCounty);
+            _this.sidebar.initSideBar(_this.currentYearData, _this.selectedCounty);
         });
     };
     /**
@@ -56996,34 +56996,28 @@ var SidebarEvents = /** @class */ (function () {
     function SidebarEvents(sidebar) {
         this.sidebar = sidebar;
         this.selectAllClicked();
+        this.unSelectAllClicked();
     }
     SidebarEvents.prototype.selectAllClicked = function () {
         var _this = this;
         d3.select("#selectAll").on('click', function () {
-            var setAllTrue = false;
-            console.log(_this.sidebar.selectedProfessions);
-            console.log(Object.keys(_this.sidebar.selectedProfessions));
             Object.keys(_this.sidebar.selectedProfessions).forEach(function (profession) {
-                if (_this.sidebar.selectedProfessions[profession] === false) {
-                    setAllTrue = true;
-                }
+                _this.sidebar.selectedProfessions[profession] = true;
+                d3.select("#" + profession)
+                    .select('rect')
+                    .attr('fill', '#cccccc');
             });
-            if (setAllTrue) {
-                Object.keys(_this.sidebar.selectedProfessions).forEach(function (profession) {
-                    _this.sidebar.selectedProfessions[profession] = true;
-                    d3.select("#" + profession)
-                        .select('rect')
-                        .attr('fill', '#cccccc');
-                });
-            }
-            else {
-                Object.keys(_this.sidebar.selectedProfessions).forEach(function (profession) {
-                    _this.sidebar.selectedProfessions[profession] = false;
-                    d3.select("#" + profession)
-                        .select('rect')
-                        .attr('fill', '#ffffff');
-                });
-            }
+        });
+    };
+    SidebarEvents.prototype.unSelectAllClicked = function () {
+        var _this = this;
+        d3.select("#unSelectAll").on('click', function () {
+            Object.keys(_this.sidebar.selectedProfessions).forEach(function (profession) {
+                _this.sidebar.selectedProfessions[profession] = false;
+                d3.select("#" + profession)
+                    .select('rect')
+                    .attr('fill', '#ffffff');
+            });
         });
     };
     return SidebarEvents;
@@ -57171,12 +57165,11 @@ var Sidebar = /** @class */ (function () {
             .attr('height', 50)
             .attr('width', 600);
     }
-    Sidebar.prototype.initSideBar = function (selectedProfessions, currentYear, selectedCounty) {
+    Sidebar.prototype.initSideBar = function (currentYear, selectedCounty) {
         var _this = this;
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
         this.countiesSvg.selectAll('*').remove();
         this.countiesHeaderSvg.selectAll('*').remove();
-        this.selectedProfessions = selectedProfessions;
         var barWidth = 120;
         var barHeight = 30;
         var mapData = document.getElementById('mapData').value;

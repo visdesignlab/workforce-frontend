@@ -15,7 +15,6 @@ class Sidebar {
 		this.selectedProfessions = {};
 		this.lastSelected = "";
 		this.lastLastSelected = "";
-
 		this.professionsLastSelected = "";
 		this.professionsLastLastSelected = "";
 		
@@ -36,11 +35,10 @@ class Sidebar {
 
 	}
 
-	initSideBar(selectedProfessions,currentYear, selectedCounty = 'State of Utah') {
+	initSideBar(currentYear, selectedCounty = 'State of Utah') {
 
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
-		this.selectedProfessions = selectedProfessions;
 		let barWidth: number = 120;
 		let barHeight: number = 30;
 		let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;

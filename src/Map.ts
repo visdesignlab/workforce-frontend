@@ -114,7 +114,7 @@ class Map{
 							//TODO
 							//update sidebar/linechart when we click on a county
 							that.linechart.initLineChart(results, that.selectedCounty);
-							that.sidebar.initSideBar({},that.currentYearData, that.selectedCounty);
+							that.sidebar.initSideBar(that.currentYearData, that.selectedCounty);
 						}) 
 						.on("mouseover", (d)=>{
 		
@@ -145,7 +145,7 @@ class Map{
 						.attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function(a, b) { return a !== b; })));
 		
 		
-					this.sidebar.initSideBar({},this.currentYearData);
+					this.sidebar.initSideBar(this.currentYearData);
 					this.linechart.initLineChart(results);
 				});
 		
@@ -247,7 +247,7 @@ class Map{
 				var selectedCounty:string = d.properties.NAME + ' County'
 				d3.select(this).transition().duration(1000).attr('fill',colorScale(d,that,mapData));
 			});
-		this.sidebar.initSideBar({},this.currentYearData,this.selectedCounty);
+		this.sidebar.initSideBar(this.currentYearData,this.selectedCounty);
 		});
 	
 	}
