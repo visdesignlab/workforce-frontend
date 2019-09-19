@@ -5,9 +5,20 @@ class Sidebar {
 	professionsSvg: any;
 	selectedProfessions: any;
 	countiesHeaderSvg: any;
+	lastSelected:string;
+	lastLastSelected:string;
+	professionsLastSelected:string;
+	professionsLastLastSelected:string;
+
 
 	constructor() {
 		this.selectedProfessions = {};
+		this.lastSelected = "";
+		this.lastLastSelected = "";
+
+		this.professionsLastSelected = "";
+		this.professionsLastLastSelected = "";
+		
 		this.countiesSvg = d3.select('#counties')
 			.append('svg')
 			.attr('height', 1120)
@@ -79,9 +90,12 @@ class Sidebar {
 			.data(headers)
 			.enter()
 			.append('g')
+			
 
 		groupsHeaders.call(this.drawHeaders);
+		
 		var axis = this.countiesHeaderSvg.append('g');
+
 
 		var xAxis = g => g
 			.attr("transform", `translate(${3*barWidth},${45})`)
@@ -96,13 +110,41 @@ class Sidebar {
 		} else {
 			groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
 		}
-		var countiesSortDirection = [true];
-
-		d3.select('#sortCounties')
-		.selectAll('g')
+		
+		d3.selectAll('#sortCounties .rectButtons')
 		.on('click', (d, i) => {
-			countiesSortDirection[i] = !countiesSortDirection[i];
-			const sortingFunction = this.getSortingOptions(i, countiesSortDirection[i]);
+			let sortingFunction:any;
+			//down
+			if(this.lastSelected == ""){
+				d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
+				this.lastSelected = d.name
+				sortingFunction = this.getSortingOptions(i, true);
+
+			}else if(this.lastSelected===d.name){
+				if(this.lastLastSelected === this.lastSelected){
+					this.lastLastSelected = "";
+					sortingFunction = this.getSortingOptions(i, true);
+					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; }); 
+
+				}else{
+					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; }); 
+					sortingFunction = this.getSortingOptions(i, false);
+					this.lastLastSelected = this.lastSelected
+			}
+				
+			}else{
+				d3.select("#sortCounties #"+this.lastSelected).transition().duration(500).text(function(d) { return '\uf0dc'; }); 
+
+				d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
+				this.lastSelected = d.name;
+				this.lastLastSelected = "";
+				sortingFunction = this.getSortingOptions(i, true);
+			}
+			//both
+		//	d3.select("#"+d.name).transition().duration(500).text(function(d) { return '\uf0dc'; }); 
+			//up
+		//	d3.select("#"+d.name).transition().duration(500).text(function(d){return "\uf0de"})
+
 
 			groups.sort(sortingFunction)
 				.transition()
@@ -123,6 +165,7 @@ class Sidebar {
 		var stats = {}
 
 		for (let prof of professions) {
+				this.selectedProfessions[prof]=true;
 				stats[prof] = {totalDemandPer100K:0,totalSupplyPer100K:0,totalSupply: 0, totalDemand: 0};
 			}
 
@@ -159,7 +202,9 @@ class Sidebar {
 		.data(professionsData.sort(sortingFunction))
 		.enter()
 		.append('g')
-		.attr('transform', (d, i) => `translate(0, ${i * barHeight + 1.4 * barHeight })`);
+		.attr('transform', (d, i) => `translate(0, ${i * barHeight + 1.4 * barHeight })`)
+		.attr('class','professions')
+		.attr('id',(d)=>d[0])
 
 	professionsGroups.append('rect')
 		.attr('width', 4 * barWidth)
@@ -189,16 +234,19 @@ class Sidebar {
 			}
 	})
 
-
+	var professionsHeadData = [{name: 'Profession', x: 0},
+	{name: 'Supply', x: barWidth},
+	{name: 'Need', x: 2 * barWidth},
+	{name: 'Gap', x: 3 * barWidth}];
 	var professionsHeaders = this.professionsSvg
 		.append('g')
 		.attr('id', 'sortProfessions')
 		.selectAll('g')
-		.data(headers)
+		.data(professionsHeadData)
 		.enter()
 		.append('g')
 
-	headers[0].name = 'Profession';
+	
 	professionsHeaders.call(this.drawHeaders);
 	var axis = this.professionsSvg.append('g');
 
@@ -218,11 +266,36 @@ class Sidebar {
 	}
 	var professionsSortDirection = [true];
 	d3.select('#sortProfessions')
-		.selectAll('g')
+		.selectAll('.rectButtons')
 		.on('click', (d, i) => {
-			professionsSortDirection[i] = !professionsSortDirection[i];
-			const sortingFunction = this.getSortingOptions(i, professionsSortDirection[i]);
+			
+			let sortingFunction:any;
+			//down
+			if(this.professionsLastSelected == ""){
+				d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
+				this.professionsLastSelected = d.name
+				sortingFunction = this.getSortingOptions(i, true);
 
+			}else if(this.professionsLastSelected===d.name){
+				if(this.professionsLastLastSelected === this.professionsLastSelected){
+					this.professionsLastLastSelected = "";
+					sortingFunction = this.getSortingOptions(i, true);
+					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; }); 
+
+				}else{
+					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; }); 
+					sortingFunction = this.getSortingOptions(i, false);
+					this.professionsLastLastSelected = this.professionsLastSelected
+			}
+				
+			}else{
+				d3.select("#sortProfessions #"+this.professionsLastSelected).transition().duration(500).text(function(d) { return '\uf0dc'; }); 
+
+				d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
+				this.professionsLastSelected = d.name;
+				this.professionsLastLastSelected = "";
+				sortingFunction = this.getSortingOptions(i, true);
+			}
 			professionsGroups.sort(sortingFunction)
 				.transition()
 				.delay(function(d, i) {
@@ -294,6 +367,7 @@ class Sidebar {
 		}
 	}
 	
+	
 	drawHeaders(groups, i = 0, dx = 0, dy = 0) {
 		
 		let barWidth: number = 120;
@@ -301,16 +375,33 @@ class Sidebar {
 		groups
 			.append('rect')
 			.attr('height', barHeight)
-			.attr('width', barWidth)
-			.attr('x', (d, i) => d.x)
+			.attr('width', barWidth-90)
+			.attr('x', (d, i) => d.x+80)
+			.attr('rx',"20")
+			.attr('ry','20')
+			.attr('style','border-radius: .2rem;')
 			.attr('fill', '#aabbcc')
-	
+			.attr('class',"rectButtons");
+			
+
+
 		groups
 			.append('text')
 			.attr('font-weight', 'bold')
 			.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
 			.attr('x', (d, i) => d.x)
 			.text(d => d.name);
+		groups
+		.append('text')
+		.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
+		.attr('x', (d, i) => d.x+90)
+		.attr("font-family","FontAwesome")
+		.attr('class',"rectIcons")
+		.attr('id',(d)=>d.name)
+		.text(function(d) { return '\uf0dc'; }); 
+		//.text("&#xf0dc");
+		
+		
 	}
 
 	// drawStackedBar(svg, data, xScale) {
