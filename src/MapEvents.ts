@@ -10,6 +10,8 @@ class MapEvents{
 		this.map = map;
 		this.updateYear();
 		this.updateType();
+		this.selectAllClicked();
+		this.unSelectAllClicked();
 
 	}
 	
@@ -26,6 +28,34 @@ class MapEvents{
 		d3.select("#mapData").on('change',()=>{
 			let mapData:string = (document.getElementById('mapData') as HTMLInputElement).value;
 			this.map.updateMapType(mapData)
+		})
+	}
+	selectAllClicked():void{
+		d3.select("#selectAll").on('click',()=>{
+			
+				Object.keys(this.map.selectedProfessions).forEach(profession => {
+					this.map.selectedProfessions[profession] = true;
+				d3.select("#" + profession)
+					.select('rect')
+					.attr('fill', '#cccccc');
+				
+				
+				})
+				this.map.updateSelections(this.map.selectedProfessions)
+			})}
+	unSelectAllClicked():void{
+
+		d3.select("#unSelectAll").on('click',()=>{
+
+			Object.keys(this.map.selectedProfessions).forEach(profession => {
+				this.map.selectedProfessions[profession] = false;
+				d3.select("#" + profession)
+					.select('rect')
+					.attr('fill', '#ffffff');
+
+			})
+			this.map.updateSelections(this.map.selectedProfessions)
+
 		})
 	}
 

@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import {Map} from './Map';
 
 class Sidebar {
 	countiesSvg: any;
@@ -9,9 +10,10 @@ class Sidebar {
 	lastLastSelected:string;
 	professionsLastSelected:string;
 	professionsLastLastSelected:string;
+	map:Map;
 
-
-	constructor() {
+	constructor(map:Map) {
+		this.map = map;
 		this.selectedProfessions = {};
 		this.lastSelected = "";
 		this.lastLastSelected = "";
@@ -35,32 +37,32 @@ class Sidebar {
 
 	}
 
-	initSideBar(currentYear, selectedCounty = 'State of Utah') {
-
+	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah') {
+		this.selectedProfessions = selectedProfessions;
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
 		let barWidth: number = 120;
 		let barHeight: number = 30;
 		let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;
-		let domainMax;
-
+		let domainMax = 0;
 		if (mapData.includes('100')) {
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupplyPer100K'], currentYear[d]['totalDemandPer100K']));
 		} else {
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']));
 		}
+		console.log(domainMax)
 
 		var headers = [{name: 'County', x: 0},
 		{name: 'Supply', x: barWidth},
 		{name: 'Need', x: 2 * barWidth},
 		{name: 'Gap', x: 3 * barWidth}];
-		this.totalSupplyDemandByCounty(currentYear);
 		var xScale = d3.scaleLinear()
 		.domain([0, domainMax])
 		.range([0, barWidth]);
 		let countiesData = [];
 		for (let county in currentYear) {
 			let d = currentYear[county];
+			console.log(d)
 			if (mapData.includes('100')) {
 				countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K]);
 			} else {
@@ -163,10 +165,9 @@ class Sidebar {
 		var stats = {}
 
 		for (let prof of professions) {
-				this.selectedProfessions[prof]=true;
 				stats[prof] = {totalDemandPer100K:0,totalSupplyPer100K:0,totalSupply: 0, totalDemand: 0};
 			}
-
+		
 		const f = d3.format('.0f');
 		for (let prof of professions) {
 			stats[prof].totalSupply += currentYear[selectedCounty]['supply'][prof];
@@ -224,11 +225,14 @@ class Sidebar {
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#ffffff');
+					this.map.updateSelections(this.selectedProfessions);
 			} else {
 				this.selectedProfessions[d[0]] = true;
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#cccccc');
+					this.map.updateSelections(this.selectedProfessions);
+				
 			}
 	})
 
@@ -434,7 +438,9 @@ class Sidebar {
 	// 		.append('title')
 	// 		.text(d => d[1])
 	// }
+	updateSidebar(currentYear, selectedCounty){
 
+	}
 	drawText(selection, i = 0, dx = 0, dy = 0) {
 		let barWidth: number = 120;
 		let barHeight: number = 30;

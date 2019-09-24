@@ -56650,12 +56650,10 @@ module.exports = g;
 Object.defineProperty(exports, "__esModule", { value: true });
 var Map_1 = __webpack_require__(/*! ./Map */ "./src/Map.ts");
 var MapEvents_1 = __webpack_require__(/*! ./MapEvents */ "./src/MapEvents.ts");
-var SidebarEvents_1 = __webpack_require__(/*! ./SidebarEvents */ "./src/SidebarEvents.ts");
 __webpack_require__(/*! bootstrap */ "./node_modules/bootstrap/dist/js/bootstrap.js");
 __webpack_require__(/*! bootstrap-select */ "./node_modules/bootstrap-select/dist/js/bootstrap-select.js");
 var myMap = new Map_1.Map();
 var myMapEvents = new MapEvents_1.MapEvents(myMap);
-var mySidebarEvents = new SidebarEvents_1.SidebarEvents(myMap.sidebar);
 
 
 /***/ }),
@@ -56683,13 +56681,14 @@ var Map = /** @class */ (function () {
      *
      */
     function Map() {
+        this.selectedProfessions = {};
         this.linechart = new linechart_1.Linechart();
         this.selectedCounty = 'State of Utah';
         this.mapData = "supply_need";
         this.yearSelected = document.getElementById('year').value;
         this.currentYearData = {};
         this.supplyScore = {};
-        this.sidebar = new sidebar_1.Sidebar();
+        this.sidebar = new sidebar_1.Sidebar(this);
         this.svg = d3.select("#map")
             .append('svg')
             .attr('width', 600)
@@ -56705,16 +56704,16 @@ var Map = /** @class */ (function () {
             _this.svg.selectAll('*').remove();
             _this.currentYearData = results[_this.yearSelected];
             var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
+            for (var profession in professions) {
+            }
             for (var county in _this.currentYearData) {
                 var totalSupply = 0;
                 var totalDemand = 0;
                 for (var _i = 0, professions_1 = professions; _i < professions_1.length; _i++) {
                     var profession = professions_1[_i];
-                    if (!_this.sidebar.selectedProfessions.hasOwnProperty(profession)
-                        || _this.sidebar.selectedProfessions[profession]) {
-                        totalSupply += _this.currentYearData[county]['supply'][profession];
-                        totalDemand += _this.currentYearData[county]['demand'][profession];
-                    }
+                    _this.selectedProfessions[profession] = true;
+                    totalSupply += _this.currentYearData[county]['supply'][profession];
+                    totalDemand += _this.currentYearData[county]['demand'][profession];
                 }
                 var population = _this.currentYearData[county].population;
                 _this.currentYearData[county]['totalSupply'] = totalSupply;
@@ -56774,7 +56773,7 @@ var Map = /** @class */ (function () {
                     //TODO
                     //update sidebar/linechart when we click on a county
                     that.linechart.initLineChart(results, that.selectedCounty);
-                    that.sidebar.initSideBar(that.currentYearData, that.selectedCounty);
+                    that.sidebar.initSideBar(that.selectedProfessions, that.currentYearData, that.selectedCounty);
                 })
                     .on("mouseover", function (d) {
                     var f = d3.format(".2f");
@@ -56798,7 +56797,7 @@ var Map = /** @class */ (function () {
                     .attr("class", "county-borders")
                     .attr("transform", "translate(20,40)")
                     .attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function (a, b) { return a !== b; })));
-                _this.sidebar.initSideBar(_this.currentYearData);
+                _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYearData);
                 _this.linechart.initLineChart(results);
             });
         });
@@ -56897,7 +56896,7 @@ var Map = /** @class */ (function () {
                 var selectedCounty = d.properties.NAME + ' County';
                 d3.select(this).transition().duration(1000).attr('fill', colorScale(d, that, mapData));
             });
-            _this.sidebar.initSideBar(_this.currentYearData, _this.selectedCounty);
+            _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYearData, _this.selectedCounty);
         });
     };
     /**
@@ -56932,6 +56931,10 @@ var Map = /** @class */ (function () {
         //after we update the year, we then update the map
         this.updateMapType(this.mapData);
     };
+    Map.prototype.updateSelections = function (selectedProfessions) {
+        this.selectedProfessions = selectedProfessions;
+        this.updateMapYear(this.yearSelected);
+    };
     Map.prototype.mouseOut = function () {
         d3.select("#tooltip").transition().duration(500).style("opacity", 0);
     };
@@ -56958,6 +56961,8 @@ var MapEvents = /** @class */ (function () {
         this.map = map;
         this.updateYear();
         this.updateType();
+        this.selectAllClicked();
+        this.unSelectAllClicked();
     }
     MapEvents.prototype.updateYear = function () {
         var _this = this;
@@ -56974,55 +56979,33 @@ var MapEvents = /** @class */ (function () {
             _this.map.updateMapType(mapData);
         });
     };
-    return MapEvents;
-}());
-exports.MapEvents = MapEvents;
-
-
-/***/ }),
-
-/***/ "./src/SidebarEvents.ts":
-/*!******************************!*\
-  !*** ./src/SidebarEvents.ts ***!
-  \******************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
-var SidebarEvents = /** @class */ (function () {
-    function SidebarEvents(sidebar) {
-        this.sidebar = sidebar;
-        this.selectAllClicked();
-        this.unSelectAllClicked();
-    }
-    SidebarEvents.prototype.selectAllClicked = function () {
+    MapEvents.prototype.selectAllClicked = function () {
         var _this = this;
         d3.select("#selectAll").on('click', function () {
-            Object.keys(_this.sidebar.selectedProfessions).forEach(function (profession) {
-                _this.sidebar.selectedProfessions[profession] = true;
+            Object.keys(_this.map.selectedProfessions).forEach(function (profession) {
+                _this.map.selectedProfessions[profession] = true;
                 d3.select("#" + profession)
                     .select('rect')
                     .attr('fill', '#cccccc');
             });
+            _this.map.updateSelections(_this.map.selectedProfessions);
         });
     };
-    SidebarEvents.prototype.unSelectAllClicked = function () {
+    MapEvents.prototype.unSelectAllClicked = function () {
         var _this = this;
         d3.select("#unSelectAll").on('click', function () {
-            Object.keys(_this.sidebar.selectedProfessions).forEach(function (profession) {
-                _this.sidebar.selectedProfessions[profession] = false;
+            Object.keys(_this.map.selectedProfessions).forEach(function (profession) {
+                _this.map.selectedProfessions[profession] = false;
                 d3.select("#" + profession)
                     .select('rect')
                     .attr('fill', '#ffffff');
             });
+            _this.map.updateSelections(_this.map.selectedProfessions);
         });
     };
-    return SidebarEvents;
+    return MapEvents;
 }());
-exports.SidebarEvents = SidebarEvents;
+exports.MapEvents = MapEvents;
 
 
 /***/ }),
@@ -57146,7 +57129,8 @@ exports.Linechart = Linechart;
 Object.defineProperty(exports, "__esModule", { value: true });
 var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
 var Sidebar = /** @class */ (function () {
-    function Sidebar() {
+    function Sidebar(map) {
+        this.map = map;
         this.selectedProfessions = {};
         this.lastSelected = "";
         this.lastLastSelected = "";
@@ -57165,32 +57149,34 @@ var Sidebar = /** @class */ (function () {
             .attr('height', 50)
             .attr('width', 600);
     }
-    Sidebar.prototype.initSideBar = function (currentYear, selectedCounty) {
+    Sidebar.prototype.initSideBar = function (selectedProfessions, currentYear, selectedCounty) {
         var _this = this;
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
+        this.selectedProfessions = selectedProfessions;
         this.countiesSvg.selectAll('*').remove();
         this.countiesHeaderSvg.selectAll('*').remove();
         var barWidth = 120;
         var barHeight = 30;
         var mapData = document.getElementById('mapData').value;
-        var domainMax;
+        var domainMax = 0;
         if (mapData.includes('100')) {
             domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d]['totalSupplyPer100K'], currentYear[d]['totalDemandPer100K']); });
         }
         else {
             domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']); });
         }
+        console.log(domainMax);
         var headers = [{ name: 'County', x: 0 },
             { name: 'Supply', x: barWidth },
             { name: 'Need', x: 2 * barWidth },
             { name: 'Gap', x: 3 * barWidth }];
-        this.totalSupplyDemandByCounty(currentYear);
         var xScale = d3.scaleLinear()
             .domain([0, domainMax])
             .range([0, barWidth]);
         var countiesData = [];
         for (var county in currentYear) {
             var d = currentYear[county];
+            console.log(d);
             if (mapData.includes('100')) {
                 countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K]);
             }
@@ -57281,7 +57267,6 @@ var Sidebar = /** @class */ (function () {
         var stats = {};
         for (var _i = 0, professions_1 = professions; _i < professions_1.length; _i++) {
             var prof = professions_1[_i];
-            this.selectedProfessions[prof] = true;
             stats[prof] = { totalDemandPer100K: 0, totalSupplyPer100K: 0, totalSupply: 0, totalDemand: 0 };
         }
         var f = d3.format('.0f');
@@ -57336,12 +57321,14 @@ var Sidebar = /** @class */ (function () {
                 d3.select("#" + d[0])
                     .select('rect')
                     .attr('fill', '#ffffff');
+                _this.map.updateSelections(_this.selectedProfessions);
             }
             else {
                 _this.selectedProfessions[d[0]] = true;
                 d3.select("#" + d[0])
                     .select('rect')
                     .attr('fill', '#cccccc');
+                _this.map.updateSelections(_this.selectedProfessions);
             }
         });
         var professionsHeadData = [{ name: 'Profession', x: 0 },
@@ -57533,6 +57520,8 @@ var Sidebar = /** @class */ (function () {
     // 		.append('title')
     // 		.text(d => d[1])
     // }
+    Sidebar.prototype.updateSidebar = function (currentYear, selectedCounty) {
+    };
     Sidebar.prototype.drawText = function (selection, i, dx, dy) {
         if (i === void 0) { i = 0; }
         if (dx === void 0) { dx = 0; }

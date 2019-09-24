@@ -21,13 +21,14 @@ class Map{
 	 * 
 	 */
 	constructor(){
+		this.selectedProfessions = {}
 		this.linechart = new Linechart()
 		this.selectedCounty = 'State of Utah'
 		this.mapData = "supply_need";
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
 		this.supplyScore = {};
-		this.sidebar = new Sidebar();
+		this.sidebar = new Sidebar(this);
 		this.svg = d3.select("#map")
 			.append('svg')
 			.attr('width', 600)
@@ -43,15 +44,15 @@ class Map{
 				this.svg.selectAll('*').remove();
 				this.currentYearData = results[this.yearSelected]
 				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
+				for(let profession in professions){
+				}
 				for (let county in this.currentYearData) {
 					let totalSupply = 0;
 					let totalDemand = 0;
 					for (let profession of professions) {
-						if (!this.sidebar.selectedProfessions.hasOwnProperty(profession)
-							|| this.sidebar.selectedProfessions[profession]) {
-							totalSupply += this.currentYearData[county]['supply'][profession];
-							totalDemand += this.currentYearData[county]['demand'][profession];
-						}
+						this.selectedProfessions[profession]= true;
+						totalSupply += this.currentYearData[county]['supply'][profession];
+						totalDemand += this.currentYearData[county]['demand'][profession];
 					}
 						let population = this.currentYearData[county].population;
 						this.currentYearData[county]['totalSupply'] = totalSupply;
@@ -114,7 +115,7 @@ class Map{
 							//TODO
 							//update sidebar/linechart when we click on a county
 							that.linechart.initLineChart(results, that.selectedCounty);
-							that.sidebar.initSideBar(that.currentYearData, that.selectedCounty);
+							that.sidebar.initSideBar(that.selectedProfessions, that.currentYearData, that.selectedCounty);
 						}) 
 						.on("mouseover", (d)=>{
 		
@@ -145,7 +146,7 @@ class Map{
 						.attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function(a, b) { return a !== b; })));
 		
 		
-					this.sidebar.initSideBar(this.currentYearData);
+					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData);
 					this.linechart.initLineChart(results);
 				});
 		
@@ -247,7 +248,7 @@ class Map{
 				var selectedCounty:string = d.properties.NAME + ' County'
 				d3.select(this).transition().duration(1000).attr('fill',colorScale(d,that,mapData));
 			});
-		this.sidebar.initSideBar(this.currentYearData,this.selectedCounty);
+		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData,this.selectedCounty);
 		});
 	
 	}
@@ -281,8 +282,10 @@ class Map{
 		//after we update the year, we then update the map
 		this.updateMapType(this.mapData);
 	}
-	
-	
+	updateSelections(selectedProfessions:any){
+		this.selectedProfessions = selectedProfessions;
+		this.updateMapYear(this.yearSelected)
+	}
 	mouseOut(){
 		d3.select("#tooltip").transition().duration(500).style("opacity", 0);      
 	}
