@@ -56959,10 +56959,10 @@ var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
 var MapEvents = /** @class */ (function () {
     function MapEvents(map) {
         this.map = map;
+        this.selectAll = true;
         this.updateYear();
         this.updateType();
         this.selectAllClicked();
-        this.unSelectAllClicked();
     }
     MapEvents.prototype.updateYear = function () {
         var _this = this;
@@ -56982,24 +56982,26 @@ var MapEvents = /** @class */ (function () {
     MapEvents.prototype.selectAllClicked = function () {
         var _this = this;
         d3.select("#selectAll").on('click', function () {
-            Object.keys(_this.map.selectedProfessions).forEach(function (profession) {
-                _this.map.selectedProfessions[profession] = true;
-                d3.select("#" + profession)
-                    .select('rect')
-                    .attr('fill', '#cccccc');
-            });
-            _this.map.updateSelections(_this.map.selectedProfessions);
-        });
-    };
-    MapEvents.prototype.unSelectAllClicked = function () {
-        var _this = this;
-        d3.select("#unSelectAll").on('click', function () {
-            Object.keys(_this.map.selectedProfessions).forEach(function (profession) {
-                _this.map.selectedProfessions[profession] = false;
-                d3.select("#" + profession)
-                    .select('rect')
-                    .attr('fill', '#ffffff');
-            });
+            if (_this.selectAll) {
+                d3.select("#selectAll").transition().text('Deselect All');
+                Object.keys(_this.map.selectedProfessions).forEach(function (profession) {
+                    _this.map.selectedProfessions[profession] = true;
+                    d3.select("#" + profession)
+                        .select('rect')
+                        .attr('fill', '#cccccc');
+                });
+                _this.selectAll = false;
+            }
+            else {
+                d3.select("#selectAll").transition().text('Select All');
+                Object.keys(_this.map.selectedProfessions).forEach(function (profession) {
+                    _this.map.selectedProfessions[profession] = false;
+                    d3.select("#" + profession)
+                        .select('rect')
+                        .attr('fill', '#ffffff');
+                });
+                _this.selectAll = true;
+            }
             _this.map.updateSelections(_this.map.selectedProfessions);
         });
     };
@@ -57142,7 +57144,7 @@ var Sidebar = /** @class */ (function () {
             .attr("style", "width:100%;");
         this.professionsSvg = d3.select('#professions')
             .append('svg')
-            .attr('height', 1000)
+            .attr('height', 700)
             .attr("style", "width:100%;");
         this.countiesHeaderSvg = d3.select('#countiesHeader')
             .append('svg')
@@ -57295,6 +57297,9 @@ var Sidebar = /** @class */ (function () {
         }
         ;
         sortingFunction = this.getSortingOptions(0, true);
+        d3.select("#sortCounties #County").transition().duration(500).text(function (d) { return '\uf0dd'; });
+        this.lastSelected = "County";
+        this.lastLastSelected = "";
         var professionsGroups = this.professionsSvg.append('g')
             .selectAll('g')
             .data(professionsData.sort(sortingFunction))
@@ -57335,7 +57340,13 @@ var Sidebar = /** @class */ (function () {
             { name: 'Supply', x: barWidth },
             { name: 'Need', x: 2 * barWidth },
             { name: 'Gap', x: 3 * barWidth }];
-        var professionsHeaders = this.professionsSvg
+        var professionHeaderSVG = d3.select('#professionsHeader');
+        professionHeaderSVG.selectAll('*').remove();
+        professionHeaderSVG = professionHeaderSVG
+            .append('svg')
+            .attr('height', 50)
+            .attr('width', 600);
+        var professionsHeaders = professionHeaderSVG
             .append('g')
             .attr('id', 'sortProfessions')
             .selectAll('g')
@@ -57343,7 +57354,10 @@ var Sidebar = /** @class */ (function () {
             .enter()
             .append('g');
         professionsHeaders.call(this.drawHeaders);
-        var axis = this.professionsSvg.append('g');
+        var axis = professionHeaderSVG.append('g');
+        d3.select("#sortProfessions #Profession").transition().duration(500).text(function (d) { return '\uf0dd'; });
+        this.professionsLastSelected = "Profession";
+        this.professionsLastLastSelected = "";
         var xAxis = function (g) { return g
             .attr("transform", "translate(" + 3 * barWidth + "," + 42 + ")")
             .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
@@ -57465,16 +57479,6 @@ var Sidebar = /** @class */ (function () {
         var barWidth = 120;
         var barHeight = 30;
         groups
-            .append('rect')
-            .attr('height', barHeight)
-            .attr('width', barWidth - 90)
-            .attr('x', function (d, i) { return d.x + 80; })
-            .attr('rx', "20")
-            .attr('ry', '20')
-            .attr('style', 'border-radius: .2rem;')
-            .attr('fill', '#aabbcc')
-            .attr('class', "rectButtons");
-        groups
             .append('text')
             .attr('font-weight', 'bold')
             .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 + 5 + dy; })
@@ -57485,7 +57489,7 @@ var Sidebar = /** @class */ (function () {
             .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 + 5 + dy; })
             .attr('x', function (d, i) { return d.x + 90; })
             .attr("font-family", "FontAwesome")
-            .attr('class', "rectIcons")
+            .attr('class', "rectButtons")
             .attr('id', function (d) { return d.name; })
             .text(function (d) { return '\uf0dc'; });
         //.text("&#xf0dc");

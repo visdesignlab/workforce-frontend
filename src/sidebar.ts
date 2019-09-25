@@ -27,7 +27,7 @@ class Sidebar {
 
 		this.professionsSvg = d3.select('#professions')
 			.append('svg')
-			.attr('height', 1000)
+			.attr('height', 700)
 			.attr("style","width:100%;")
 		this.countiesHeaderSvg = d3.select('#countiesHeader')
 			.append('svg')
@@ -123,6 +123,7 @@ class Sidebar {
 			}else if(this.lastSelected===d.name){
 				if(this.lastLastSelected === this.lastSelected){
 					this.lastLastSelected = "";
+
 					sortingFunction = this.getSortingOptions(i, true);
 					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; }); 
 
@@ -195,7 +196,10 @@ class Sidebar {
 	};
 
 	sortingFunction = this.getSortingOptions(0, true);
-
+	d3.select("#sortCounties #County").transition().duration(500).text(function(d) { return '\uf0dd'; }); 
+	this.lastSelected ="County"
+	this.lastLastSelected =""
+	
 	var professionsGroups = this.professionsSvg.append('g')
 		.selectAll('g')
 		.data(professionsData.sort(sortingFunction))
@@ -240,7 +244,14 @@ class Sidebar {
 	{name: 'Supply', x: barWidth},
 	{name: 'Need', x: 2 * barWidth},
 	{name: 'Gap', x: 3 * barWidth}];
-	var professionsHeaders = this.professionsSvg
+	
+	var professionHeaderSVG = d3.select('#professionsHeader');
+	professionHeaderSVG.selectAll('*').remove();
+	professionHeaderSVG = professionHeaderSVG
+			.append('svg')
+			.attr('height', 50)
+			.attr('width', 600);
+	var professionsHeaders = professionHeaderSVG
 		.append('g')
 		.attr('id', 'sortProfessions')
 		.selectAll('g')
@@ -250,8 +261,11 @@ class Sidebar {
 
 	
 	professionsHeaders.call(this.drawHeaders);
-	var axis = this.professionsSvg.append('g');
-
+	var axis = professionHeaderSVG.append('g');
+	d3.select("#sortProfessions #Profession").transition().duration(500).text(function(d) { return '\uf0dd'; }); 	
+	this.professionsLastSelected ="Profession"
+	this.professionsLastLastSelected =""
+	
 	var xAxis = g => g
 		.attr("transform", `translate(${3*barWidth},${42})`)
 		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
@@ -374,16 +388,7 @@ class Sidebar {
 		
 		let barWidth: number = 120;
 		let barHeight: number = 30;
-		groups
-			.append('rect')
-			.attr('height', barHeight)
-			.attr('width', barWidth-90)
-			.attr('x', (d, i) => d.x+80)
-			.attr('rx',"20")
-			.attr('ry','20')
-			.attr('style','border-radius: .2rem;')
-			.attr('fill', '#aabbcc')
-			.attr('class',"rectButtons");
+		
 			
 
 
@@ -398,7 +403,7 @@ class Sidebar {
 		.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
 		.attr('x', (d, i) => d.x+90)
 		.attr("font-family","FontAwesome")
-		.attr('class',"rectIcons")
+		.attr('class',"rectButtons")
 		.attr('id',(d)=>d.name)
 		.text(function(d) { return '\uf0dc'; }); 
 		//.text("&#xf0dc");

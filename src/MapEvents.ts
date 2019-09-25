@@ -4,14 +4,14 @@ import {legendColor} from 'd3-svg-legend'
 import {Map} from './Map'
 class MapEvents{
 	map: Map;
-
+	selectAll : boolean;
 	constructor(map:Map){
 
 		this.map = map;
+		this.selectAll=true;
 		this.updateYear();
 		this.updateType();
 		this.selectAllClicked();
-		this.unSelectAllClicked();
 
 	}
 	
@@ -32,32 +32,36 @@ class MapEvents{
 	}
 	selectAllClicked():void{
 		d3.select("#selectAll").on('click',()=>{
-			
+			if(this.selectAll){
+				d3.select("#selectAll").transition().text('Deselect All');
 				Object.keys(this.map.selectedProfessions).forEach(profession => {
 					this.map.selectedProfessions[profession] = true;
 				d3.select("#" + profession)
 					.select('rect')
 					.attr('fill', '#cccccc');
-				
-				
+			
 				})
+				this.selectAll = false;
+			
+			}
+
+
+			else{
+				d3.select("#selectAll").transition().text('Select All');
+
+				Object.keys(this.map.selectedProfessions).forEach(profession => {
+						this.map.selectedProfessions[profession] = false;
+						d3.select("#" + profession)
+							.select('rect')
+							.attr('fill', '#ffffff');
+		
+					})
+				this.selectAll = true;
+				
+			}
 				this.map.updateSelections(this.map.selectedProfessions)
 			})}
-	unSelectAllClicked():void{
 
-		d3.select("#unSelectAll").on('click',()=>{
-
-			Object.keys(this.map.selectedProfessions).forEach(profession => {
-				this.map.selectedProfessions[profession] = false;
-				d3.select("#" + profession)
-					.select('rect')
-					.attr('fill', '#ffffff');
-
-			})
-			this.map.updateSelections(this.map.selectedProfessions)
-
-		})
-	}
 
 }
 export{MapEvents}
