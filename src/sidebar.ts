@@ -50,7 +50,6 @@ class Sidebar {
 		} else {
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']));
 		}
-		console.log(domainMax)
 
 		var headers = [{name: 'County', x: 0},
 		{name: 'Supply', x: barWidth},
@@ -62,7 +61,6 @@ class Sidebar {
 		let countiesData = [];
 		for (let county in currentYear) {
 			let d = currentYear[county];
-			console.log(d)
 			if (mapData.includes('100')) {
 				countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K]);
 			} else {
