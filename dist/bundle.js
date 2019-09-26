@@ -57209,7 +57209,6 @@ var Sidebar = /** @class */ (function () {
         var countiesData = [];
         for (var county in currentYear) {
             var d = currentYear[county];
-            console.log(d);
             if (mapData.includes('100')) {
                 countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K]);
             }
