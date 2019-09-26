@@ -2,6 +2,120 @@
 .counties :hover {
 	opacity: 0.7;
 }
+.selected {
+	stroke: #00ffcc;
+	stroke-width: 4px;
+	opacity: 0.8;
+}
+.professions {
+    cursor: pointer;
+}
+.rectButtons, .rectIcons{
+	cursor: pointer;
+}
+.rectIcons{
+	pointer-events: none;
+}
+.rectButtons:hover, .rectIcons:hover{
+	opacity: .8;
+}
+.rectButtons:active{
+	fill: #7c90a3;
+}
+
+
+#tooltip {
+	z-index: 1000;
+	position: absolute;
+	text-align: center;
+	padding: 20px;
+	margin: 10px;
+	font: 12px sans-serif;
+	background: lightsteelblue;
+	border: 1px;
+	border-radius: 2px;
+	pointer-events: none;
+}
+	#tooltip h4{
+		margin:0;
+		font-size:14px;
+	}
+	#tooltip{
+		background:rgba(0,0,0,0.9);
+		border:1px solid grey;
+		border-radius:5px;
+		font-size:12px;
+		width:auto;
+		padding:4px;
+		color:white;
+		opacity:0;
+	}
+	#tooltip table{
+		table-layout:fixed;
+	}
+	#tooltip tr td{
+		padding:0;
+		margin:0;
+	}
+	#tooltip tr td:nth-child(1){
+		width:50px;
+	}
+	#tooltip tr td:nth-child(2){
+		text-align:center;
+	}
+	.axis {
+		font: 2px sans-serif;
+	}
+
+	.axis path,
+	.axis line {
+		fill: none;
+		stroke: #000;
+		shape-rendering: crispEdges;
+		stroke-width: 0.1px;
+	}
+
+
+	ul {
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+		background-color: #91B4BA;
+	}
+	li {
+		float: left;
+	}
+
+	li a {
+		display: block;
+		color: white;
+		text-align: center;
+		padding: 14px 16px;
+		text-decoration: none;
+		font-weight: bold;
+	}
+	html {
+		overflow: hidden;
+		height: 100%;
+	}
+	
+	body {
+		height: 100%;
+		overflow: auto;
+		overflow-x: hidden;
+		
+	}
+	li :hover {
+		background-color: #91B4CA;
+	}
+	#header {
+		margin: 10px;
+	}
+
+.counties :hover {
+	opacity: 0.7;
+}
 
 .county-borders {
 	fill: none;
@@ -107,6 +221,11 @@
 	li :hover {
 		background-color: #91B4CA;
 	}
-	#header {
-		margin: 10px;
+
+	.entry-wrap {
+		display: block;
+		padding: 60px;
+		background-color: #fff;
+		border-radius: 4px;
+		box-shadow: 0 0.15em 0.35em 0 rgba(0,0,0,0.135);
 	}
