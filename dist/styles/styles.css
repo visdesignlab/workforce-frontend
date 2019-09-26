@@ -76,25 +76,6 @@
 	}
 
 
-	ul {
-		list-style-type: none;
-		margin: 0;
-		padding: 0;
-		overflow: hidden;
-		background-color: #91B4BA;
-	}
-	li {
-		float: left;
-	}
-
-	li a {
-		display: block;
-		color: white;
-		text-align: center;
-		padding: 14px 16px;
-		text-decoration: none;
-		font-weight: bold;
-	}
 	html {
 		overflow: hidden;
 		height: 100%;
@@ -105,9 +86,6 @@
 		overflow: auto;
 		overflow-x: hidden;
 		
-	}
-	li :hover {
-		background-color: #91B4CA;
 	}
 	#header {
 		margin: 10px;
@@ -194,32 +172,6 @@
 		stroke: #000;
 		shape-rendering: crispEdges;
 		stroke-width: 0.1px;
-	}
-
-
-	ul {
-		list-style-type: none;
-		margin: 0;
-		padding: 0;
-		overflow: hidden;
-		background-color: #91B4BA;
-	}
-
-	li {
-		float: left;
-	}
-
-	li a {
-		display: block;
-		color: white;
-		text-align: center;
-		padding: 14px 16px;
-		text-decoration: none;
-		font-weight: bold;
-	}
-
-	li :hover {
-		background-color: #91B4CA;
 	}
 
 	.entry-wrap {
