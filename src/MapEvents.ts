@@ -33,7 +33,7 @@ class MapEvents{
 	selectAllClicked():void{
 		d3.select("#selectAll").on('click',()=>{
 			if(this.selectAll){
-				d3.select("#selectAll").transition().text('Deselect All');
+				d3.select("#selectAll").transition().text('Unselect All');
 				Object.keys(this.map.selectedProfessions).forEach(profession => {
 					this.map.selectedProfessions[profession] = true;
 				d3.select("#" + profession)
