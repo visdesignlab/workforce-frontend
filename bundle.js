@@ -56724,7 +56724,7 @@ var Map = /** @class */ (function () {
      */
     Map.prototype.drawMap = function () {
         var _this = this;
-        d3.json('../data/model-results.json').then(function (results) {
+        d3.json('./data/model-results.json').then(function (results) {
             _this.svg.selectAll('*').remove();
             _this.currentYearData = results[_this.yearSelected];
             var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
@@ -56772,7 +56772,7 @@ var Map = /** @class */ (function () {
                 return d3.interpolateRdBu(_this.supplyScore[county]);
             };
             var that = _this;
-            d3.json("../data/UT-49-utah-counties.json").then(function (us) {
+            d3.json("./data/UT-49-utah-counties.json").then(function (us) {
                 var topojsonFeatures = topojson.feature(us, us.objects.cb_2015_utah_county_20m);
                 var mapCenter = d3.geoCentroid(topojsonFeatures);
                 var projection = d3.geoAlbersUsa()
@@ -56915,7 +56915,7 @@ var Map = /** @class */ (function () {
             .orient('horizontal')
             .scale(linear);
         d3.select('g.legendLinear').call(legendLinear);
-        d3.json("../data/UT-49-utah-counties.json").then(function (us) {
+        d3.json("./data/UT-49-utah-counties.json").then(function (us) {
             _this.svg.select('g.counties').selectAll('path').each(function (d) {
                 var selectedCounty = d.properties.NAME + ' County';
                 d3.select(this).transition().duration(1000).attr('fill', colorScale(d, that, mapData));
@@ -56930,7 +56930,7 @@ var Map = /** @class */ (function () {
     Map.prototype.updateMapYear = function (year) {
         var _this = this;
         this.yearSelected = year;
-        d3.json('../data/model-results.json').then(function (results) {
+        d3.json('./data/model-results.json').then(function (results) {
             _this.currentYearData = results[_this.yearSelected];
             var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
             for (var county in _this.currentYearData) {
