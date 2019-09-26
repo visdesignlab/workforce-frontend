@@ -1,4 +1,3 @@
-
 .counties :hover {
 	opacity: 0.7;
 }
@@ -8,7 +7,7 @@
 	opacity: 0.8;
 }
 .professions {
-    cursor: pointer;
+	cursor: pointer;
 }
 .rectButtons, .rectIcons{
 	cursor: pointer;
@@ -36,60 +35,60 @@
 	border-radius: 2px;
 	pointer-events: none;
 }
-	#tooltip h4{
-		margin:0;
-		font-size:14px;
-	}
-	#tooltip{
-		background:rgba(0,0,0,0.9);
-		border:1px solid grey;
-		border-radius:5px;
-		font-size:12px;
-		width:auto;
-		padding:4px;
-		color:white;
-		opacity:0;
-	}
-	#tooltip table{
-		table-layout:fixed;
-	}
-	#tooltip tr td{
-		padding:0;
-		margin:0;
-	}
-	#tooltip tr td:nth-child(1){
-		width:50px;
-	}
-	#tooltip tr td:nth-child(2){
-		text-align:center;
-	}
-	.axis {
-		font: 2px sans-serif;
-	}
+#tooltip h4{
+	margin:0;
+	font-size:14px;
+}
+#tooltip{
+	background:rgba(0,0,0,0.9);
+	border:1px solid grey;
+	border-radius:5px;
+	font-size:12px;
+	width:auto;
+	padding:4px;
+	color:white;
+	opacity:0;
+}
+#tooltip table{
+	table-layout:fixed;
+}
+#tooltip tr td{
+	padding:0;
+	margin:0;
+}
+#tooltip tr td:nth-child(1){
+	width:50px;
+}
+#tooltip tr td:nth-child(2){
+	text-align:center;
+}
+.axis {
+	font: 2px sans-serif;
+}
 
-	.axis path,
-	.axis line {
-		fill: none;
-		stroke: #000;
-		shape-rendering: crispEdges;
-		stroke-width: 0.1px;
-	}
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+	stroke-width: 0.1px;
+}
 
 
-	html {
-		overflow: hidden;
-		height: 100%;
-	}
-	
-	body {
-		height: 100%;
-		overflow: auto;
-		overflow-x: hidden;
-		
-	}
-	#header {
-		margin: 10px;
-	}
+html {
+	overflow: hidden;
+	height: 100%;
+}
+
+body {
+	height: 100%;
+	overflow: auto;
+	overflow-x: hidden;
+
+}
+#header {
+	margin: 10px;
+}
 
 .counties :hover {
 	opacity: 0.7;
@@ -135,49 +134,49 @@
 	border-radius: 2px;
 	pointer-events: none;
 }
-	#tooltip h4{
-		margin:0;
-		font-size:14px;
-	}
-	#tooltip{
-		background:rgba(0,0,0,0.9);
-		border:1px solid grey;
-		border-radius:5px;
-		font-size:12px;
-		width:auto;
-		padding:4px;
-		color:white;
-		opacity:0;
-	}
-	#tooltip table{
-		table-layout:fixed;
-	}
-	#tooltip tr td{
-		padding:0;
-		margin:0;
-	}
-	#tooltip tr td:nth-child(1){
-		width:50px;
-	}
-	#tooltip tr td:nth-child(2){
-		text-align:center;
-	}
-	.axis {
-		font: 2px sans-serif;
-	}
+#tooltip h4{
+	margin:0;
+	font-size:14px;
+}
+#tooltip{
+	background:rgba(0,0,0,0.9);
+	border:1px solid grey;
+	border-radius:5px;
+	font-size:12px;
+	width:auto;
+	padding:4px;
+	color:white;
+	opacity:0;
+}
+#tooltip table{
+	table-layout:fixed;
+}
+#tooltip tr td{
+	padding:0;
+	margin:0;
+}
+#tooltip tr td:nth-child(1){
+	width:50px;
+}
+#tooltip tr td:nth-child(2){
+	text-align:center;
+}
+.axis {
+	font: 2px sans-serif;
+}
 
-	.axis path,
-	.axis line {
-		fill: none;
-		stroke: #000;
-		shape-rendering: crispEdges;
-		stroke-width: 0.1px;
-	}
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+	stroke-width: 0.1px;
+}
 
-	.entry-wrap {
-		display: block;
-		padding: 60px;
-		background-color: #fff;
-		border-radius: 4px;
-		box-shadow: 0 0.15em 0.35em 0 rgba(0,0,0,0.135);
-	}
+.entry-wrap {
+	display: block;
+	padding: 60px;
+	background-color: #fff;
+	border-radius: 4px;
+	box-shadow: 0 0.15em 0.35em 0 rgba(0,0,0,0.135);
+}
