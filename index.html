@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>UMEC Gap Analysis Tool</title>
+		<link rel="stylesheet" href="/styles/styles.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/css/bootstrap-select.min.css">
+		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+		<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	</head>
+
+	<body>
+		<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #91B4BA;">
+			<a class="navbar-brand" href="/">
+				<img src="https://umec.utah.gov/wp-content/uploads/UMEC-logo-horizontal.png" height='50'>
+			</a>
+			<div class="navbar-collapse collapse" id="collapsingNavbar">
+				<ul class="navbar-nav ml-auto">
+					<li class="nav-item">
+						<a class="nav-link"  href="about.html">About</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+		<div class='container-fluid'>
+		<div id="tooltip"></div><!-- div to hold tooltip. -->
+
+				<div class = 'row'>
+						<div id = "mapContainer" class='col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-7'>
+					<div class = "row">
+					<select class = "selectpicker col-xs-5 col-sm-5 col-md-5 col-lg-5" id='year'>
+						<option value="2014">2014</option>
+						<option value="2015">2015</option>
+						<option value="2016">2016</option>
+						<option value="2017">2017</option>
+						<option value="2018">2018</option>
+						<option value="2019" selected>2019</option>
+						<option value="2020">2020</option>
+						<option value="2021">2021</option>
+						<option value="2022">2022</option>
+						<option value="2022">2023</option>
+						<option value="2022">2024</option>
+					</select>
+					<select class = "selectpicker col-xs-5 col-sm-5 col-md-5 col-lg-5 " id='mapData'>
+						<option value="supply_need" selected>Supply/Need</option>
+						<option value="supply_need_per_100K">Supply/Need per 100K</option>
+						<option value="population">Population</option>
+						<option value="supply_per_100k">Supply per 100K</option>
+						<option value="demand_per_100k">Demand per 100K</option>
+					</select>
+				</div>
+				<div class = "row">
+					<div id='map' >
+					</div>
+				</div>
+				<div class = "row">				
+					<div id='linechart'  ></div>
+					</div>
+				</div>
+				<div id="sidebar" class='col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-4'>
+					<div>
+						<h1>Counties</h1>
+						<div id='countiesHeader'>
+						</div>
+						<div id="counties" style='width: 510px; max-width: 510px; min-width: 510px; height: 600px; overflow: auto;  border-top: double;'>
+						</div>
+						
+					</div>
+					<div>
+						<h1>Professions</h1>
+						<button id = "selectAll" style="background-color: rgb(204, 204, 204);" type="button" class="btn btn-light btn-sm">Select All</button>
+
+						</div>
+						<div id='professionsHeader'>
+							</div>
+					<div id="professions" style='width: 510px;max-width: 510px; min-width: 510px;  border-top: double;'>
+					
+					</div>
+				</div>
+			</div>
+			</div>
+	
+
+	<script src="bundle.js"></script>
+	<script>
+		alert('The current model is based on dummy data.');
+	</script>
+</body>
+</html>
