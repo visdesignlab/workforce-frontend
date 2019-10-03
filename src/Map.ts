@@ -9,6 +9,7 @@ import {Linechart} from './linechart'
 class Map{
 	svg:any;
 	mapData:string;
+	mapType:string;
 	selectedCounty:string;
 	supplyScore:any;
 	selectedProfessions: any;
@@ -25,6 +26,7 @@ class Map{
 		this.linechart = new Linechart()
 		this.selectedCounty = 'State of Utah'
 		this.mapData = "supply_need";
+		this.mapType = 'counties';
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
 		this.supplyScore = {};
@@ -40,7 +42,8 @@ class Map{
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap(map = 'LHD'):void{
+	drawMap():void{
+		const map = this.mapType;
 			d3.json('../data/model-results.json').then((results)=> {
 				results = results[map];
 				this.svg.selectAll('*').remove();
@@ -246,21 +249,20 @@ class Map{
 					.scale(linear);
 
 		d3.select('g.legendLinear').call(legendLinear)	
-		d3.json("../data/UT-49-utah-counties.json").then((us)=> {
 			this.svg.select('g.counties').selectAll('path').each(function(d){
 				var selectedCounty:string = d.properties.NAME
 				d3.select(this).transition().duration(1000).attr('fill',colorScale(d,that,mapData));
 
 			});
 		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData,this.selectedCounty);
-		});
 	
 	}
 	/**
 	 * This handles when the user selects a new year
 	 * @param year this is the new year selected by the user
 	 */
-	updateMapYear(year:string, map = 'LHD'):void{
+	updateMapYear(year:string):void{
+		const map = this.mapType;
 		this.yearSelected = year;
 		d3.json('../data/model-results.json').then((results)=> {
 			results = results[map];
