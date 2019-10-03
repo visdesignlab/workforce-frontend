@@ -13,6 +13,7 @@ class Map{
 	selectedCounty:string;
 	supplyScore:any;
 	selectedProfessions: any;
+	results: any;
 	currentYearData : any;
 	yearSelected: string;
 	linechart:Linechart;
