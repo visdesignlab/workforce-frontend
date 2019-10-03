@@ -6,13 +6,12 @@ class MapEvents{
 	map: Map;
 	selectAll : boolean;
 	constructor(map:Map){
-
 		this.map = map;
 		this.selectAll=true;
 		this.updateYear();
 		this.updateType();
 		this.selectAllClicked();
-
+		this.changeMapType();
 	}
 	
 	updateYear():void{
@@ -62,6 +61,12 @@ class MapEvents{
 				this.map.updateSelections(this.map.selectedProfessions)
 			})}
 
+	changeMapType() {
+		d3.select("#mapType").on('change',()=>{
+			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
+			this.map.drawMap();
+		})
+	}
 
 }
 export{MapEvents}

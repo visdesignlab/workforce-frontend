@@ -9,9 +9,11 @@ import {Linechart} from './linechart'
 class Map{
 	svg:any;
 	mapData:string;
+	mapType:string;
 	selectedCounty:string;
 	supplyScore:any;
 	selectedProfessions: any;
+	results: any;
 	currentYearData : any;
 	yearSelected: string;
 	linechart:Linechart;
@@ -25,6 +27,7 @@ class Map{
 		this.linechart = new Linechart()
 		this.selectedCounty = 'State of Utah'
 		this.mapData = "supply_need";
+		this.mapType = 'counties';
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
 		this.supplyScore = {};
@@ -34,13 +37,17 @@ class Map{
 			.attr('width', 600)
 			.attr('height', 600);
 		this.drawMap()
+
+
 	}
 	/**
 	 * initial drawing of map.
 	 */
 	drawMap():void{
-			
+		const map = this.mapType;
 			d3.json('../data/model-results.json').then((results)=> {
+				results = results[map];
+				this.results = results;
 				this.svg.selectAll('*').remove();
 				this.currentYearData = results[this.yearSelected]
 				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
@@ -85,12 +92,12 @@ class Map{
 					return county['totalDemand'] / county['population'] * 100000;
 				};
 				let colorScale = (d)=>{
-					let county = d.properties.NAME + ' County';
+					let county = d.properties.NAME;
 					return d3.interpolateRdBu(this.supplyScore[county]);
 				}
 				let that:any = this				
 				d3.json("../data/UT-49-utah-counties.json").then((us)=> {
-					var topojsonFeatures = topojson.feature(us, us.objects.cb_2015_utah_county_20m);
+					var topojsonFeatures = topojson.feature(us, us.objects[map]);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
 					var projection = d3.geoAlbersUsa()
 						.scale(200)
@@ -103,30 +110,24 @@ class Map{
 						.attr("class", "counties")
 						.attr("transform", "translate(20,40)")
 						.selectAll("path")
-						.data(topojson.feature(us, us.objects.cb_2015_utah_county_20m).features)
+						.data(topojson.feature(us, us.objects[map]).features)
 						.enter().append("path")
 						.attr("d", path)
 						.attr('fill', colorScale)
 						.attr('stroke', 'black')
-						.on('click', function(d){
-						d3.selectAll('path').classed('selected', false);
-							d3.select(this).classed('selected', true);
-							that.selectedCounty = d.properties.NAME + ' County';
-							//TODO
-							//update sidebar/linechart when we click on a county
-							that.linechart.initLineChart(results, that.selectedCounty);
-							that.sidebar.initSideBar(that.selectedProfessions, that.currentYearData, that.selectedCounty);
+						.on('click', (d) => {
+							this.highlightPath(d.properties.NAME);
 						}) 
 						.on("mouseover", (d)=>{
 		
 							var f = d3.format(".2f");
-							const supplyDemandRatio = f(2 *this.supplyScore[d.properties.NAME + ' County']);
-							const population = this.currentYearData[d.properties.NAME + ' County']['population'];
+							const supplyDemandRatio = f(2 *this.supplyScore[d.properties.NAME]);
+							const population = this.currentYearData[d.properties.NAME]['population'];
 							const supplyPer100k = d3.format('.0f')(
-							this.currentYearData[d.properties.NAME + ' County']['totalSupply'] / population * 100000);
+							this.currentYearData[d.properties.NAME]['totalSupply'] / population * 100000);
 							const demandPer100k = d3.format('.0f')(
-								this.currentYearData[d.properties.NAME + ' County']['totalDemand'] / population * 100000);
-							var toolTip = "<h4>"+d.properties.NAME+" County</h4><table>"+
+								this.currentYearData[d.properties.NAME]['totalDemand'] / population * 100000);
+							var toolTip = "<h4>"+d.properties.NAME+"</h4><table>"+
 							"<tr><td>Supply/Need:</td><td>"+(supplyDemandRatio)+"</td></tr>"+
 							"<tr><td>Population:</td><td>"+(population)+"</td></tr>"+
 							"<tr><td>Supply/100K:</td><td>"+(supplyPer100k)+"</td></tr>"+
@@ -143,9 +144,10 @@ class Map{
 					this.svg.append("path")
 						.attr("class", "county-borders")
 						.attr("transform", "translate(20,40)")
-						.attr("d", path(topojson.mesh(us, us.objects.cb_2015_utah_county_20m, function(a, b) { return a !== b; })));
-		
-		
+						.attr("d", path(topojson.mesh(us, us.objects[map], function(a, b) { return a !== b; })));
+
+
+
 					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData);
 					this.linechart.initLineChart(results);
 				});
@@ -197,7 +199,7 @@ class Map{
 	 * @param mapData current map type that is selected
 	 */
 	myColorScale(d,that,mapData){
-		let county = d.properties.NAME + ' County';
+		let county = d.properties.NAME;
 		if (mapData == 'supply_need') {
 			return d3.interpolateRdBu(that.supplyScore[county]);
 		} else if (mapData == 'supply_need_per_100K') {
@@ -243,13 +245,12 @@ class Map{
 					.scale(linear);
 
 		d3.select('g.legendLinear').call(legendLinear)	
-		d3.json("../data/UT-49-utah-counties.json").then((us)=> {
 			this.svg.select('g.counties').selectAll('path').each(function(d){
-				var selectedCounty:string = d.properties.NAME + ' County'
+				var selectedCounty:string = d.properties.NAME
 				d3.select(this).transition().duration(1000).attr('fill',colorScale(d,that,mapData));
+
 			});
 		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData,this.selectedCounty);
-		});
 	
 	}
 	/**
@@ -257,8 +258,10 @@ class Map{
 	 * @param year this is the new year selected by the user
 	 */
 	updateMapYear(year:string):void{
+		const map = this.mapType;
 		this.yearSelected = year;
 		d3.json('../data/model-results.json').then((results)=> {
+			results = results[map];
 			this.currentYearData = results[this.yearSelected]
 				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
 				for (let county in this.currentYearData) {
@@ -288,6 +291,19 @@ class Map{
 	}
 	mouseOut(){
 		d3.select("#tooltip").transition().duration(500).style("opacity", 0);      
+	}
+
+	highlightPath(name:string) {
+		d3.selectAll('path').classed('selected', false);
+		this.selectedCounty = name;
+		this.linechart.initLineChart(this.results, this.selectedCounty);
+		this.sidebar.initSideBar(this.selectedProfessions,
+			this.currentYearData, this.selectedCounty);
+
+		// should be moved it id-based paths
+		d3.select('svg .counties').selectAll('path')
+			.filter(d => d.properties.NAME == name)
+			.classed('selected', true);
 	}
 
 }

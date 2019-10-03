@@ -74,12 +74,18 @@ class Sidebar {
 			.data(countiesData.sort(sortingFunction))
 			.enter()
 			.append('g')
-			.attr('transform', (d, i) => `translate(0, ${i * barHeight})`);
+			.attr('transform', (d, i) => `translate(0, ${i * barHeight})`)
+			.attr('class','pointerCursor')
 
 		groups.append('rect')
 			.attr('width', 4 * barWidth)
 			.attr('height', barHeight)
-			.attr('fill', (d) => d[0] == selectedCounty ? '#cccccc' : 'none')
+			.attr('id', d => d[0].replace(/\s/g, ''))
+			.attr('fill', (d) => d[0] == selectedCounty ? '#cccccc' : '#ffffff')
+
+		groups.on('click', (d) => {
+				this.highlightRect(d[0]);
+			});
 
 		var groupsHeaders = this.countiesHeaderSvg
 			.append('g')
@@ -472,6 +478,18 @@ class Sidebar {
 			}
 			return sortingFunction;
 		}
+	}
+
+	highlightRect(id) {
+		this.map.highlightPath(id);
+		id = id.replace(/\s/g, '');
+
+		this.countiesSvg.selectAll('rect')
+			.attr('fill', '#ffffff');
+
+		this.countiesSvg.select(`#${id}`)
+			.attr('fill', '#cccccc');
+
 	}
 }
 
