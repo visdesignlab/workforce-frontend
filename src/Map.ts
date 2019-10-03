@@ -46,6 +46,7 @@ class Map{
 		const map = this.mapType;
 			d3.json('../data/model-results.json').then((results)=> {
 				results = results[map];
+				this.results = results;
 				this.svg.selectAll('*').remove();
 				this.currentYearData = results[this.yearSelected]
 				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
@@ -113,14 +114,8 @@ class Map{
 						.attr("d", path)
 						.attr('fill', colorScale)
 						.attr('stroke', 'black')
-						.on('click', function(d){
-						d3.selectAll('path').classed('selected', false);
-							d3.select(this).classed('selected', true);
-							that.selectedCounty = d.properties.NAME;
-							//TODO
-							//update sidebar/linechart when we click on a county
-							that.linechart.initLineChart(results, that.selectedCounty);
-							that.sidebar.initSideBar(that.selectedProfessions, that.currentYearData, that.selectedCounty);
+						.on('click', (d) => {
+							this.highlightPath(d.properties.NAME);
 						}) 
 						.on("mouseover", (d)=>{
 		
@@ -295,6 +290,19 @@ class Map{
 	}
 	mouseOut(){
 		d3.select("#tooltip").transition().duration(500).style("opacity", 0);      
+	}
+
+	highlightPath(name:string) {
+		d3.selectAll('path').classed('selected', false);
+		this.selectedCounty = name;
+		this.linechart.initLineChart(this.results, this.selectedCounty);
+		this.sidebar.initSideBar(this.selectedProfessions,
+			this.currentYearData, this.selectedCounty);
+
+		// should be moved it id-based paths
+		d3.select('svg .counties').selectAll('path')
+			.filter(d => d.properties.NAME == name)
+			.classed('selected', true);
 	}
 
 }
