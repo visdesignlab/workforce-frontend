@@ -40,10 +40,9 @@ class Map{
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap():void{
-			
+	drawMap(map = 'LHD'):void{
 			d3.json('../data/model-results.json').then((results)=> {
-				results = results['LHD'];
+				results = results[map];
 				this.svg.selectAll('*').remove();
 				this.currentYearData = results[this.yearSelected]
 				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
@@ -93,7 +92,7 @@ class Map{
 				}
 				let that:any = this				
 				d3.json("../data/UT-49-utah-counties.json").then((us)=> {
-					var topojsonFeatures = topojson.feature(us, us.objects.LHD);
+					var topojsonFeatures = topojson.feature(us, us.objects[map]);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
 					var projection = d3.geoAlbersUsa()
 						.scale(200)
@@ -106,7 +105,7 @@ class Map{
 						.attr("class", "counties")
 						.attr("transform", "translate(20,40)")
 						.selectAll("path")
-						.data(topojson.feature(us, us.objects.LHD).features)
+						.data(topojson.feature(us, us.objects[map]).features)
 						.enter().append("path")
 						.attr("d", path)
 						.attr('fill', colorScale)
@@ -146,7 +145,8 @@ class Map{
 					this.svg.append("path")
 						.attr("class", "county-borders")
 						.attr("transform", "translate(20,40)")
-						.attr("d", path(topojson.mesh(us, us.objects.LHD, function(a, b) { return a !== b; })));
+						.attr("d", path(topojson.mesh(us, us.objects[map], function(a, b) { return a !== b; })));
+
 
 
 					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData);
