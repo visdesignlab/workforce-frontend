@@ -260,9 +260,10 @@ class Map{
 	 * This handles when the user selects a new year
 	 * @param year this is the new year selected by the user
 	 */
-	updateMapYear(year:string):void{
+	updateMapYear(year:string, map = 'LHD'):void{
 		this.yearSelected = year;
 		d3.json('../data/model-results.json').then((results)=> {
+			results = results[map];
 			this.currentYearData = results[this.yearSelected]
 				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
 				for (let county in this.currentYearData) {
