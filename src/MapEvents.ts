@@ -7,7 +7,7 @@ class MapEvents{
 	selectAll : boolean;
 	constructor(map:Map){
 		this.map = map;
-		this.selectAll=true;
+		this.selectAll=false;
 		this.updateYear();
 		this.updateType();
 		this.selectAllClicked();
@@ -50,7 +50,7 @@ class MapEvents{
 
 				Object.keys(this.map.selectedProfessions).forEach(profession => {
 						this.map.selectedProfessions[profession] = false;
-						d3.select("#" + profession)
+						d3.selectAll("#" + profession)
 							.select('rect')
 							.attr('fill', '#ffffff');
 		
