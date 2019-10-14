@@ -279,12 +279,11 @@ class Map{
 						this.currentYearData[county]['totalDemand'] = totalDemand;
 						this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
 						this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
-						this.supplyScore[county] = (totalSupply / totalDemand) / 2;
+						this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
 				}
-		});
-		//after we update the year, we then update the map
 		this.updateMapType(this.mapData);
-	}
+		});
+		}
 	updateSelections(selectedProfessions:any){
 		this.selectedProfessions = selectedProfessions;
 		this.updateMapYear(this.yearSelected)
