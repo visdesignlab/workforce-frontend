@@ -12,6 +12,7 @@ class MapEvents{
 		this.updateType();
 		this.selectAllClicked();
 		this.changeMapType();
+		this.changeModelData();
 	}
 	
 	updateYear():void{
@@ -64,6 +65,14 @@ class MapEvents{
 	changeMapType() {
 		d3.select("#mapType").on('change',()=>{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
+			this.map.drawMap();
+		})
+	}
+
+	changeModelData() {
+		d3.select("#modelData").on('change',()=>{
+			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
+			this.map.modelData = (document.getElementById('modelData') as HTMLInputElement).value;
 			this.map.drawMap();
 		})
 	}

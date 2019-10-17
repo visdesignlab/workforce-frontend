@@ -10,6 +10,7 @@ class Map{
 	svg:any;
 	mapData:string;
 	mapType:string;
+	modelData:string;
 	selectedCounty:string;
 	supplyScore:any;
 	selectedProfessions: any;
@@ -28,6 +29,7 @@ class Map{
 		this.selectedCounty = 'State of Utah'
 		this.mapData = "supply_need";
 		this.mapType = 'counties';
+		this.modelData = 'model1';
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
 		this.supplyScore = {};
@@ -45,7 +47,8 @@ class Map{
 	 */
 	drawMap():void{
 		const map = this.mapType;
-			d3.json('../data/model-results.json').then((results)=> {
+		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
+		d3.json(`../data/${modelFile}`).then((results)=> {
 				results = results[map];
 				this.results = results;
 				this.svg.selectAll('*').remove();
