@@ -56704,7 +56704,7 @@ var Map = /** @class */ (function () {
         var _this = this;
         var map = this.mapType;
         var modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
-        d3.json("./data/" + modelFile).then(function (results) {
+        d3.json("../data/" + modelFile).then(function (results) {
             results = results[map];
             _this.results = results;
             _this.svg.selectAll('*').remove();
@@ -56754,7 +56754,7 @@ var Map = /** @class */ (function () {
                 return d3.interpolateRdBu(_this.supplyScore[county]);
             };
             var that = _this;
-            d3.json("./data/UT-49-utah-counties.json").then(function (us) {
+            d3.json("../data/UT-49-utah-counties.json").then(function (us) {
                 var topojsonFeatures = topojson.feature(us, us.objects[map]);
                 var mapCenter = d3.geoCentroid(topojsonFeatures);
                 var projection = d3.geoAlbersUsa()
@@ -56904,7 +56904,7 @@ var Map = /** @class */ (function () {
         var _this = this;
         var map = this.mapType;
         this.yearSelected = year;
-        d3.json('./data/model-results.json').then(function (results) {
+        d3.json('../data/model-results.json').then(function (results) {
             results = results[map];
             _this.currentYearData = results[_this.yearSelected];
             var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
