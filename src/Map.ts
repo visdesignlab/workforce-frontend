@@ -10,6 +10,7 @@ class Map{
 	svg:any;
 	mapData:string;
 	mapType:string;
+	modelData:string;
 	selectedCounty:string;
 	supplyScore:any;
 	selectedProfessions: any;
@@ -28,6 +29,7 @@ class Map{
 		this.selectedCounty = 'State of Utah'
 		this.mapData = "supply_need";
 		this.mapType = 'counties';
+		this.modelData = 'model1';
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
 		this.supplyScore = {};
@@ -45,7 +47,8 @@ class Map{
 	 */
 	drawMap():void{
 		const map = this.mapType;
-			d3.json('../data/model-results.json').then((results)=> {
+		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
+		d3.json(`../data/${modelFile}`).then((results)=> {
 				results = results[map];
 				this.results = results;
 				this.svg.selectAll('*').remove();
@@ -279,12 +282,11 @@ class Map{
 						this.currentYearData[county]['totalDemand'] = totalDemand;
 						this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
 						this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
-						this.supplyScore[county] = (totalSupply / totalDemand) / 2;
+						this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
 				}
-		});
-		//after we update the year, we then update the map
 		this.updateMapType(this.mapData);
-	}
+		});
+		}
 	updateSelections(selectedProfessions:any){
 		this.selectedProfessions = selectedProfessions;
 		this.updateMapYear(this.yearSelected)

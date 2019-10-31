@@ -7,11 +7,12 @@ class MapEvents{
 	selectAll : boolean;
 	constructor(map:Map){
 		this.map = map;
-		this.selectAll=true;
+		this.selectAll=false;
 		this.updateYear();
 		this.updateType();
 		this.selectAllClicked();
 		this.changeMapType();
+		this.changeModelData();
 	}
 	
 	updateYear():void{
@@ -50,7 +51,7 @@ class MapEvents{
 
 				Object.keys(this.map.selectedProfessions).forEach(profession => {
 						this.map.selectedProfessions[profession] = false;
-						d3.select("#" + profession)
+						d3.selectAll("#" + profession)
 							.select('rect')
 							.attr('fill', '#ffffff');
 		
@@ -64,6 +65,14 @@ class MapEvents{
 	changeMapType() {
 		d3.select("#mapType").on('change',()=>{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
+			this.map.drawMap();
+		})
+	}
+
+	changeModelData() {
+		d3.select("#modelData").on('change',()=>{
+			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
+			this.map.modelData = (document.getElementById('modelData') as HTMLInputElement).value;
 			this.map.drawMap();
 		})
 	}

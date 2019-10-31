@@ -81,6 +81,7 @@ class Sidebar {
 			.attr('width', 4 * barWidth)
 			.attr('height', barHeight)
 			.attr('id', d => d[0].replace(/\s/g, ''))
+			.attr('class', 'background')
 			.attr('fill', (d) => d[0] == selectedCounty ? '#cccccc' : '#ffffff')
 
 		groups.on('click', (d) => {
@@ -484,7 +485,7 @@ class Sidebar {
 		this.map.highlightPath(id);
 		id = id.replace(/\s/g, '');
 
-		this.countiesSvg.selectAll('rect')
+		this.countiesSvg.selectAll('.background')
 			.attr('fill', '#ffffff');
 
 		this.countiesSvg.select(`#${id}`)
