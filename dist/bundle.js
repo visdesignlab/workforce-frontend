@@ -56686,6 +56686,7 @@ var Map = /** @class */ (function () {
         this.selectedCounty = 'State of Utah';
         this.mapData = "supply_need";
         this.mapType = 'counties';
+        this.modelData = 'model1';
         this.yearSelected = document.getElementById('year').value;
         this.currentYearData = {};
         this.supplyScore = {};
@@ -56702,7 +56703,8 @@ var Map = /** @class */ (function () {
     Map.prototype.drawMap = function () {
         var _this = this;
         var map = this.mapType;
-        d3.json('./data/model-results.json').then(function (results) {
+        var modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
+        d3.json("./data/" + modelFile).then(function (results) {
             results = results[map];
             _this.results = results;
             _this.svg.selectAll('*').remove();
@@ -56922,11 +56924,10 @@ var Map = /** @class */ (function () {
                 _this.currentYearData[county]['totalDemand'] = totalDemand;
                 _this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
                 _this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
-                _this.supplyScore[county] = (totalSupply / totalDemand) / 2;
+                _this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
             }
+            _this.updateMapType(_this.mapData);
         });
-        //after we update the year, we then update the map
-        this.updateMapType(this.mapData);
     };
     Map.prototype.updateSelections = function (selectedProfessions) {
         this.selectedProfessions = selectedProfessions;
@@ -56966,11 +56967,12 @@ var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
 var MapEvents = /** @class */ (function () {
     function MapEvents(map) {
         this.map = map;
-        this.selectAll = true;
+        this.selectAll = false;
         this.updateYear();
         this.updateType();
         this.selectAllClicked();
         this.changeMapType();
+        this.changeModelData();
     }
     MapEvents.prototype.updateYear = function () {
         var _this = this;
@@ -57004,7 +57006,7 @@ var MapEvents = /** @class */ (function () {
                 d3.select("#selectAll").transition().text('Select All');
                 Object.keys(_this.map.selectedProfessions).forEach(function (profession) {
                     _this.map.selectedProfessions[profession] = false;
-                    d3.select("#" + profession)
+                    d3.selectAll("#" + profession)
                         .select('rect')
                         .attr('fill', '#ffffff');
                 });
@@ -57017,6 +57019,14 @@ var MapEvents = /** @class */ (function () {
         var _this = this;
         d3.select("#mapType").on('change', function () {
             _this.map.mapType = document.getElementById('mapType').value;
+            _this.map.drawMap();
+        });
+    };
+    MapEvents.prototype.changeModelData = function () {
+        var _this = this;
+        d3.select("#modelData").on('change', function () {
+            _this.map.mapType = document.getElementById('mapType').value;
+            _this.map.modelData = document.getElementById('modelData').value;
             _this.map.drawMap();
         });
     };
@@ -57045,6 +57055,7 @@ var Linechart = /** @class */ (function () {
         this.height = 200;
         this.margin = { top: 20, right: 20, bottom: 40, left: 40 };
         this.lineChartSvg = d3.select('#linechart').append("svg").attr("width", 800).attr('height', 800);
+        this.clipPathID = 0;
     }
     Linechart.prototype.initLineChart = function (results, selectedCounty) {
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
@@ -57070,7 +57081,7 @@ var Linechart = /** @class */ (function () {
             max = d3.max([d3.max(demand), d3.max(supply), max]);
         }
         for (var i in supply_demand) {
-            this.createLineChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
+            this.createAreaChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
         }
     };
     Linechart.prototype.createLineChart = function (results, supply, demand, profession, max, xi, yi) {
@@ -57118,6 +57129,103 @@ var Linechart = /** @class */ (function () {
             .attr("stroke", "#086fad")
             .style("mix-blend-mode", "multiply")
             .attr("d", function (d) { return line(d); });
+        this.data.series = demand;
+        chartgroup
+            .append("path")
+            .attr("stroke-dasharray", ("3, 3"))
+            .datum(this.data.series)
+            .attr("stroke", "#c7001e")
+            .style("mix-blend-mode", "multiply")
+            .attr("d", function (d) { return line(d); });
+    };
+    Linechart.prototype.createAreaChart = function (results, supply, demand, profession, max, xi, yi) {
+        var _this = this;
+        if (xi === void 0) { xi = 0; }
+        if (yi === void 0) { yi = 0; }
+        this.data.dates = Object.keys(results);
+        this.data.series = demand;
+        var x = d3.scaleLinear()
+            .domain(d3.extent(this.data.dates))
+            .range([this.margin.left, this.width - this.margin.right]);
+        var y = d3.scaleLinear()
+            .domain([0, d3.max([max, d3.max(demand), d3.max(supply)])]).nice()
+            .range([this.height - this.margin.bottom, this.margin.top]);
+        var xAxis = function (g) { return g
+            .attr("transform", "translate(0," + (_this.height - _this.margin.bottom) + ")")
+            .call(d3.axisBottom(x).ticks(4).tickSize(1.5).tickFormat(d3.format(".0f"))); };
+        var yAxis = function (g) { return g
+            .attr("transform", "translate(" + _this.margin.left + ",0)")
+            .call(d3.axisLeft(y).tickSize(1.5).tickFormat(d3.format(".2s"))); };
+        var line = d3.line()
+            .x(function (d, i) { return x(_this.data.dates[i]); })
+            .y(function (d) { return y(d); });
+        var lineChartGroup = this.lineChartSvg.append('g')
+            .attr('transform', "translate(" + xi * this.width + ", " + yi * this.height + ")");
+        lineChartGroup.append('text')
+            .attr("x", (this.width / 2))
+            .attr("y", (this.margin.top))
+            .attr("text-anchor", "middle")
+            .style("font-size", "16px")
+            .text(profession);
+        this.data.dates = Object.keys(results);
+        this.data.series = supply;
+        lineChartGroup.append("g")
+            .call(xAxis);
+        lineChartGroup.append("g")
+            .call(yAxis);
+        var aboveUid = 'above' + this.clipPathID;
+        ;
+        var belowUid = 'below' + this.clipPathID;
+        ;
+        this.clipPathID += 1;
+        var colors = ['#086fad', '#c7001e'];
+        var curve = d3.curveStep;
+        var chartgroup = lineChartGroup.append("g")
+            .attr("fill", "none")
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-linecap", "round");
+        chartgroup
+            .append("path")
+            .datum(this.data.series)
+            .attr("stroke", "#086fad")
+            .style("mix-blend-mode", "multiply")
+            .attr("d", function (d) { return line(d); });
+        chartgroup.append("clipPath")
+            .datum(this.data.series)
+            .attr("id", aboveUid)
+            .append("path")
+            .attr("d", d3.area()
+            .curve(curve)
+            .x(function (d, i) { return x(_this.data.dates[i]); })
+            .y0(this.height)
+            .y1(function (d) { return y(d); }));
+        chartgroup.append("clipPath")
+            .datum(this.data.series)
+            .attr("id", belowUid)
+            .append("path")
+            .attr("d", d3.area()
+            .curve(curve)
+            .x(function (d, i) { return x(_this.data.dates[i]); })
+            .y0(0)
+            .y1(function (d) { return y(d); }));
+        chartgroup.append("path")
+            .datum(demand)
+            .attr('clip-path', "url(#" + belowUid + ")")
+            .attr("fill", colors[1])
+            .attr("d", d3.area()
+            .curve(curve)
+            .x(function (d, i) { return x(_this.data.dates[i]); })
+            .y0(this.height)
+            .y1(function (d) { return y(d); }));
+        chartgroup.append("path")
+            .datum(demand)
+            .attr('clip-path', "url(#" + aboveUid + ")")
+            .attr("fill", colors[0])
+            .attr("d", d3.area()
+            .curve(curve)
+            .x(function (d, i) { return x(_this.data.dates[i]); })
+            .y0(0)
+            .y1(function (d) { return y(d); }));
         this.data.series = demand;
         chartgroup
             .append("path")
@@ -57212,6 +57320,7 @@ var Sidebar = /** @class */ (function () {
             .attr('width', 4 * barWidth)
             .attr('height', barHeight)
             .attr('id', function (d) { return d[0].replace(/\s/g, ''); })
+            .attr('class', 'background')
             .attr('fill', function (d) { return d[0] == selectedCounty ? '#cccccc' : '#ffffff'; });
         groups.on('click', function (d) {
             _this.highlightRect(d[0]);
@@ -57575,7 +57684,7 @@ var Sidebar = /** @class */ (function () {
     Sidebar.prototype.highlightRect = function (id) {
         this.map.highlightPath(id);
         id = id.replace(/\s/g, '');
-        this.countiesSvg.selectAll('rect')
+        this.countiesSvg.selectAll('.background')
             .attr('fill', '#ffffff');
         this.countiesSvg.select("#" + id)
             .attr('fill', '#cccccc');
