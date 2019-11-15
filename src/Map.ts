@@ -45,7 +45,7 @@ class Map{
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap(customModel):void{
+	drawMap(customModel = true):void{
 			d3.select('#spinner')
 				.classed('d-flex', true)
 		console.log( this.selectedCounty) 
