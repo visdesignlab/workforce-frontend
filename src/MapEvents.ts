@@ -13,6 +13,7 @@ class MapEvents{
 		this.selectAllClicked();
 		this.changeMapType();
 		this.changeModelData();
+		this.runCustomModel();
 	}
 	
 	updateYear():void{
@@ -74,6 +75,12 @@ class MapEvents{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			this.map.modelData = (document.getElementById('modelData') as HTMLInputElement).value;
 			this.map.drawMap();
+		})
+	}
+
+	runCustomModel() {
+		d3.select("#runModel").on('click',()=>{
+			this.map.drawMap(true);
 		})
 	}
 

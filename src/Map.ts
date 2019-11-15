@@ -45,15 +45,53 @@ class Map{
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap():void{
+	drawMap(customModel):void{
+			d3.select('#spinner')
+				.classed('d-flex', true)
+		console.log( this.selectedCounty) 
+		console.log( this.yearSelected) 
 		const map = this.mapType;
 		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
-		d3.json(`../data/${modelFile}`).then((results)=> {
+		const serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
+		const option = (document.getElementById('customModel') as HTMLInputElement).value;
+		console.log( option) 
+		let request = {
+			method:"POST",
+			mode: "cors",
+			body: JSON.stringify({
+				"geo": this.selectedCounty,
+				"year": this.yearSelected,
+				"option": option,
+				"sub_option":"all_combination",
+				"wage_max":"0",
+				"wage_weight":"0"
+			}),
+			headers: {
+				"Content-type": "application/json; charset=UTF-8"
+			}
+		};
+		let promise;
+		if (!customModel) {
+			promise = d3.json(`../data/${modelFile}`);
+		}
+		else {
+			promise = d3.json(serverUrl, request);
+		}
+
+		promise.then((results)=> {
+			console.log( results) 
+			d3.select('#spinner')
+				.classed('d-flex', false)
+				.style('display', 'none');
+			if (!customModel) {
 				results = results[map];
 				this.results = results;
-				this.svg.selectAll('*').remove();
-				this.currentYearData = results[this.yearSelected]
-				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
+			} else {
+				this.results[this.yearSelected][this.selectedCounty].demand = results.result.demand['w_0.1'] || results.result.demand;
+			}
+			this.svg.selectAll('*').remove();
+			this.currentYearData = this.results[this.yearSelected]
+			var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
 				for(let profession in professions){
 				}
 				for (let county in this.currentYearData) {
@@ -152,7 +190,7 @@ class Map{
 
 
 					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData);
-					this.linechart.initLineChart(results);
+					this.linechart.initLineChart(this.results);
 				});
 		
 		
