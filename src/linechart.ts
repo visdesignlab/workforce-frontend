@@ -11,7 +11,7 @@ class Linechart{
 	this.width = 200;
 	this.height = 200
 	this.margin = {top: 20, right: 20, bottom: 40, left: 40};
-	this.lineChartSvg = d3.select('#linechart').append("svg").attr("width", 800).attr('height', 800);
+	this.lineChartSvg = d3.select('#linechart').append("svg").attr("width", 600).attr('height', 800);
 	this.clipPathID = 0;
 
 	}
@@ -130,7 +130,7 @@ class Linechart{
 
 		var yAxis = g => g
 			.attr("transform", `translate(${this.margin.left},0)`)
-			.call(d3.axisLeft(y).tickSize(1.5).tickFormat(d3.format(".2s")))
+			.call(d3.axisLeft(y).ticks(5).tickSize(1.5).tickFormat(d3.format(".2s")))
 
 		var line = d3.line()
 			.x((d, i) => x(this.data.dates[i]))

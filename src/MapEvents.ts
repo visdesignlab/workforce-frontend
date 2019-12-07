@@ -5,8 +5,10 @@ import {Map} from './Map'
 class MapEvents{
 	map: Map;
 	selectAll : boolean;
-	constructor(map:Map){
+	id: number;
+	constructor(map:Map, id = 0){
 		this.map = map;
+		this.id = id;
 		this.selectAll=false;
 		this.updateYear();
 		this.updateType();
@@ -26,7 +28,7 @@ class MapEvents{
 	}
 
 	updateType():void{
-		d3.select("#mapData").on('change',()=>{
+		document.getElementById("mapData").addEventListener('change',()=>{
 			let mapData:string = (document.getElementById('mapData') as HTMLInputElement).value;
 			this.map.updateMapType(mapData)
 		})
@@ -64,17 +66,23 @@ class MapEvents{
 			})}
 
 	changeMapType() {
-		d3.select("#mapType").on('change',()=>{
+		document.getElementById("mapType").addEventListener('change',()=>{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			this.map.drawMap();
 		})
 	}
 
 	changeModelData() {
-		d3.select("#modelData").on('change',()=>{
+		document.getElementById("modelData").addEventListener('change',()=>{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
-			this.map.modelData = (document.getElementById('modelData') as HTMLInputElement).value;
-			this.map.drawMap();
+			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
+
+			if (selectedOptions[this.id]) {
+				this.map.modelData = selectedOptions[this.id].value;
+				this.map.drawMap();
+			} else {
+				this.map.destroy();
+			}
 		})
 	}
 

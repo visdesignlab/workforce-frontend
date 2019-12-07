@@ -8,6 +8,7 @@ import {Linechart} from './linechart'
  */
 class Map{
 	svg:any;
+	map: Map;
 	mapData:string;
 	mapType:string;
 	modelData:string;
@@ -16,6 +17,7 @@ class Map{
 	selectedProfessions: any;
 	results: any;
 	currentYearData : any;
+	otherCurrentYearData : any;
 	yearSelected: string;
 	linechart:Linechart;
 	sidebar:Sidebar;
@@ -32,29 +34,29 @@ class Map{
 		this.modelData = 'model1';
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
+		this.otherCurrentYearData = {};
 		this.supplyScore = {};
 		this.sidebar = new Sidebar(this);
 		this.svg = d3.select("#map")
 			.append('svg')
 			.attr('width', 600)
-			.attr('height', 600);
-		this.drawMap()
+			.attr('height', 600)
+			.attr('transform', 'translate(0,0)');
+	}
 
-
+	destroy() {
+		this.svg.selectAll('*').remove();
 	}
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap(customModel = true):void{
+	drawMap(customModel = false, initSidebar = true, otherCurrentYearData):void{
 			d3.select('#spinner')
 				.classed('d-flex', true)
-		console.log( this.selectedCounty) 
-		console.log( this.yearSelected) 
 		const map = this.mapType;
 		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
 		const serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
 		const option = (document.getElementById('customModel') as HTMLInputElement).value;
-		console.log( option) 
 		let request = {
 			method:"POST",
 			mode: "cors",
@@ -79,7 +81,6 @@ class Map{
 		}
 
 		promise.then((results)=> {
-			console.log( results) 
 			d3.select('#spinner')
 				.classed('d-flex', false)
 				.style('display', 'none');
@@ -143,7 +144,7 @@ class Map{
 					var projection = d3.geoAlbersUsa()
 						.scale(200)
 						.translate(300,300);
-					projection = d3.geoMercator().scale(4000).translate([600/2, 600/2])
+					projection = d3.geoMercator().scale(4000).translate([400/2, 600/2])
 					projection.center(mapCenter);
 					var path = d3.geoPath(projection);
 		
@@ -188,13 +189,11 @@ class Map{
 						.attr("d", path(topojson.mesh(us, us.objects[map], function(a, b) { return a !== b; })));
 
 
-
-					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData);
+						if (this.map)
+							this.otherCurrentYearData = this.map.currentYearData;
+						this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 					this.linechart.initLineChart(this.results);
 				});
-		
-		
-
 		});
 	}
 	/**
@@ -291,7 +290,7 @@ class Map{
 				d3.select(this).transition().duration(1000).attr('fill',colorScale(d,that,mapData));
 
 			});
-		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData,this.selectedCounty);
+		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 	
 	}
 	/**
@@ -337,8 +336,7 @@ class Map{
 		d3.selectAll('path').classed('selected', false);
 		this.selectedCounty = name;
 		this.linechart.initLineChart(this.results, this.selectedCounty);
-		this.sidebar.initSideBar(this.selectedProfessions,
-			this.currentYearData, this.selectedCounty);
+		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 
 		// should be moved it id-based paths
 		d3.select('svg .counties').selectAll('path')

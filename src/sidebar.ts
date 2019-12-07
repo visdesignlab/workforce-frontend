@@ -20,15 +20,23 @@ class Sidebar {
 		this.professionsLastSelected = "";
 		this.professionsLastLastSelected = "";
 		
-		this.countiesSvg = d3.select('#counties')
-			.append('svg')
-			.attr('height', 1120)
-			.attr("style","width:100%;")
+		this.countiesSvg = d3.select('#counties').select('svg');
 
-		this.professionsSvg = d3.select('#professions')
-			.append('svg')
-			.attr('height', 700)
-			.attr("style","width:100%;")
+		if (!this.countiesSvg.node()) {
+			this.countiesSvg = d3.select('#counties')
+				.append('svg')
+				.attr('height', 1120)
+				.attr("style","width:100%;")
+		}
+
+		this.professionsSvg = d3.select('#professions').select('svg');
+
+		if (!this.professionsSvg.node()) {
+			this.professionsSvg = d3.select('#professions')
+				.append('svg')
+				.attr('height', 700)
+				.attr("style","width:100%;")
+		}
 		this.countiesHeaderSvg = d3.select('#countiesHeader')
 			.append('svg')
 			.attr('height', 50)
@@ -37,7 +45,7 @@ class Sidebar {
 
 	}
 
-	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah') {
+	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []) {
 		this.selectedProfessions = selectedProfessions;
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
@@ -61,10 +69,12 @@ class Sidebar {
 		let countiesData = [];
 		for (let county in currentYear) {
 			let d = currentYear[county];
+			let e = otherCurrentYearData[county] || {};
 			if (mapData.includes('100')) {
-				countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K]);
+				countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K,
+				e.totalSupplyPer100K, e.totalDemandPer100K, e.totalDemandPer100K - e.totalSupplyPer100K]);
 			} else {
-				countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply]);
+				countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply, e.totalSupply, e.totalDemand, e.totalDemand - e.totalSupply]);
 			}
 		};
 		var sortingFunction = this.getSortingOptions(0, true);
@@ -111,9 +121,9 @@ class Sidebar {
 		groups.call(this.drawText, 1,  50+barWidth);
 		groups.call(this.drawText, 2,  2 * barWidth);
 		if (mapData.includes('100')) {
-			groups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+			groups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		} else {
-			groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
+			groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2);
 		}
 		
 		d3.selectAll('#sortCounties .rectButtons')
@@ -171,8 +181,9 @@ class Sidebar {
 		var stats = {}
 
 		for (let prof of professions) {
-				stats[prof] = {totalDemandPer100K:0,totalSupplyPer100K:0,totalSupply: 0, totalDemand: 0};
-			}
+			stats[prof] = {totalDemandPer100K:0,totalSupplyPer100K:0,totalSupply: 0, totalDemand: 0,
+				otherTotalDemandPer100K:0,otherTotalSupplyPer100K:0,otherTotalSupply: 0, otherTotalDemand: 0};
+		}
 		
 		const f = d3.format('.0f');
 		for (let prof of professions) {
@@ -180,14 +191,21 @@ class Sidebar {
 			stats[prof].totalDemand += currentYear[selectedCounty]['demand'][prof];
 			stats[prof].totalSupplyPer100K = Number(f(stats[prof].totalSupply / population * 100000));
 			stats[prof].totalDemandPer100K = Number(f(stats[prof].totalDemand / population * 100000));
+			if (Object.keys(otherCurrentYearData).length) {
+				stats[prof].otherTotalSupply += otherCurrentYearData[selectedCounty]['supply'][prof];
+				stats[prof].otherTotalDemand += otherCurrentYearData[selectedCounty]['demand'][prof];
+				stats[prof].otherTotalSupplyPer100K = Number(f(stats[prof].otherTotalSupply / population * 100000));
+				stats[prof].otherTotalDemandPer100K = Number(f(stats[prof].otherTotalDemand / population * 100000));
+			}
 		}
 	//}
 
 	var data = Object.keys(stats).map(d => {
 		if (mapData.includes('100')) {
-		return [stats[d].totalSupplyPer100K, stats[d].totalDemandPer100K, stats[d].totalDemandPer100K - stats[d].totalSupplyPer100K];
+		return [stats[d].totalSupplyPer100K, stats[d].totalDemandPer100K, stats[d].totalDemandPer100K - stats[d].totalSupplyPer100K,
+		stats[d].otherTotalSupplyPer100K, stats[d].otherTotalDemandPer100K, stats[d].otherTotalDemandPer100K - stats[d].otherTotalSupplyPer100K];
 		} else {
-		return [stats[d].totalSupply, stats[d].totalDemand, stats[d].totalDemand- stats[d].totalSupply];
+		return [stats[d].totalSupply, stats[d].totalDemand, stats[d].totalDemand- stats[d].totalSupply, stats[d].otherTotalSupply, stats[d].otherTotalDemand, stats[d].otherTotalDemand- stats[d].otherTotalSupply];
 		}
 	});
 	var xScale = d3.scaleLinear()
@@ -205,12 +223,14 @@ class Sidebar {
 	this.lastSelected ="County"
 	this.lastLastSelected =""
 	
+		if (Object.keys(otherCurrentYearData).length)
+			barHeight *= 2;
 	var professionsGroups = this.professionsSvg.append('g')
 		.selectAll('g')
 		.data(professionsData.sort(sortingFunction))
 		.enter()
 		.append('g')
-		.attr('transform', (d, i) => `translate(0, ${i * barHeight + 1.4 * barHeight })`)
+		.attr('transform', (d, i) => `translate(0, ${i * barHeight})`)
 		.attr('class','professions')
 		.attr('id',(d)=>d[0])
 
@@ -280,10 +300,18 @@ class Sidebar {
 
 	professionsGroups.call(this.drawText, 1,  barWidth);
 	professionsGroups.call(this.drawText, 2,  2 * barWidth);
+	if (Object.keys(otherCurrentYearData).length) {
+		professionsGroups.call(this.drawText, 4,  barWidth, barHeight / 2);
+		professionsGroups.call(this.drawText, 5,  2 * barWidth, barHeight / 2);
+	}
 	if (mapData.includes('100')) {
-		professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+		professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+		if (Object.keys(otherCurrentYearData).length)
+			professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 	} else {
-		professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 1, 2);
+		professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 3, 4);
+		if (Object.keys(otherCurrentYearData).length)
+			professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 1, 2);
 	}
 	var professionsSortDirection = [true];
 	d3.select('#sortProfessions')
@@ -330,7 +358,7 @@ class Sidebar {
 		});
 	}
 
-	draw1DScatterPlot(svg, xScale, x = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
+	draw1DScatterPlot(svg, xScale, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
 		let barWidth: number = 120;
 		let barHeight: number = 30;	
 		const radius = 6;
@@ -345,15 +373,15 @@ class Sidebar {
 				.attr('stroke', '#000000')
 				.attr('x1', x)
 				.attr('x2', x + barWidth)
-				.attr('y1', (d, i) => 0 * barHeight + barHeight / 2)
-				.attr('y2', (d, i) => 0 * barHeight + barHeight / 2)
+				.attr('y1', (d, i) => y + 0 * barHeight + barHeight / 2)
+				.attr('y2', (d, i) => y + 0 * barHeight + barHeight / 2)
 		
 			groups
 				.append('rect')
 				.attr('height', 6)
 				.attr('width', d => Math.abs(xScale(d[i]) - xScale(d[j])))
 				.attr('x', d => {return x + xScale(d3.min([d[i], d[j]]))})
-				.attr('y', (d, i) => 0 * barHeight + barHeight / 2 - radius / 2)
+				.attr('y', (d, i) => y + 0 * barHeight + barHeight / 2 - radius / 2)
 				.attr('fill', d => d[i] > d[j] ? iColor : jColor);
 		
 			groups
@@ -362,7 +390,7 @@ class Sidebar {
 				.attr('stroke', iColor)
 				.attr('fill', iColor)
 				.attr('cx', d => x + xScale(d[i]))
-				.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
+				.attr('cy', (d, i) => y + 0 * barHeight + barHeight / 2)
 				.append('title')
 				.text(d => d[i])
 		
@@ -372,7 +400,7 @@ class Sidebar {
 				.attr('stroke', jColor)
 				.attr('fill', jColor)
 				.attr('cx', d => x + xScale(d[j]))
-				.attr('cy', (d, i) => 0 * barHeight + barHeight / 2)
+				.attr('cy', (d, i) => y + 0 * barHeight + barHeight / 2)
 				.append('title')
 				.text(d => d[j])
 		}
