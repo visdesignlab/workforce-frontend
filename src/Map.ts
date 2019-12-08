@@ -8,6 +8,7 @@ import {Linechart} from './linechart'
  */
 class Map{
 	svg:any;
+	map: Map;
 	mapData:string;
 	mapType:string;
 	modelData:string;
@@ -16,6 +17,7 @@ class Map{
 	selectedProfessions: any;
 	results: any;
 	currentYearData : any;
+	otherCurrentYearData : any;
 	yearSelected: string;
 	linechart:Linechart;
 	sidebar:Sidebar;
@@ -32,28 +34,73 @@ class Map{
 		this.modelData = 'model1';
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 		this.currentYearData = {};
+		this.otherCurrentYearData = {};
 		this.supplyScore = {};
 		this.sidebar = new Sidebar(this);
 		this.svg = d3.select("#map")
 			.append('svg')
 			.attr('width', 600)
-			.attr('height', 600);
-		this.drawMap()
+			.attr('height', 600)
+			.attr('transform', 'translate(0,0)');
 
+	}
 
+	destroy() {
+		this.svg.selectAll('*').remove();
 	}
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap():void{
+	drawMap(customModel = false, initSidebar = true, otherCurrentYearData):void{
+			d3.select('#spinner')
+				.classed('d-flex', true)
 		const map = this.mapType;
 		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
-		d3.json(`../data/${modelFile}`).then((results)=> {
+		const serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
+		const option = (document.getElementById('customModel') as HTMLInputElement).value;
+		let request = {
+			method:"POST",
+			mode: "cors",
+			body: JSON.stringify({
+				"geo": this.selectedCounty,
+				"year": this.yearSelected,
+				"option": option,
+				"sub_option":"all_combination",
+				"wage_max":"0",
+				"wage_weight":"0"
+			}),
+			headers: {
+				"Content-type": "application/json; charset=UTF-8"
+			}
+		};
+		let promise;
+		if (!customModel) {
+			promise = d3.json(`../data/${modelFile}`);
+		}
+		else {
+			promise = d3.json(serverUrl, request);
+		}
+
+		promise.then((results)=> {
+			if (!customModel) {
 				results = results[map];
 				this.results = results;
-				this.svg.selectAll('*').remove();
-				this.currentYearData = results[this.yearSelected]
-				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
+			} else {
+				this.results[this.yearSelected][this.selectedCounty].demand = results.result.demand['w_0.1'] || results.result.demand;
+			}
+			this.svg.selectAll('*').remove();
+		this.svg.append('line')
+			.attr('stroke', 'black')
+			.attr('stroke-width', 2)
+			.attr('x1', 600)
+			.attr('x2', 600)
+			.attr('y1', 0)
+			.attr('y2', 600);
+			this.currentYearData = this.results[this.yearSelected]
+			d3.select('#spinner')
+				.classed('d-flex', false)
+				.style('display', 'none');
+			var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
 				for(let profession in professions){
 				}
 				for (let county in this.currentYearData) {
@@ -105,7 +152,7 @@ class Map{
 					var projection = d3.geoAlbersUsa()
 						.scale(200)
 						.translate(300,300);
-					projection = d3.geoMercator().scale(4000).translate([600/2, 600/2])
+					projection = d3.geoMercator().scale(4000).translate([400/2, 600/2])
 					projection.center(mapCenter);
 					var path = d3.geoPath(projection);
 		
@@ -150,13 +197,13 @@ class Map{
 						.attr("d", path(topojson.mesh(us, us.objects[map], function(a, b) { return a !== b; })));
 
 
-
-					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData);
-					this.linechart.initLineChart(results);
+					if (this.map) {
+						this.otherCurrentYearData = this.map.currentYearData;
+						this.map.otherCurrentYearData = this.currentYearData;
+					}
+					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+					this.linechart.initLineChart(this.results);
 				});
-		
-		
-
 		});
 	}
 	/**
@@ -247,13 +294,13 @@ class Map{
 					.orient('horizontal')
 					.scale(linear);
 
-		d3.select('g.legendLinear').call(legendLinear)	
+		d3.selectAll('g.legendLinear').call(legendLinear)
 			this.svg.select('g.counties').selectAll('path').each(function(d){
 				var selectedCounty:string = d.properties.NAME
 				d3.select(this).transition().duration(1000).attr('fill',colorScale(d,that,mapData));
 
 			});
-		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData,this.selectedCounty);
+		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 	
 	}
 	/**
@@ -263,7 +310,8 @@ class Map{
 	updateMapYear(year:string):void{
 		const map = this.mapType;
 		this.yearSelected = year;
-		d3.json('../data/model-results.json').then((results)=> {
+		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
+		d3.json(`../data/${modelFile}`).then((results)=> {
 			results = results[map];
 			this.currentYearData = results[this.yearSelected]
 				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
@@ -299,11 +347,13 @@ class Map{
 		d3.selectAll('path').classed('selected', false);
 		this.selectedCounty = name;
 		this.linechart.initLineChart(this.results, this.selectedCounty);
-		this.sidebar.initSideBar(this.selectedProfessions,
-			this.currentYearData, this.selectedCounty);
+		if (this.map && this.map.linechart.results) {
+			this.map.linechart.updateLineChart(this.selectedCounty);
+		}
+		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 
 		// should be moved it id-based paths
-		d3.select('svg .counties').selectAll('path')
+		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => d.properties.NAME == name)
 			.classed('selected', true);
 	}
