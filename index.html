@@ -23,10 +23,15 @@
 			</div>
 		</nav>
 		<div class='container-fluid'>
+	<div id='spinner' class="d-flex justify-content-center">
+  <div class="spinner-border" role="status">
+    <span class="sr-only">Loading...</span>
+  </div>
+</div>
 		<div id="tooltip"></div><!-- div to hold tooltip. -->
 
 				<div class = 'row'>
-						<div id = "mapContainer" class='col-xs-8 col-sm-8 col-md-8 col-lg-8 col-xl-7'>
+						<div id = "mapContainer" class='col-xs-8 col-sm-8 col-md-8 col-lg-8 col-xl-8'>
 					<div class = "row">
 					<select class = "selectpicker col-xs-2 col-sm-2 col-md-2 col-lg-2" id='year'>
 						<option value="2014">2014</option>
@@ -52,10 +57,17 @@
 						<option value="counties" selected>Counties</option>
 						<option value="LHD">Local Health Districts</option>
 					</select>
-					<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3" id='modelData'>
+					<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3" multiple id='modelData'>
 						<option value="model1" selected>Model 1</option>
 						<option value="model2">Model 2</option>
 					</select>
+					<select class = "selectpicker col-xs-4 col-sm-4 col-md-4 col-lg-4" id='customModel'>
+						<option value="">Custom Model</option>
+						<option value="ideal_staffing">Ideal Staffing</option>
+						<option value="ideal_staffing_current">Ideal Staffing Current</option>
+						<option value="service_allocation">Service Allocation</option>
+					</select>
+						<button id = "runModel" style="background-color: rgb(204, 204, 204);" type="button" class="btn btn-light btn-sm">Run Model</button>
 				</div>
 				<div class = "row">
 					<div id='map' >
