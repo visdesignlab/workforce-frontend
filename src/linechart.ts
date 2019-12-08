@@ -6,6 +6,7 @@ class Linechart{
 	margin:any;
 	clipPathID:any;
 	lineChartSvg:any;
+	results: any;
 	constructor(){
 	this.data = {dates: {}, series: {}};
 	this.width = 200;
@@ -15,8 +16,25 @@ class Linechart{
 	this.clipPathID = 0;
 
 	}
+
+	public updateLineChart(selectedCounty) {
+		this.initLineChart(this.results, selectedCounty);
+	}
+
+	puplic destroy() {
+		this.lineChartSvg.selectAll('*').remove();
+	}
+
 	public initLineChart(results, selectedCounty = 'State of Utah') {
 		this.lineChartSvg.selectAll('*').remove();
+		this.lineChartSvg.append('line')
+			.attr('stroke', 'black')
+			.attr('stroke-width', 2)
+			.attr('x1', 600)
+			.attr('x2', 600)
+			.attr('y1', 0)
+			.attr('y2', 800);
+		this.results = results;
 		var supply = [];
 		var demand = [];
 		var supply_demand = [];
@@ -160,7 +178,6 @@ class Linechart{
 		var belowUid = 'below' + this.clipPathID;;
 		this.clipPathID += 1;
 		var colors = ['#086fad', '#c7001e'];
-		var curve = d3.curveStep;
 		const chartgroup = lineChartGroup.append("g")
 			.attr("fill", "none")
 			.attr("stroke-linejoin", "round")
@@ -179,7 +196,6 @@ class Linechart{
 			.attr("id", aboveUid)
 			.append("path")
 			.attr("d", d3.area()
-				.curve(curve)
 				.x((d, i) => x(this.data.dates[i]))
 				.y0(this.height)
 				.y1(d => y(d)));
@@ -189,7 +205,6 @@ class Linechart{
 			.attr("id", belowUid)
 			.append("path")
 			.attr("d", d3.area()
-				.curve(curve)
 				.x((d, i) => x(this.data.dates[i]))
 				.y0(0)
 				.y1(d => y(d)));
@@ -199,7 +214,6 @@ class Linechart{
 			.attr('clip-path', `url(#${belowUid})`)
 			.attr("fill", colors[1])
 			.attr("d", d3.area()
-				.curve(curve)
 				.x((d, i) => x(this.data.dates[i]))
 				.y0(this.height)
 				.y1(d => y(d)));
@@ -209,7 +223,6 @@ class Linechart{
 			.attr('clip-path', `url(#${aboveUid})`)
 			.attr("fill", colors[0])
 			.attr("d", d3.area()
-				.curve(curve)
 				.x((d, i) => x(this.data.dates[i]))
 				.y0(0)
 				.y1(d => y(d)));

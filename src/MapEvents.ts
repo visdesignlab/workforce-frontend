@@ -78,10 +78,15 @@ class MapEvents{
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
 
 			if (selectedOptions[this.id]) {
+				if (selectedOptions.length == 1) {
+					this.map.map = null;
+					this.map.otherCurrentYearData = {};
+				}
 				this.map.modelData = selectedOptions[this.id].value;
 				this.map.drawMap();
 			} else {
 				this.map.destroy();
+				this.map.linechart.destroy();
 			}
 		})
 	}

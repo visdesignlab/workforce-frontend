@@ -25,7 +25,7 @@ class Sidebar {
 		if (!this.countiesSvg.node()) {
 			this.countiesSvg = d3.select('#counties')
 				.append('svg')
-				.attr('height', 1120)
+				.attr('height', 1800)
 				.attr("style","width:100%;")
 		}
 
@@ -37,11 +37,14 @@ class Sidebar {
 				.attr('height', 700)
 				.attr("style","width:100%;")
 		}
-		this.countiesHeaderSvg = d3.select('#countiesHeader')
-			.append('svg')
-			.attr('height', 50)
-			.attr('width', 600)
+		this.countiesHeaderSvg = d3.select('#countiesHeader').select('svg');
 
+		if (!this.countiesHeaderSvg.node()) {
+			this.countiesHeaderSvg = d3.select('#countiesHeader')
+				.append('svg')
+				.attr('height', 50)
+				.attr('width', 600)
+		}
 
 	}
 
@@ -51,6 +54,9 @@ class Sidebar {
 		this.countiesHeaderSvg.selectAll('*').remove();
 		let barWidth: number = 120;
 		let barHeight: number = 30;
+		if (Object.keys(otherCurrentYearData).length)
+			barHeight *= 2;
+
 		let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;
 		let domainMax = 0;
 		if (mapData.includes('100')) {
@@ -118,14 +124,22 @@ class Sidebar {
 		axis.call(xAxis);
 
 		groups.call(this.drawText);
-		groups.call(this.drawText, 1,  50+barWidth);
+		groups.call(this.drawText, 1,  barWidth);
 		groups.call(this.drawText, 2,  2 * barWidth);
+		if (Object.keys(otherCurrentYearData).length) {
+			groups.call(this.drawText, 4,  barWidth, barHeight / 2);
+			groups.call(this.drawText, 5,  2 * barWidth, barHeight / 2);
+		}
 		if (mapData.includes('100')) {
 			groups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+			if (Object.keys(otherCurrentYearData).length)
+				groups.call(this.draw1DScatterPlot, xScale, 3*barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		} else {
 			groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2);
+		if (Object.keys(otherCurrentYearData).length)
+			groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 4, 5);
 		}
-		
+
 		d3.selectAll('#sortCounties .rectButtons')
 		.on('click', (d, i) => {
 			let sortingFunction:any;
@@ -223,8 +237,6 @@ class Sidebar {
 	this.lastSelected ="County"
 	this.lastLastSelected =""
 	
-		if (Object.keys(otherCurrentYearData).length)
-			barHeight *= 2;
 	var professionsGroups = this.professionsSvg.append('g')
 		.selectAll('g')
 		.data(professionsData.sort(sortingFunction))
@@ -254,13 +266,19 @@ class Sidebar {
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#ffffff');
-					this.map.updateSelections(this.selectedProfessions);
+				if (this.map.map)
+					this.map.map.updateSelections(this.selectedProfessions);
+				this.map.updateSelections(this.selectedProfessions);
 			} else {
 				this.selectedProfessions[d[0]] = true;
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#cccccc');
-					this.map.updateSelections(this.selectedProfessions);
+				if (this.map.map) {
+					this.map.map.selectedCounty = this.map.selectedCounty;
+					this.map.map.updateSelections(this.selectedProfessions);
+				}
+				this.map.updateSelections(this.selectedProfessions);
 				
 			}
 	})
@@ -307,11 +325,11 @@ class Sidebar {
 	if (mapData.includes('100')) {
 		professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		if (Object.keys(otherCurrentYearData).length)
-			professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+			professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 	} else {
-		professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 3, 4);
+		professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2);
 		if (Object.keys(otherCurrentYearData).length)
-			professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 1, 2);
+			professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 4, 5);
 	}
 	var professionsSortDirection = [true];
 	d3.select('#sortProfessions')
@@ -352,7 +370,7 @@ class Sidebar {
 				})
 				.duration(1000)
 				.attr("transform", function(d, i) {
-					let y = i * barHeight + 1.4 * barHeight;
+					let y = i * barHeight;
 					return "translate(" + 0 + ", " + y + ")";
 				});
 		});
