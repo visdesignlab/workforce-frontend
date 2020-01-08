@@ -127,7 +127,7 @@ class Sidebar {
 			.append('g')
 
 
-		groupsHeaders.call(this.drawHeaders);
+		groupsHeaders.call(this.drawHeaders, barWidth, barHeight);
 
 		var axis = this.countiesHeaderSvg.append('g');
 
@@ -137,21 +137,21 @@ class Sidebar {
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		axis.call(xAxis);
 
-		groups.call(this.drawText);
-		groups.call(this.drawText, 1, barWidth );
-		groups.call(this.drawText, 2,  2 * barWidth);
+		groups.call(this.drawText, barWidth, barHeight);
+		groups.call(this.drawText, barWidth, barHeight, 1, barWidth );
+		groups.call(this.drawText, barWidth, barHeight, 2,  2 * barWidth);
 		if (Object.keys(otherCurrentYearData).length) {
-			groups.call(this.drawText, 4,  barWidth, barHeight / 2);
-			groups.call(this.drawText, 5,  2 * barWidth,barHeight / 2);
+			groups.call(this.drawText, barWidth, barHeight, 4,  barWidth, barHeight / 2);
+			groups.call(this.drawText, barWidth, barHeight, 5,  2 * barWidth,barHeight / 2);
 		}
 		if (mapData.includes('100')) {
-			groups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 			if (Object.keys(otherCurrentYearData).length)
-				groups.call(this.draw1DScatterPlot, xScale, 3*barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3*barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		} else {
-			groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2);
+			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, 0, 1, 2);
 		if (Object.keys(otherCurrentYearData).length)
-			groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 4, 5);
+			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, barHeight / 2, 4, 5);
 		}
 
 		d3.selectAll('#sortCounties .rectButtons')
@@ -251,18 +251,20 @@ class Sidebar {
 	this.lastSelected ="County"
 	this.lastLastSelected =""
 
+
 	var professionsGroups = this.professionsSvg.append('g')
 		.selectAll('g')
 		.data(professionsData.sort(sortingFunction))
 		.enter()
 		.append('g')
-		.attr('transform', (d, i) => `translate(0, ${i * barHeight})`)
+		.attr('transform', (d, i) => `translate(0, ${i * (barHeight)})`)
 		.attr('class','professions')
 		.attr('id',(d)=>d[0])
 
+	barHeight = barHeight - 2;
 	professionsGroups.append('rect')
 		.attr('width', 4 * barWidth + margin.left + margin.right)
-		.attr('height', barHeight - 4)
+		.attr('height', barHeight)
 		.attr('fill', (d) => {
 			if (!this.selectedProfessions.hasOwnProperty(d[0])
 				|| this.selectedProfessions[d[0]]) {
@@ -317,7 +319,7 @@ class Sidebar {
 		.append('g')
 
 
-	professionsHeaders.call(this.drawHeaders);
+	professionsHeaders.call(this.drawHeaders, barWidth, barHeight);
 	var axis = professionHeaderSVG.append('g');
 	d3.select("#sortProfessions #Profession").transition().duration(500).text(function(d) { return '\uf0dd'; });
 	this.professionsLastSelected ="Profession";
@@ -328,22 +330,22 @@ class Sidebar {
 		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 	axis.call(xAxis);
 
-	professionsGroups.call(this.drawText);
+	professionsGroups.call(this.drawText, barWidth, barHeight);
 
-	professionsGroups.call(this.drawText, 1,  barWidth);
-	professionsGroups.call(this.drawText, 2,  2 * barWidth);
+	professionsGroups.call(this.drawText, barWidth, barHeight, 1, barWidth);
+	professionsGroups.call(this.drawText, barWidth, barHeight, 2,  2 * barWidth);
 	if (Object.keys(otherCurrentYearData).length) {
-		professionsGroups.call(this.drawText, 4,  barWidth, barHeight / 2);
-		professionsGroups.call(this.drawText, 5,  2 * barWidth, barHeight / 2);
+		professionsGroups.call(this.drawText, barWidth, barHeight, 4,  barWidth, barHeight / 2);
+		professionsGroups.call(this.drawText, barWidth, barHeight, 5,  2 * barWidth, barHeight / 2);
 	}
 	if (mapData.includes('100')) {
-		professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+		professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		if (Object.keys(otherCurrentYearData).length)
-			professionsGroups.call(this.draw1DScatterPlot, xScale, 3*barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3*barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 	} else {
-		professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2);
+		professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, 0, 1, 2);
 		if (Object.keys(otherCurrentYearData).length)
-			professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 4, 5);
+			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, barHeight / 2, 4, 5);
 	}
 	var professionsSortDirection = [true];
 	d3.select('#sortProfessions')
@@ -390,9 +392,7 @@ class Sidebar {
 		});
 	}
 
-	draw1DScatterPlot(svg, xScale, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
-		let barWidth: number = 120;
-		let barHeight: number = 30;
+	draw1DScatterPlot(svg, xScale, barWidth, barHeight, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
 		x = x + 15;
 		const radius = 6;
 
@@ -450,13 +450,7 @@ class Sidebar {
 	}
 
 
-	drawHeaders(groups, i = 0, dx = 0, dy = 0) {
-
-		let barWidth: number = 120;
-		let barHeight: number = 30;
-
-
-
+	drawHeaders(groups, barWidth, barHeight, i = 0, dx = 0, dy = 0) {
 
 		groups
 			.append('text')
@@ -512,9 +506,7 @@ class Sidebar {
 	updateSidebar(currentYear, selectedCounty){
 
 	}
-	drawText(selection, i = 0, dx = 0, dy = 0) {
-		let barWidth: number = 120;
-		let barHeight: number = 30;
+	drawText(selection, barWidth, barHeight, i = 0, dx = 0, dy = 0) {
 		let marginLeft = 15;
 		var groups = selection.append('g');
 

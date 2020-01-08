@@ -56737,7 +56737,7 @@ var Map = /** @class */ (function () {
         };
         var promise;
         if (!customModel) {
-            promise = d3.json("./data/" + modelFile);
+            promise = d3.json("../data/" + modelFile);
         }
         else {
             promise = d3.json(serverUrl, request);
@@ -56807,7 +56807,7 @@ var Map = /** @class */ (function () {
                 return d3.interpolateRdBu(_this.supplyScore[county]);
             };
             var that = _this;
-            d3.json("./data/UT-49-utah-counties.json").then(function (us) {
+            d3.json("../data/UT-49-utah-counties.json").then(function (us) {
                 var topojsonFeatures = topojson.feature(us, us.objects[map]);
                 var mapCenter = d3.geoCentroid(topojsonFeatures);
                 var projection = d3.geoAlbersUsa()
@@ -56962,7 +56962,7 @@ var Map = /** @class */ (function () {
         var map = this.mapType;
         this.yearSelected = year;
         var modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
-        d3.json("./data/" + modelFile).then(function (results) {
+        d3.json("../data/" + modelFile).then(function (results) {
             results = results[map];
             _this.currentYearData = results[_this.yearSelected];
             var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
@@ -57381,6 +57381,7 @@ var Sidebar = /** @class */ (function () {
         this.countiesSvg.selectAll('*').remove();
         this.countiesHeaderSvg.selectAll('*').remove();
         var barWidth = 120;
+        var margin = { left: 15, top: 0, bottom: 0, right: 15 };
         var barHeight = 30;
         if (Object.keys(otherCurrentYearData).length)
             barHeight *= 2;
@@ -57421,13 +57422,22 @@ var Sidebar = /** @class */ (function () {
             .attr('transform', function (d, i) { return "translate(0, " + i * barHeight + ")"; })
             .attr('class', 'pointerCursor');
         groups.append('rect')
-            .attr('width', 4 * barWidth)
+            .attr('width', 4 * barWidth + margin.left + margin.right)
             .attr('height', barHeight)
             .attr('id', function (d) { return d[0].replace(/\s/g, ''); })
-            .attr('class', 'background')
-            .attr('fill', function (d) { return d[0] == selectedCounty ? '#cccccc' : '#ffffff'; });
+            .attr('class', 'background');
+        d3.select("#" + this.removeSpaces(selectedCounty))
+            .classed('selectedCounty', true);
         groups.on('click', function (d) {
             _this.highlightRect(d[0]);
+        });
+        groups.on('mouseover', function (d) {
+            d3.select("#" + _this.removeSpaces(d[0]))
+                .classed('hoverCounty', true);
+        });
+        groups.on('mouseout', function (d) {
+            d3.select('.hoverCounty')
+                .classed('hoverCounty', false);
         });
         var groupsHeaders = this.countiesHeaderSvg
             .append('g')
@@ -57436,28 +57446,28 @@ var Sidebar = /** @class */ (function () {
             .data(headers)
             .enter()
             .append('g');
-        groupsHeaders.call(this.drawHeaders);
+        groupsHeaders.call(this.drawHeaders, barWidth, barHeight);
         var axis = this.countiesHeaderSvg.append('g');
         var xAxis = function (g) { return g
-            .attr("transform", "translate(" + 3 * barWidth + "," + 45 + ")")
+            .attr("transform", "translate(" + (3 * barWidth + 15) + "," + 45 + ")")
             .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
         axis.call(xAxis);
-        groups.call(this.drawText);
-        groups.call(this.drawText, 1, barWidth);
-        groups.call(this.drawText, 2, 2 * barWidth);
+        groups.call(this.drawText, barWidth, barHeight);
+        groups.call(this.drawText, barWidth, barHeight, 1, barWidth);
+        groups.call(this.drawText, barWidth, barHeight, 2, 2 * barWidth);
         if (Object.keys(otherCurrentYearData).length) {
-            groups.call(this.drawText, 4, barWidth, barHeight / 2);
-            groups.call(this.drawText, 5, 2 * barWidth, barHeight / 2);
+            groups.call(this.drawText, barWidth, barHeight, 4, barWidth, barHeight / 2);
+            groups.call(this.drawText, barWidth, barHeight, 5, 2 * barWidth, barHeight / 2);
         }
         if (mapData.includes('100')) {
-            groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+            groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
             if (Object.keys(otherCurrentYearData).length)
-                groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+                groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
         }
         else {
-            groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2);
+            groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, 0, 1, 2);
             if (Object.keys(otherCurrentYearData).length)
-                groups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 4, 5);
+                groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, barHeight / 2, 4, 5);
         }
         d3.selectAll('#sortCounties .rectButtons')
             .on('click', function (d, i) {
@@ -57488,7 +57498,7 @@ var Sidebar = /** @class */ (function () {
                 sortingFunction = _this.getSortingOptions(i, true);
             }
             //both
-            //	d3.select("#"+d.name).transition().duration(500).text(function(d) { return '\uf0dc'; }); 
+            //	d3.select("#"+d.name).transition().duration(500).text(function(d) { return '\uf0dc'; });
             //up
             //	d3.select("#"+d.name).transition().duration(500).text(function(d){return "\uf0de"})
             groups.sort(sortingFunction)
@@ -57552,12 +57562,13 @@ var Sidebar = /** @class */ (function () {
             .data(professionsData.sort(sortingFunction))
             .enter()
             .append('g')
-            .attr('transform', function (d, i) { return "translate(0, " + i * barHeight + ")"; })
+            .attr('transform', function (d, i) { return "translate(0, " + i * (barHeight) + ")"; })
             .attr('class', 'professions')
             .attr('id', function (d) { return d[0]; });
+        barHeight = barHeight - 2;
         professionsGroups.append('rect')
-            .attr('width', 4 * barWidth)
-            .attr('height', barHeight - 4)
+            .attr('width', 4 * barWidth + margin.left + margin.right)
+            .attr('height', barHeight)
             .attr('fill', function (d) {
             if (!_this.selectedProfessions.hasOwnProperty(d[0])
                 || _this.selectedProfessions[d[0]]) {
@@ -57606,31 +57617,31 @@ var Sidebar = /** @class */ (function () {
             .data(professionsHeadData)
             .enter()
             .append('g');
-        professionsHeaders.call(this.drawHeaders);
+        professionsHeaders.call(this.drawHeaders, barWidth, barHeight);
         var axis = professionHeaderSVG.append('g');
         d3.select("#sortProfessions #Profession").transition().duration(500).text(function (d) { return '\uf0dd'; });
         this.professionsLastSelected = "Profession";
         this.professionsLastLastSelected = "";
         var xAxis = function (g) { return g
-            .attr("transform", "translate(" + 3 * barWidth + "," + 42 + ")")
+            .attr("transform", "translate(" + (3 * barWidth + margin.left) + "," + 42 + ")")
             .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
         axis.call(xAxis);
-        professionsGroups.call(this.drawText);
-        professionsGroups.call(this.drawText, 1, barWidth);
-        professionsGroups.call(this.drawText, 2, 2 * barWidth);
+        professionsGroups.call(this.drawText, barWidth, barHeight);
+        professionsGroups.call(this.drawText, barWidth, barHeight, 1, barWidth);
+        professionsGroups.call(this.drawText, barWidth, barHeight, 2, 2 * barWidth);
         if (Object.keys(otherCurrentYearData).length) {
-            professionsGroups.call(this.drawText, 4, barWidth, barHeight / 2);
-            professionsGroups.call(this.drawText, 5, 2 * barWidth, barHeight / 2);
+            professionsGroups.call(this.drawText, barWidth, barHeight, 4, barWidth, barHeight / 2);
+            professionsGroups.call(this.drawText, barWidth, barHeight, 5, 2 * barWidth, barHeight / 2);
         }
         if (mapData.includes('100')) {
-            professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+            professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
             if (Object.keys(otherCurrentYearData).length)
-                professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+                professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
         }
         else {
-            professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, 0, 1, 2);
+            professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, 0, 1, 2);
             if (Object.keys(otherCurrentYearData).length)
-                professionsGroups.call(this.draw1DScatterPlot, xScale, 3 * barWidth, barHeight / 2, 4, 5);
+                professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, barHeight / 2, 4, 5);
         }
         var professionsSortDirection = [true];
         d3.select('#sortProfessions')
@@ -57674,15 +57685,14 @@ var Sidebar = /** @class */ (function () {
             });
         });
     };
-    Sidebar.prototype.draw1DScatterPlot = function (svg, xScale, x, y, i, j, iColor, jColor) {
+    Sidebar.prototype.draw1DScatterPlot = function (svg, xScale, barWidth, barHeight, x, y, i, j, iColor, jColor) {
         if (x === void 0) { x = 0; }
         if (y === void 0) { y = 0; }
         if (i === void 0) { i = 0; }
         if (j === void 0) { j = 1; }
         if (iColor === void 0) { iColor = '#086fad'; }
         if (jColor === void 0) { jColor = '#c7001e'; }
-        var barWidth = 120;
-        var barHeight = 30;
+        x = x + 15;
         var radius = 6;
         var xAxis = function (g) { return g
             .attr("transform", "translate(" + barWidth + "," + 20 + ")")
@@ -57734,12 +57744,10 @@ var Sidebar = /** @class */ (function () {
             _loop_1(county);
         }
     };
-    Sidebar.prototype.drawHeaders = function (groups, i, dx, dy) {
+    Sidebar.prototype.drawHeaders = function (groups, barWidth, barHeight, i, dx, dy) {
         if (i === void 0) { i = 0; }
         if (dx === void 0) { dx = 0; }
         if (dy === void 0) { dy = 0; }
-        var barWidth = 120;
-        var barHeight = 30;
         groups
             .append('text')
             .attr('font-weight', 'bold')
@@ -57788,18 +57796,17 @@ var Sidebar = /** @class */ (function () {
     // }
     Sidebar.prototype.updateSidebar = function (currentYear, selectedCounty) {
     };
-    Sidebar.prototype.drawText = function (selection, i, dx, dy) {
+    Sidebar.prototype.drawText = function (selection, barWidth, barHeight, i, dx, dy) {
         if (i === void 0) { i = 0; }
         if (dx === void 0) { dx = 0; }
         if (dy === void 0) { dy = 0; }
-        var barWidth = 120;
-        var barHeight = 30;
+        var marginLeft = 15;
         var groups = selection.append('g');
         var f = d3.format('.0f');
         groups
             .append('text')
             .attr('y', function (d, i) { return 0 * barHeight + barHeight / 2 + 5 + dy; })
-            .attr('x', dx)
+            .attr('x', dx + marginLeft)
             .text(function (d) { return isNaN(d[i]) ? d[i] : f(d[i]); });
     };
     Sidebar.prototype.getSortingOptions = function (index, ascending) {
@@ -57818,11 +57825,14 @@ var Sidebar = /** @class */ (function () {
     };
     Sidebar.prototype.highlightRect = function (id) {
         this.map.highlightPath(id);
-        id = id.replace(/\s/g, '');
-        this.countiesSvg.selectAll('.background')
-            .attr('fill', '#ffffff');
+        id = this.removeSpaces(id);
+        this.countiesSvg.select('.selectedCounty')
+            .classed('selectedCounty', false);
         this.countiesSvg.select("#" + id)
-            .attr('fill', '#cccccc');
+            .classed('selectedCounty', true);
+    };
+    Sidebar.prototype.removeSpaces = function (s) {
+        return s.replace(/\s/g, '');
     };
     return Sidebar;
 }());
