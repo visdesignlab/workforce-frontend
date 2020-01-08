@@ -1,6 +1,8 @@
 .counties :hover {
 	opacity: 0.7;
 }
+
+
 .selected {
 	stroke: #00ffcc;
 	stroke-width: 4px;
@@ -22,6 +24,17 @@
 	fill: #7c90a3;
 }
 
+.background {
+	fill:#ffffff;
+}
+
+.hoverCounty {
+	fill: #D3D3D3;
+}
+
+.selectedCounty {
+	fill: #A9A9A9;
+}
 
 #tooltip {
 	z-index: 1000;

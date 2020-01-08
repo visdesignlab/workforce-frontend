@@ -19,7 +19,7 @@ class Sidebar {
 		this.lastLastSelected = "";
 		this.professionsLastSelected = "";
 		this.professionsLastLastSelected = "";
-		
+
 		this.countiesSvg = d3.select('#counties').select('svg');
 
 		if (!this.countiesSvg.node()) {
@@ -53,6 +53,7 @@ class Sidebar {
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
 		let barWidth: number = 120;
+		let margin = {left: 15, top:0, bottom: 0, right:15};
 		let barHeight: number = 30;
 		if (Object.keys(otherCurrentYearData).length)
 			barHeight *= 2;
@@ -94,15 +95,28 @@ class Sidebar {
 			.attr('class','pointerCursor')
 
 		groups.append('rect')
-			.attr('width', 4 * barWidth)
+			.attr('width', 4 * barWidth + margin.left + margin.right)
 			.attr('height', barHeight)
 			.attr('id', d => d[0].replace(/\s/g, ''))
 			.attr('class', 'background')
-			.attr('fill', (d) => d[0] == selectedCounty ? '#cccccc' : '#ffffff')
+
+		d3.select(`#${this.removeSpaces(selectedCounty)}`)
+			.classed('selectedCounty', true);
+
 
 		groups.on('click', (d) => {
 				this.highlightRect(d[0]);
 			});
+
+		groups.on('mouseover', d => {
+			d3.select(`#${this.removeSpaces(d[0])}`)
+				.classed('hoverCounty', true);
+			});
+
+		groups.on('mouseout', d => {
+			d3.select('.hoverCounty')
+				.classed('hoverCounty', false);
+		})
 
 		var groupsHeaders = this.countiesHeaderSvg
 			.append('g')
@@ -111,24 +125,24 @@ class Sidebar {
 			.data(headers)
 			.enter()
 			.append('g')
-			
+
 
 		groupsHeaders.call(this.drawHeaders);
-		
+
 		var axis = this.countiesHeaderSvg.append('g');
 
 
 		var xAxis = g => g
-			.attr("transform", `translate(${3*barWidth},${45})`)
+			.attr("transform", `translate(${3*barWidth + 15},${45})`)
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		axis.call(xAxis);
 
 		groups.call(this.drawText);
-		groups.call(this.drawText, 1,  barWidth);
+		groups.call(this.drawText, 1, barWidth );
 		groups.call(this.drawText, 2,  2 * barWidth);
 		if (Object.keys(otherCurrentYearData).length) {
 			groups.call(this.drawText, 4,  barWidth, barHeight / 2);
-			groups.call(this.drawText, 5,  2 * barWidth, barHeight / 2);
+			groups.call(this.drawText, 5,  2 * barWidth,barHeight / 2);
 		}
 		if (mapData.includes('100')) {
 			groups.call(this.draw1DScatterPlot, xScale, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
@@ -154,16 +168,16 @@ class Sidebar {
 					this.lastLastSelected = "";
 
 					sortingFunction = this.getSortingOptions(i, true);
-					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; }); 
+					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; });
 
 				}else{
-					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; }); 
+					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; });
 					sortingFunction = this.getSortingOptions(i, false);
 					this.lastLastSelected = this.lastSelected
 			}
-				
+
 			}else{
-				d3.select("#sortCounties #"+this.lastSelected).transition().duration(500).text(function(d) { return '\uf0dc'; }); 
+				d3.select("#sortCounties #"+this.lastSelected).transition().duration(500).text(function(d) { return '\uf0dc'; });
 
 				d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
 				this.lastSelected = d.name;
@@ -171,7 +185,7 @@ class Sidebar {
 				sortingFunction = this.getSortingOptions(i, true);
 			}
 			//both
-		//	d3.select("#"+d.name).transition().duration(500).text(function(d) { return '\uf0dc'; }); 
+		//	d3.select("#"+d.name).transition().duration(500).text(function(d) { return '\uf0dc'; });
 			//up
 		//	d3.select("#"+d.name).transition().duration(500).text(function(d){return "\uf0de"})
 
@@ -198,7 +212,7 @@ class Sidebar {
 			stats[prof] = {totalDemandPer100K:0,totalSupplyPer100K:0,totalSupply: 0, totalDemand: 0,
 				otherTotalDemandPer100K:0,otherTotalSupplyPer100K:0,otherTotalSupply: 0, otherTotalDemand: 0};
 		}
-		
+
 		const f = d3.format('.0f');
 		for (let prof of professions) {
 			stats[prof].totalSupply += currentYear[selectedCounty]['supply'][prof];
@@ -233,10 +247,10 @@ class Sidebar {
 	};
 
 	sortingFunction = this.getSortingOptions(0, true);
-	d3.select("#sortCounties #County").transition().duration(500).text(function(d) { return '\uf0dd'; }); 
+	d3.select("#sortCounties #County").transition().duration(500).text(function(d) { return '\uf0dd'; });
 	this.lastSelected ="County"
 	this.lastLastSelected =""
-	
+
 	var professionsGroups = this.professionsSvg.append('g')
 		.selectAll('g')
 		.data(professionsData.sort(sortingFunction))
@@ -247,7 +261,7 @@ class Sidebar {
 		.attr('id',(d)=>d[0])
 
 	professionsGroups.append('rect')
-		.attr('width', 4 * barWidth)
+		.attr('width', 4 * barWidth + margin.left + margin.right)
 		.attr('height', barHeight - 4)
 		.attr('fill', (d) => {
 			if (!this.selectedProfessions.hasOwnProperty(d[0])
@@ -279,7 +293,7 @@ class Sidebar {
 					this.map.map.updateSelections(this.selectedProfessions);
 				}
 				this.map.updateSelections(this.selectedProfessions);
-				
+
 			}
 	})
 
@@ -287,7 +301,7 @@ class Sidebar {
 	{name: 'Supply', x: barWidth},
 	{name: 'Need', x: 2 * barWidth},
 	{name: 'Gap', x: 3 * barWidth}];
-	
+
 	var professionHeaderSVG = d3.select('#professionsHeader');
 	professionHeaderSVG.selectAll('*').remove();
 	professionHeaderSVG = professionHeaderSVG
@@ -302,15 +316,15 @@ class Sidebar {
 		.enter()
 		.append('g')
 
-	
+
 	professionsHeaders.call(this.drawHeaders);
 	var axis = professionHeaderSVG.append('g');
-	d3.select("#sortProfessions #Profession").transition().duration(500).text(function(d) { return '\uf0dd'; }); 	
-	this.professionsLastSelected ="Profession"
-	this.professionsLastLastSelected =""
-	
+	d3.select("#sortProfessions #Profession").transition().duration(500).text(function(d) { return '\uf0dd'; });
+	this.professionsLastSelected ="Profession";
+	this.professionsLastLastSelected = "";
+
 	var xAxis = g => g
-		.attr("transform", `translate(${3*barWidth},${42})`)
+		.attr("transform", `translate(${3*barWidth + margin.left},${42})`)
 		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 	axis.call(xAxis);
 
@@ -335,7 +349,7 @@ class Sidebar {
 	d3.select('#sortProfessions')
 		.selectAll('.rectButtons')
 		.on('click', (d, i) => {
-			
+
 			let sortingFunction:any;
 			//down
 			if(this.professionsLastSelected == ""){
@@ -347,16 +361,16 @@ class Sidebar {
 				if(this.professionsLastLastSelected === this.professionsLastSelected){
 					this.professionsLastLastSelected = "";
 					sortingFunction = this.getSortingOptions(i, true);
-					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; }); 
+					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; });
 
 				}else{
-					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; }); 
+					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; });
 					sortingFunction = this.getSortingOptions(i, false);
 					this.professionsLastLastSelected = this.professionsLastSelected
 			}
-				
+
 			}else{
-				d3.select("#sortProfessions #"+this.professionsLastSelected).transition().duration(500).text(function(d) { return '\uf0dc'; }); 
+				d3.select("#sortProfessions #"+this.professionsLastSelected).transition().duration(500).text(function(d) { return '\uf0dc'; });
 
 				d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
 				this.professionsLastSelected = d.name;
@@ -378,13 +392,14 @@ class Sidebar {
 
 	draw1DScatterPlot(svg, xScale, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
 		let barWidth: number = 120;
-		let barHeight: number = 30;	
+		let barHeight: number = 30;
+		x = x + 15;
 		const radius = 6;
-		
+
 			var xAxis = g => g
 				.attr("transform", `translate(${barWidth},${20})`)
 				.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
-		
+
 			var groups = svg.append('g');
 			groups
 				.append('line')
@@ -393,7 +408,7 @@ class Sidebar {
 				.attr('x2', x + barWidth)
 				.attr('y1', (d, i) => y + 0 * barHeight + barHeight / 2)
 				.attr('y2', (d, i) => y + 0 * barHeight + barHeight / 2)
-		
+
 			groups
 				.append('rect')
 				.attr('height', 6)
@@ -401,7 +416,7 @@ class Sidebar {
 				.attr('x', d => {return x + xScale(d3.min([d[i], d[j]]))})
 				.attr('y', (d, i) => y + 0 * barHeight + barHeight / 2 - radius / 2)
 				.attr('fill', d => d[i] > d[j] ? iColor : jColor);
-		
+
 			groups
 				.append('circle')
 				.attr('r', 6)
@@ -411,7 +426,7 @@ class Sidebar {
 				.attr('cy', (d, i) => y + 0 * barHeight + barHeight / 2)
 				.append('title')
 				.text(d => d[i])
-		
+
 			groups
 				.append('circle')
 				.attr('r', 6)
@@ -422,7 +437,7 @@ class Sidebar {
 				.append('title')
 				.text(d => d[j])
 		}
-	
+
 	totalSupplyDemandByCounty(currentYear) {
 		let barWidth: number = 120;
 		let barHeight: number = 30;
@@ -433,14 +448,14 @@ class Sidebar {
 			currentYear[county]['totalDemand'] = totalDemand;
 		}
 	}
-	
-	
+
+
 	drawHeaders(groups, i = 0, dx = 0, dy = 0) {
-		
+
 		let barWidth: number = 120;
 		let barHeight: number = 30;
-		
-			
+
+
 
 
 		groups
@@ -456,10 +471,10 @@ class Sidebar {
 		.attr("font-family","FontAwesome")
 		.attr('class',"rectButtons")
 		.attr('id',(d)=>d.name)
-		.text(function(d) { return '\uf0dc'; }); 
+		.text(function(d) { return '\uf0dc'; });
 		//.text("&#xf0dc");
-		
-		
+
+
 	}
 
 	// drawStackedBar(svg, data, xScale) {
@@ -500,17 +515,18 @@ class Sidebar {
 	drawText(selection, i = 0, dx = 0, dy = 0) {
 		let barWidth: number = 120;
 		let barHeight: number = 30;
+		let marginLeft = 15;
 		var groups = selection.append('g');
-	
+
 		const f = d3.format('.0f');
-	
+
 		groups
 			.append('text')
 			.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
-			.attr('x', dx)
+			.attr('x', dx + marginLeft)
 			.text(d => isNaN(d[i]) ? d[i] : f(d[i]));
 	}
-	
+
 
 	getSortingOptions(index, ascending) {
 
@@ -529,14 +545,17 @@ class Sidebar {
 
 	highlightRect(id) {
 		this.map.highlightPath(id);
-		id = id.replace(/\s/g, '');
+		id = this.removeSpaces(id);
 
-		this.countiesSvg.selectAll('.background')
-			.attr('fill', '#ffffff');
+		this.countiesSvg.select('.selectedCounty')
+			.classed('selectedCounty', false);
 
 		this.countiesSvg.select(`#${id}`)
-			.attr('fill', '#cccccc');
+			.classed('selectedCounty', true);
+	}
 
+	removeSpaces(s) : string{
+		return s.replace(/\s/g, '');
 	}
 }
 
