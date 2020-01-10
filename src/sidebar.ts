@@ -6,6 +6,7 @@ class Sidebar {
 	professionsSvg: any;
 	selectedProfessions: any;
 	countiesHeaderSvg: any;
+	margin:any;
 	lastSelected:string;
 	lastLastSelected:string;
 	professionsLastSelected:string;
@@ -53,7 +54,7 @@ class Sidebar {
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
 		let barWidth: number = 120;
-		let margin = {left: 15, top:0, bottom: 0, right:15};
+		this.margin = {left: 15, top:0, bottom: 0, right:15};
 		let barHeight: number = 30;
 		if (Object.keys(otherCurrentYearData).length)
 			barHeight *= 2;
@@ -86,6 +87,48 @@ class Sidebar {
 		};
 		var sortingFunction = this.getSortingOptions(0, true);
 
+		/**
+		* Pull out the state, put it in its own SVG above.
+		* TODO::  this is straight duplicating the code below it atm. Pull into a function.
+		// */
+		// let stateSvg = d3.select('#state');
+		// stateSvg.selectAll('*').remove();
+		// stateSvg = stateSvg
+		// 		.append('svg')
+		// 		.attr('height', 30)
+		// 		.attr('style', "width:100%");
+		//
+		// let state = countiesData.filter(d => {
+		// 	return d[0].includes("State of");
+		// })[0];
+		//
+		// stateSvg = stateSvg.append('g')
+		// 	.attr('class', 'pointerCursor')
+		//
+		// stateSvg.append('rect')
+		// 	.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
+		// 	.attr('height', barHeight)
+		// 	.attr('id', d => state[0].replace(/\s/g, ''))
+		// 	.attr('class', 'background')
+		//
+		// stateSvg.on('click', (d) => {
+		// 		this.highlightRect(state[0]);
+		// 	});
+		//
+		// stateSvg.on('mouseover', d => {
+		// 	d3.select(`#${this.removeSpaces(state[0])}`)
+		// 		.classed('hoverCounty', true);
+		// 	});
+		//
+		// stateSvg.on('mouseout', d => {
+		// 	d3.select('.hoverCounty')
+		// 		.classed('hoverCounty', false);
+		// })
+
+		// let state = countiesData.filter(d => {
+		// 	return d[0].includes("State of");
+		// })[0];
+
 		var groups = this.countiesSvg.append('g')
 			.selectAll('g')
 			.data(countiesData.sort(sortingFunction))
@@ -95,14 +138,13 @@ class Sidebar {
 			.attr('class','pointerCursor')
 
 		groups.append('rect')
-			.attr('width', 4 * barWidth + margin.left + margin.right)
+			.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
 			.attr('height', barHeight)
 			.attr('id', d => d[0].replace(/\s/g, ''))
 			.attr('class', 'background')
 
 		d3.select(`#${this.removeSpaces(selectedCounty)}`)
 			.classed('selectedCounty', true);
-
 
 		groups.on('click', (d) => {
 				this.highlightRect(d[0]);
@@ -133,25 +175,25 @@ class Sidebar {
 
 
 		var xAxis = g => g
-			.attr("transform", `translate(${3*barWidth + 15},${45})`)
+			.attr("transform", `translate(${3*barWidth + this.margin.left},${45})`)
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		axis.call(xAxis);
 
-		groups.call(this.drawText, barWidth, barHeight);
-		groups.call(this.drawText, barWidth, barHeight, 1, barWidth );
-		groups.call(this.drawText, barWidth, barHeight, 2,  2 * barWidth);
+		groups.call(this.drawText, barWidth, barHeight, this.margin.left);
+		groups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
+		groups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
 		if (Object.keys(otherCurrentYearData).length) {
-			groups.call(this.drawText, barWidth, barHeight, 4,  barWidth, barHeight / 2);
-			groups.call(this.drawText, barWidth, barHeight, 5,  2 * barWidth,barHeight / 2);
+			groups.call(this.drawText, barWidth, barHeight, this.margin.left, 4,  barWidth, barHeight / 2);
+			groups.call(this.drawText, barWidth, barHeight, this.margin.left, 5,  2 * barWidth,barHeight / 2);
 		}
 		if (mapData.includes('100')) {
-			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 			if (Object.keys(otherCurrentYearData).length)
-				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3*barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3*barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		} else {
-			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, 0, 1, 2);
+			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2);
 		if (Object.keys(otherCurrentYearData).length)
-			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, barHeight / 2, 4, 5);
+			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
 		}
 
 		d3.selectAll('#sortCounties .rectButtons')
@@ -251,7 +293,6 @@ class Sidebar {
 	this.lastSelected ="County"
 	this.lastLastSelected =""
 
-
 	var professionsGroups = this.professionsSvg.append('g')
 		.selectAll('g')
 		.data(professionsData.sort(sortingFunction))
@@ -261,9 +302,10 @@ class Sidebar {
 		.attr('class','professions')
 		.attr('id',(d)=>d[0])
 
+	// Reducing bar height to account for the space between bars in professions. Makes sure everything is centered.
 	barHeight = barHeight - 2;
 	professionsGroups.append('rect')
-		.attr('width', 4 * barWidth + margin.left + margin.right)
+		.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
 		.attr('height', barHeight)
 		.attr('fill', (d) => {
 			if (!this.selectedProfessions.hasOwnProperty(d[0])
@@ -326,26 +368,26 @@ class Sidebar {
 	this.professionsLastLastSelected = "";
 
 	var xAxis = g => g
-		.attr("transform", `translate(${3*barWidth + margin.left},${42})`)
+		.attr("transform", `translate(${3*barWidth + this.margin.left},${42})`)
 		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 	axis.call(xAxis);
 
-	professionsGroups.call(this.drawText, barWidth, barHeight);
+	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left);
 
-	professionsGroups.call(this.drawText, barWidth, barHeight, 1, barWidth);
-	professionsGroups.call(this.drawText, barWidth, barHeight, 2,  2 * barWidth);
+	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth);
+	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
 	if (Object.keys(otherCurrentYearData).length) {
-		professionsGroups.call(this.drawText, barWidth, barHeight, 4,  barWidth, barHeight / 2);
-		professionsGroups.call(this.drawText, barWidth, barHeight, 5,  2 * barWidth, barHeight / 2);
+		professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 4,  barWidth, barHeight / 2);
+		professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 5,  2 * barWidth, barHeight / 2);
 	}
 	if (mapData.includes('100')) {
-		professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+		professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		if (Object.keys(otherCurrentYearData).length)
-			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3*barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
+			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3*barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 	} else {
-		professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, 0, 1, 2);
+		professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2);
 		if (Object.keys(otherCurrentYearData).length)
-			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, 3 * barWidth, barHeight / 2, 4, 5);
+			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
 	}
 	var professionsSortDirection = [true];
 	d3.select('#sortProfessions')
@@ -392,9 +434,9 @@ class Sidebar {
 		});
 	}
 
-	draw1DScatterPlot(svg, xScale, barWidth, barHeight, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
-		x = x + 15;
+	draw1DScatterPlot(svg, xScale, barWidth, barHeight, leftMargin, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
 		const radius = 6;
+		x += leftMargin;
 
 			var xAxis = g => g
 				.attr("transform", `translate(${barWidth},${20})`)
@@ -436,6 +478,23 @@ class Sidebar {
 				.attr('cy', (d, i) => y + 0 * barHeight + barHeight / 2)
 				.append('title')
 				.text(d => d[j])
+
+
+			//making tooltip for side bars. Considered adding color to match scale, but problems with white.
+			groups
+				.on('mouseover', d => {
+					console.log(d);
+					let toolTip = "<h4>"+ (-d[3]) + "</h4>";
+					console.log(d[1] / d[2]);
+					d3.select("#barTooltip")
+						.style("opacity", .9);
+						// .style("color", d3.interpolateRdBu(d[1] / d[2] / 2));
+					d3.select("#barTooltip").html(toolTip)
+						.style("left", (d3.event.pageX) + "px")
+						.style("top", (d3.event.pageY - 28) + "px");
+				})
+
+			groups.on('mouseout', () => d3.select("#barTooltip").style("opacity", 0));
 		}
 
 	totalSupplyDemandByCounty(currentYear) {
@@ -506,16 +565,15 @@ class Sidebar {
 	updateSidebar(currentYear, selectedCounty){
 
 	}
-	drawText(selection, barWidth, barHeight, i = 0, dx = 0, dy = 0) {
-		let marginLeft = 15;
+	drawText(selection, barWidth, barHeight, leftMargin, i = 0, dx = 0, dy = 0) {
 		var groups = selection.append('g');
-
+		dx += leftMargin;
 		const f = d3.format('.0f');
 
 		groups
 			.append('text')
 			.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
-			.attr('x', dx + marginLeft)
+			.attr('x', dx)
 			.text(d => isNaN(d[i]) ? d[i] : f(d[i]));
 	}
 

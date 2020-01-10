@@ -136,13 +136,30 @@ body {
 	flex-grow: 1;
 }
 
-#tooltip {
+#barTooltip{
+	position: absolute;
+	text-align: center;
+	pointer-events: none;
+	background:#333333;
+	z-index: 100;
+	border:1px solid grey;
+	border-radius:3px;
+	min-width: 100;
+	padding:2px;
+	opacity:0;
+}
+
+#barTooltip h4 {
+	margin:0;
+	font-size:18px;
+}
+
+#tooltip{
 	position: absolute;
 	text-align: center;
 	padding: 20px;
 	margin: 10px;
 	font: 12px sans-serif;
-	background: lightsteelblue;
 	border: 1px;
 	border-radius: 2px;
 	pointer-events: none;

@@ -4,7 +4,7 @@ import {legendColor} from 'd3-svg-legend'
 import {Sidebar} from './sidebar';
 import {Linechart} from './linechart'
 /**
- * 
+ *
  */
 class Map{
 	svg:any;
@@ -23,7 +23,7 @@ class Map{
 	sidebar:Sidebar;
 
 	/**
-	 * 
+	 *
 	 */
 	constructor(){
 		this.selectedProfessions = {}
@@ -118,18 +118,18 @@ class Map{
 						this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
 						this.supplyScore[county] = (totalSupply / totalDemand) / 2;
 				}
-		
+
 				var linear = d3.scaleOrdinal()
 					.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 					.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
-				
-		
+
+
 				var legendLinear = legendColor()
 					.shapeWidth(115)
 					.labelFormat(d3.format(".0f"))
 					.orient('horizontal')
 					.scale(linear);
-		
+
 				this.svg.append("g")
 					.attr("class", "legendLinear")
 					.attr("transform", "translate(20,20)");
@@ -145,7 +145,7 @@ class Map{
 					let county = d.properties.NAME;
 					return d3.interpolateRdBu(this.supplyScore[county]);
 				}
-				let that:any = this				
+				let that:any = this
 				d3.json("../data/UT-49-utah-counties.json").then((us)=> {
 					var topojsonFeatures = topojson.feature(us, us.objects[map]);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
@@ -155,7 +155,7 @@ class Map{
 					projection = d3.geoMercator().scale(4000).translate([400/2, 600/2])
 					projection.center(mapCenter);
 					var path = d3.geoPath(projection);
-		
+
 					this.svg.append("g")
 						.attr("class", "counties")
 						.attr("transform", "translate(20,40)")
@@ -167,9 +167,9 @@ class Map{
 						.attr('stroke', 'black')
 						.on('click', (d) => {
 							this.highlightPath(d.properties.NAME);
-						}) 
+						})
 						.on("mouseover", (d)=>{
-		
+
 							var f = d3.format(".2f");
 							const supplyDemandRatio = f(2 *this.supplyScore[d.properties.NAME]);
 							const population = this.currentYearData[d.properties.NAME]['population'];
@@ -183,14 +183,14 @@ class Map{
 							"<tr><td>Supply/100K:</td><td>"+(supplyPer100k)+"</td></tr>"+
 							"<tr><td>Demand/100K:</td><td>"+(demandPer100k)+"</td></tr>"+
 							"</table>";
-							
-								d3.select("#tooltip").transition().duration(200).style("opacity", .9);     
-								d3.select("#tooltip").html(toolTip)  
-									.style("left", (d3.event.pageX) + "px")     
+
+								d3.select("#tooltip").transition().duration(200).style("opacity", .9);
+								d3.select("#tooltip").html(toolTip)
+									.style("left", (d3.event.pageX) + "px")
 									.style("top", (d3.event.pageY - 28) + "px");
 									})
 							.on("mouseout", this.mouseOut);
-		
+
 					this.svg.append("path")
 						.attr("class", "county-borders")
 						.attr("transform", "translate(20,40)")
@@ -207,7 +207,7 @@ class Map{
 		});
 	}
 	/**
-	 * 
+	 *
 	 * @param mapData current map type that is selected
 	 * @param currentYearData current results data
 	 */
@@ -221,7 +221,7 @@ class Map{
 				.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 				.range([d3.interpolatePuOr(1), d3.interpolatePuOr(0.5), d3.interpolatePuOr(0)]);
 		} else if (mapData == 'supply_per_100k') {
-			let max = d3.max(Object.keys(currentYearData).map( d => 
+			let max = d3.max(Object.keys(currentYearData).map( d =>
 				currentYearData[d]['totalSupply'] / currentYearData[d]['population'] * 100000
 			));
 
@@ -243,21 +243,22 @@ class Map{
 		}
 	}
 	/**
-	 * 
+	 *
 	 * @param d the current county
 	 * @param that reference to this class calling the function
 	 * @param mapData current map type that is selected
 	 */
 	myColorScale(d,that,mapData){
+		console.log(that.supplyScore);
 		let county = d.properties.NAME;
 		if (mapData == 'supply_need') {
 			return d3.interpolateRdBu(that.supplyScore[county]);
 		} else if (mapData == 'supply_need_per_100K') {
 			return d3.interpolatePuOr(1 - that.supplyScore[county]);
 		} else if (mapData == 'supply_per_100k') {
-			
 
-			let max = d3.max(Object.keys(that.currentYearData).map( d => 
+
+			let max = d3.max(Object.keys(that.currentYearData).map( d =>
 				that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000
 			));
 
@@ -267,7 +268,7 @@ class Map{
 
 			return d3.interpolatePurples(scale(that.currentYearData[county]['totalSupply']/that.currentYearData[county]['population']*100000));
 		} else if (mapData == 'demand_per_100k') {
-			
+
 			let max = d3.max(Object.keys(that.currentYearData), d => that.currentYearData[d]['totalDemand']/that.currentYearData[d]['population']*100000)
 
 			const scale = d3.scaleLinear()
@@ -286,8 +287,8 @@ class Map{
 	updateMapType(mapData:string):void{
 		this.mapData = mapData;
 		let that:any = this;
-		let colorScale:any = this.myColorScale; 
-		let linear:any =this.getLinear(this.mapData,this.currentYearData) 
+		let colorScale:any = this.myColorScale;
+		let linear:any =this.getLinear(this.mapData,this.currentYearData)
 		var legendLinear:any = legendColor()
 					.shapeWidth(115)
 					.labelFormat(d3.format(".0f"))
@@ -301,7 +302,7 @@ class Map{
 
 			});
 		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
-	
+
 	}
 	/**
 	 * This handles when the user selects a new year
@@ -340,7 +341,7 @@ class Map{
 		this.updateMapYear(this.yearSelected)
 	}
 	mouseOut(){
-		d3.select("#tooltip").transition().duration(500).style("opacity", 0);      
+		d3.select("#tooltip").transition().duration(500).style("opacity", 0);
 	}
 
 	highlightPath(name:string) {
