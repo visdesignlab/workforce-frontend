@@ -61,11 +61,21 @@ class Sidebar {
 
 		let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;
 		let domainMax = 0;
+
+		let currState = Object.keys(currentYear).filter(d => {
+			return d.includes("State of")
+		})[0];
+
+		let temp = currentYear[currState];
+		delete currentYear[currState];
+
 		if (mapData.includes('100')) {
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupplyPer100K'], currentYear[d]['totalDemandPer100K']));
 		} else {
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']));
 		}
+
+		currentYear[currState] = temp;
 
 		var headers = [{name: 'County', x: 0},
 		{name: 'Supply', x: barWidth},
@@ -91,43 +101,47 @@ class Sidebar {
 		* Pull out the state, put it in its own SVG above.
 		* TODO::  this is straight duplicating the code below it atm. Pull into a function.
 		// */
-		// let stateSvg = d3.select('#state');
-		// stateSvg.selectAll('*').remove();
-		// stateSvg = stateSvg
-		// 		.append('svg')
-		// 		.attr('height', 30)
-		// 		.attr('style', "width:100%");
-		//
-		// let state = countiesData.filter(d => {
-		// 	return d[0].includes("State of");
-		// })[0];
-		//
-		// stateSvg = stateSvg.append('g')
-		// 	.attr('class', 'pointerCursor')
-		//
-		// stateSvg.append('rect')
-		// 	.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
-		// 	.attr('height', barHeight)
-		// 	.attr('id', d => state[0].replace(/\s/g, ''))
-		// 	.attr('class', 'background')
-		//
-		// stateSvg.on('click', (d) => {
-		// 		this.highlightRect(state[0]);
-		// 	});
-		//
-		// stateSvg.on('mouseover', d => {
-		// 	d3.select(`#${this.removeSpaces(state[0])}`)
-		// 		.classed('hoverCounty', true);
-		// 	});
-		//
-		// stateSvg.on('mouseout', d => {
-		// 	d3.select('.hoverCounty')
-		// 		.classed('hoverCounty', false);
-		// })
+		let stateSvg = d3.select('#state');
+		stateSvg.selectAll('*').remove();
+		stateSvg = stateSvg
+				.append('svg')
+				.attr('height', 30)
+				.attr('style', "width:100%");
 
-		// let state = countiesData.filter(d => {
-		// 	return d[0].includes("State of");
-		// })[0];
+		let state = countiesData.filter(d => {
+			return d[0].includes("State of");
+		})[0];
+
+		stateSvg = stateSvg.append('g')
+			.selectAll('g')
+			.data([state])
+			.enter()
+			.append('g')
+			.attr('class', 'pointerCursor')
+
+		stateSvg.append('rect')
+			.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
+			.attr('height', barHeight)
+			.attr('id', d => d[0].replace(/\s/g, ''))
+			.attr('class', 'background')
+
+		stateSvg.on('click', (d) => {
+				this.highlightRect(d[0]);
+			});
+
+		stateSvg.on('mouseover', d => {
+			d3.select(`#${this.removeSpaces(d[0])}`)
+				.classed('hoverCounty', true);
+			});
+
+		stateSvg.on('mouseout', d => {
+			d3.select('.hoverCounty')
+				.classed('hoverCounty', false);
+		})
+
+		countiesData = countiesData.filter(d => {
+			return !d[0].includes("State of");
+		});
 
 		var groups = this.countiesSvg.append('g')
 			.selectAll('g')
@@ -194,6 +208,14 @@ class Sidebar {
 			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2);
 		if (Object.keys(otherCurrentYearData).length)
 			groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
+		}
+
+		stateSvg.call(this.drawText, barWidth, barHeight, this.margin.left);
+		stateSvg.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
+		stateSvg.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
+		if (Object.keys(otherCurrentYearData).length) {
+			stateSvg.call(this.drawText, barWidth, barHeight, this.margin.left, 4,  barWidth, barHeight / 2);
+			stateSvg.call(this.drawText, barWidth, barHeight, this.margin.left, 5,  2 * barWidth,barHeight / 2);
 		}
 
 		d3.selectAll('#sortCounties .rectButtons')
@@ -466,8 +488,6 @@ class Sidebar {
 				.attr('fill', iColor)
 				.attr('cx', d => x + xScale(d[i]))
 				.attr('cy', (d, i) => y + 0 * barHeight + barHeight / 2)
-				.append('title')
-				.text(d => d[i])
 
 			groups
 				.append('circle')
@@ -476,8 +496,6 @@ class Sidebar {
 				.attr('fill', jColor)
 				.attr('cx', d => x + xScale(d[j]))
 				.attr('cy', (d, i) => y + 0 * barHeight + barHeight / 2)
-				.append('title')
-				.text(d => d[j])
 
 
 			//making tooltip for side bars. Considered adding color to match scale, but problems with white.
