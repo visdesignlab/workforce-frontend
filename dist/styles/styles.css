@@ -145,6 +145,7 @@ body {
 	border:1px solid grey;
 	border-radius:3px;
 	min-width: 100;
+	color:white;
 	padding:2px;
 	opacity:0;
 }
