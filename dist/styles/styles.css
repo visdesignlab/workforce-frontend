@@ -2,7 +2,6 @@
 	opacity: 0.7;
 }
 
-
 .selected {
 	stroke: #00ffcc;
 	stroke-width: 4px;
@@ -210,4 +209,10 @@ body {
 	background-color: #fff;
 	border-radius: 4px;
 	box-shadow: 0 0.15em 0.35em 0 rgba(0,0,0,0.135);
+}
+
+#bootstrap-overrides .dropdown{
+	margin-top:10px;
+	padding-right:0px;
+	padding-left:10px;
 }
