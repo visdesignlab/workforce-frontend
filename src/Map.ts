@@ -249,7 +249,6 @@ class Map{
 	 * @param mapData current map type that is selected
 	 */
 	myColorScale(d,that,mapData){
-		console.log(that.supplyScore);
 		let county = d.properties.NAME;
 		if (mapData == 'supply_need') {
 			return d3.interpolateRdBu(that.supplyScore[county]);
@@ -301,8 +300,9 @@ class Map{
 				d3.select(this).transition().duration(1000).attr('fill',colorScale(d,that,mapData));
 
 			});
-		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 
+		this.sidebar.updateSidebar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 	}
 	/**
 	 * This handles when the user selects a new year
@@ -351,8 +351,7 @@ class Map{
 		if (this.map && this.map.linechart.results) {
 			this.map.linechart.updateLineChart(this.selectedCounty);
 		}
-		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
-
+		this.sidebar.highlightBar(this.selectedCounty);
 		// should be moved it id-based paths
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => d.properties.NAME == name)

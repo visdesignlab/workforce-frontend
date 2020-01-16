@@ -49,6 +49,8 @@ class Sidebar {
 	}
 
 	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []) {
+		console.log(selectedProfessions);
+		console.log(otherCurrentYearData);
 		this.selectedProfessions = selectedProfessions;
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
@@ -83,17 +85,7 @@ class Sidebar {
 		var xScale = d3.scaleLinear()
 		.domain([0, domainMax])
 		.range([0, barWidth]);
-		let countiesData = [];
-		for (let county in currentYear) {
-			let d = currentYear[county];
-			let e = otherCurrentYearData[county] || {};
-			if (mapData.includes('100')) {
-				countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K,
-				e.totalSupplyPer100K, e.totalDemandPer100K, e.totalDemandPer100K - e.totalSupplyPer100K]);
-			} else {
-				countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply, e.totalSupply, e.totalDemand, e.totalDemand - e.totalSupply]);
-			}
-		};
+		let countiesData = this.calculateCountiesData(currentYear, otherCurrentYearData, mapData.includes('100'));
 		var sortingFunction = this.getSortingOptions(0, true);
 
 		/**
@@ -148,7 +140,7 @@ class Sidebar {
 			.enter()
 			.append('g')
 			.attr('transform', (d, i) => `translate(0, ${i * barHeight})`)
-			.attr('class','pointerCursor')
+			.attr('class','pointerCursor countiesG')
 
 		groups.append('rect')
 			.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
@@ -190,18 +182,18 @@ class Sidebar {
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		axis.call(xAxis);
 
-		groups.call(this.drawText, barWidth, barHeight, this.margin.left);
-
-		if (Object.keys(otherCurrentYearData).length) {
-			groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 1, barWidth );
-			groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 2,  2 * barWidth);
-			groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 4,  barWidth, barHeight / 2);
-			groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 5,  2 * barWidth,barHeight / 2);
-		}
-		else{
-			groups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
-			groups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
-		}
+		groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
+		//
+		// if (Object.keys(otherCurrentYearData).length) {
+		// 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 1, barWidth );
+		// 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 2,  2 * barWidth);
+		// 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 4,  barWidth, barHeight / 2);
+		// 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 5,  2 * barWidth,barHeight / 2);
+		// }
+		// else{
+		// 	groups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
+		// 	groups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
+		// }
 		if (mapData.includes('100')) {
 			if (Object.keys(otherCurrentYearData).length){
 				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
@@ -222,21 +214,26 @@ class Sidebar {
 			}
 		}
 
-		stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left);
+
+		stateGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
 
 		if (Object.keys(otherCurrentYearData).length) {
 			stateSvg.attr("height", "60");
-			stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth );
-			stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 2,  2 * barWidth);
-			stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 4,  barWidth, barHeight / 2);
-			stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 5,  2 * barWidth,barHeight / 2);
 		}
 		else{
 			stateSvg.attr("height", "30");
-
-			stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
-			stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
 		}
+		// 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth );
+		// 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 2,  2 * barWidth);
+		// 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 4,  barWidth, barHeight / 2);
+		// 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 5,  2 * barWidth,barHeight / 2);
+		// }
+		// else{
+		// 	stateSvg.attr("height", "30");
+		//
+		// 	stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
+		// 	stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
+		// }
 
 		d3.selectAll('#sortCounties .rectButtons')
 		.on('click', (d, i) => {
@@ -290,7 +287,7 @@ class Sidebar {
 		this.professionsSvg.selectAll('*').remove();
 		var professions = Object.keys(currentYear[selectedCounty]['supply']);
 		var population = currentYear[selectedCounty]['population'];
-		var stats = {}
+		var stats = {};
 
 		for (let prof of professions) {
 			stats[prof] = {totalDemandPer100K:0,totalSupplyPer100K:0,totalSupply: 0, totalDemand: 0,
@@ -414,18 +411,18 @@ class Sidebar {
 		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 	axis.call(xAxis);
 
-	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left);
-
-	if (Object.keys(otherCurrentYearData).length) {
-		professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth);
-		professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 2,  2 * barWidth);
-		professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 4,  barWidth, barHeight / 2);
-		professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 5,  2 * barWidth, barHeight / 2);
-	}
-	else{
-		professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth);
-		professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
-	}
+	professionsGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
+	//
+	// if (Object.keys(otherCurrentYearData).length) {
+	// 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth);
+	// 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 2,  2 * barWidth);
+	// 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 4,  barWidth, barHeight / 2);
+	// 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 5,  2 * barWidth, barHeight / 2);
+	// }
+	// else{
+	// 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth);
+	// 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
+	// }
 	if (mapData.includes('100')) {
 		if (Object.keys(otherCurrentYearData).length){
 			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight/2, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
@@ -497,7 +494,9 @@ class Sidebar {
 				.attr("transform", `translate(${barWidth},${20})`)
 				.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 
-			var groups = svg.append('g');
+			var groups = svg.append('g')
+				.attr('id', d => "plot" + d[0]);
+
 			groups
 				.append('line')
 				.attr('stroke', '#000000')
@@ -508,6 +507,7 @@ class Sidebar {
 
 			groups
 				.append('rect')
+				.attr('class', 'scatterPlotRect')
 				.attr('height', 6)
 				.attr('width', d => Math.abs(xScale(d[i]) - xScale(d[j])))
 				.attr('x', d => {return x + xScale(d3.min([d[i], d[j]]))})
@@ -516,6 +516,7 @@ class Sidebar {
 
 			groups
 				.append('circle')
+				.attr('class', 'supplyCircle')
 				.attr('r', 6)
 				.attr('stroke', iColor)
 				.attr('fill', iColor)
@@ -524,6 +525,7 @@ class Sidebar {
 
 			groups
 				.append('circle')
+				.attr('class', 'needCircle')
 				.attr('r', 6)
 				.attr('stroke', jColor)
 				.attr('fill', jColor)
@@ -534,9 +536,7 @@ class Sidebar {
 			//making tooltip for side bars. Considered adding color to match scale, but problems with white.
 			groups
 				.on('mouseover', d => {
-					console.log(d);
 					let toolTip = "<h4>"+ (-d[3]) + "</h4>";
-					console.log(d[1] / d[2]);
 					d3.select("#barTooltip")
 						.style("opacity", .9);
 						// .style("color", d3.interpolateRdBu(d[1] / d[2] / 2));
@@ -570,16 +570,13 @@ class Sidebar {
 			.text(d => d.name);
 
 		groups
-		.append('text')
-		.attr('y', (d, i) => 15)
-		.attr('x', (d, i) => d.x+90)
-		.attr("font-family","FontAwesome")
-		.attr('class',"rectButtons")
-		.attr('id',(d)=>d.name)
-		.text(function(d) { return '\uf0dc'; });
-		//.text("&#xf0dc");
-
-
+			.append('text')
+			.attr('y', (d, i) => 15)
+			.attr('x', (d, i) => d.x+90)
+			.attr("font-family","FontAwesome")
+			.attr('class',"rectButtons")
+			.attr('id',(d)=>d.name)
+			.text(function(d) { return '\uf0dc'; });
 	}
 
 	// drawStackedBar(svg, data, xScale) {
@@ -614,9 +611,14 @@ class Sidebar {
 	// 		.append('title')
 	// 		.text(d => d[1])
 	// }
-	updateSidebar(currentYear, selectedCounty){
-
+	updateSidebar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []){
+		for(let current in currentYear){
+			d3.select("#plot" + this.removeSpaces(current))
+		}
 	}
+
+
+
 	drawText(selection, barWidth, barHeight, leftMargin, i = 0, dx = 0, dy = 0) {
 		var groups = selection.append('g');
 		dx += leftMargin;
@@ -627,6 +629,80 @@ class Sidebar {
 			.attr('y', (d, i) => 0 * barHeight + barHeight / 2 + 5 + dy)
 			.attr('x', dx)
 			.text(d => isNaN(d[i]) ? d[i] : f(d[i]));
+	}
+
+	drawAllText(selection, barWidth, barHeight, leftMargin, doubleBars) {
+		var groups = selection.append('g');
+		const f = d3.format('.0f');
+
+		if(!doubleBars){
+			// groups.selectAll('text')
+			// 	.data([0, 1, 2])
+			// 	.enter()
+			// 	.append('text')
+			// 	.attr('y', (d, i) => barHeight / 2)
+			// 	.attr('x', (d, i) => leftMargin + barWidth * i)
+			// 	.style("dominant-baseline", "middle")
+			// 	.text((d, i) => isNaN(selection.data()[i][d]) ? selection.data()[i][d] : f(selection.data()[i][d]));
+			//
+			groups
+				.append('text')
+				.attr('y', (d, i) => barHeight / 2)
+				.attr('x', leftMargin)
+				.style("dominant-baseline", "middle")
+				.text(d => isNaN(d[0]) ? d[0] : f(d[0]));
+
+			groups
+				.append('text')
+				.attr('y', (d, i) => barHeight / 2)
+				.attr('x', leftMargin + barWidth)
+				.style("dominant-baseline", "middle")
+				.text(d => isNaN(d[1]) ? d[1] : f(d[1]));
+
+			groups
+				.append('text')
+				.attr('y', (d, i) => barHeight / 2)
+				.attr('x', leftMargin + 2 * barWidth)
+				.style("dominant-baseline", "middle")
+				.text(d => isNaN(d[2]) ? d[2] : f(d[2]));
+		}
+		else
+		{
+			groups
+				.append('text')
+				.attr('y', (d, i) => barHeight / 2)
+				.attr('x', leftMargin)
+				.style("dominant-baseline", "middle")
+				.text(d => isNaN(d[0]) ? d[0] : f(d[0]));
+
+			groups
+				.append('text')
+				.attr('y', (d, i) => barHeight / 4)
+				.attr('x', leftMargin + barWidth)
+				.style("dominant-baseline", "middle")
+				.text(d => isNaN(d[1]) ? d[1] : f(d[1]));
+
+			groups
+				.append('text')
+				.attr('y', (d, i) => barHeight / 4)
+				.attr('x', leftMargin + 2 * barWidth)
+				.style("dominant-baseline", "middle")
+				.text(d => isNaN(d[2]) ? d[2] : f(d[2]));
+
+			groups
+				.append('text')
+				.attr('y', (d, i) => barHeight/2 + barHeight / 4)
+				.attr('x', leftMargin + barWidth)
+				.style("dominant-baseline", "middle")
+				.text(d => isNaN(d[4]) ? d[4] : f(d[4]));
+
+			groups
+				.append('text')
+				.attr('y', (d, i) => barHeight/2 +  barHeight / 4)
+				.attr('x', leftMargin + 2 * barWidth)
+				.style("dominant-baseline", "middle")
+				.text(d => isNaN(d[5]) ? d[5] : f(d[5]));
+		}
 	}
 
 
@@ -649,6 +725,12 @@ class Sidebar {
 		this.map.highlightPath(id);
 		id = this.removeSpaces(id);
 
+		this.highlightBar(id)
+	}
+
+	highlightBar(id){
+		id = this.removeSpaces(id);
+		console.log("here");
 		this.countiesSvg.select('.selectedCounty')
 			.classed('selectedCounty', false);
 
@@ -658,6 +740,22 @@ class Sidebar {
 
 	removeSpaces(s) : string{
 		return s.replace(/\s/g, '');
+	}
+
+	calculateCountiesData(currentYear, otherCurrentYearData, secondBar){
+		let countiesData = [];
+		for (let county in currentYear) {
+			let d = currentYear[county];
+			let e = otherCurrentYearData[county] || {};
+			if (secondBar) {
+				countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K,
+				e.totalSupplyPer100K, e.totalDemandPer100K, e.totalDemandPer100K - e.totalSupplyPer100K]);
+			} else {
+				countiesData.push([county, d.totalSupply, d.totalDemand, d.totalDemand - d.totalSupply, e.totalSupply, e.totalDemand, e.totalDemand - e.totalSupply]);
+			}
+		};
+
+		return countiesData
 	}
 }
 
