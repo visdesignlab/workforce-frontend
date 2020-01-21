@@ -632,6 +632,7 @@ class Sidebar {
 	}
 
 	drawAllText(selection, barWidth, barHeight, leftMargin, doubleBars) {
+		
 		var groups = selection.append('g');
 		const f = d3.format('.0f');
 
