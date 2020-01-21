@@ -14,7 +14,9 @@
     "source-map-loader": "^0.2.4",
     "topojson-client": "^3.0.0",
     "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7"
+    "webpack-cli": "^3.3.7",
+    "webpack-dev-middleware": "^3.7.2",
+    "webpack-hot-middleware": "^2.25.0"
   },
   "devDependencies": {
     "autoprefixer": "^9.6.1",
