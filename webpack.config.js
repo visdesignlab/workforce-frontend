@@ -1,15 +1,22 @@
 const path = require('path');
+const webpack = require('webpack');
 
 
 module.exports = {
-  entry: "./src/Main.ts",
+  entry: ["./src/Main.ts", 'webpack-hot-middleware/client'],
   output: {
       filename: "bundle.js",
-      path: path.resolve(__dirname, 'dist')
+      path: path.resolve(__dirname, 'dist'),
+      publicPath: '/',
   },
+
 
   // Enable sourcemaps for debugging webpack's output.
   devtool: "source-map",
+  devServer: {
+    contentBase: './dist',
+    hot: true,
+  },
 	mode: 'development',
 
   resolve: {
@@ -39,6 +46,7 @@ module.exports = {
                 loader: 'postcss-loader',
                 options: {
                   plugins: function () {
+
                     return [
                       require('autoprefixer')
                     ];
@@ -52,9 +60,14 @@ module.exports = {
             ]
           }
       ]
-      
-  
-        },
 
+
+        },
+        plugins: [
+          new webpack.optimize.OccurrenceOrderPlugin(),
+          new webpack.HotModuleReplacementPlugin(),
+          // Use NoErrorsPlugin for webpack 1.x
+          new webpack.NoEmitOnErrorsPlugin()
+        ],
   // Other options...
 };

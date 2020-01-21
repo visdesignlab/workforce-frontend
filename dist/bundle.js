@@ -77,7 +77,7 @@
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
 /******/
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
+/******/ 	__webpack_require__.p = "/";
 /******/
 /******/
 /******/ 	// Load entry module and return exports
@@ -57906,6 +57906,8 @@ var Sidebar = /** @class */ (function () {
             .text(function (d) { return isNaN(d[i]) ? d[i] : f(d[i]); });
     };
     Sidebar.prototype.drawAllText = function (selection, barWidth, barHeight, leftMargin, doubleBars) {
+        console.log("drawing text");
+        wrgwrgw;
         var groups = selection.append('g');
         var f = d3.format('.0f');
         if (!doubleBars) {

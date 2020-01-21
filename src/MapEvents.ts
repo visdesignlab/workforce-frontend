@@ -17,7 +17,7 @@ class MapEvents{
 		this.changeModelData();
 		this.runCustomModel();
 	}
-	
+
 	updateYear():void{
 		d3.select("#year").on('change',()=>{
 			let year:string = (document.getElementById('year') as HTMLInputElement).value;
@@ -42,10 +42,10 @@ class MapEvents{
 				d3.select("#" + profession)
 					.select('rect')
 					.attr('fill', '#cccccc');
-			
+
 				})
 				this.selectAll = false;
-			
+
 			}
 
 
@@ -57,10 +57,10 @@ class MapEvents{
 						d3.selectAll("#" + profession)
 							.select('rect')
 							.attr('fill', '#ffffff');
-		
+
 					})
 				this.selectAll = true;
-				
+
 			}
 				this.map.updateSelections(this.map.selectedProfessions)
 			})}

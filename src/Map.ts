@@ -51,7 +51,7 @@ class Map{
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap(customModel = false, initSidebar = true, otherCurrentYearData):void{
+	drawMap(customModel = false, initSidebar = true, otherCurrentYearData = []):void{
 			d3.select('#spinner')
 				.classed('d-flex', true)
 		const map = this.mapType;
