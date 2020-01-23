@@ -203,7 +203,17 @@ class Sidebar {
 				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 			}
 
+			d3.select("#counties").select("svg")
+				.attr("height", d => {
+					return groups.data().length * barHeight * 2 + 10;
+				})
+
 		} else {
+
+			d3.select("#counties").select("svg")
+				.attr("height", d => {
+					return groups.data().length * barHeight + 10;
+				})
 
 			if (Object.keys(otherCurrentYearData).length){
 				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2);
@@ -632,11 +642,11 @@ class Sidebar {
 	}
 
 	drawAllText(selection, barWidth, barHeight, leftMargin, doubleBars) {
-		
 		var groups = selection.append('g');
 		const f = d3.format('.0f');
 
 		if(!doubleBars){
+
 			// groups.selectAll('text')
 			// 	.data([0, 1, 2])
 			// 	.enter()
