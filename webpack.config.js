@@ -1,9 +1,9 @@
 const path = require('path');
-const webpack = require('webpack');
+// const webpack = require('webpack');
 
 
 module.exports = {
-  entry: ["./src/Main.ts", 'webpack-hot-middleware/client'],
+  entry: ["./src/Main.ts"],
   output: {
       filename: "bundle.js",
       path: path.resolve(__dirname, 'dist'),
@@ -63,11 +63,11 @@ module.exports = {
 
 
         },
-        plugins: [
-          new webpack.optimize.OccurrenceOrderPlugin(),
-          new webpack.HotModuleReplacementPlugin(),
-          // Use NoErrorsPlugin for webpack 1.x
-          new webpack.NoEmitOnErrorsPlugin()
-        ],
+        // plugins: [
+        //   new webpack.optimize.OccurrenceOrderPlugin(),
+        //   new webpack.HotModuleReplacementPlugin(),
+        //   // Use NoErrorsPlugin for webpack 1.x
+        //   new webpack.NoEmitOnErrorsPlugin()
+        // ],
   // Other options...
 };

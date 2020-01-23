@@ -81,7 +81,7 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/Main.ts");
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -56714,6 +56714,7 @@ var Map = /** @class */ (function () {
         var _this = this;
         if (customModel === void 0) { customModel = false; }
         if (initSidebar === void 0) { initSidebar = true; }
+        if (otherCurrentYearData === void 0) { otherCurrentYearData = []; }
         d3.select('#spinner')
             .classed('d-flex', true);
         var map = this.mapType;
@@ -57507,8 +57508,16 @@ var Sidebar = /** @class */ (function () {
             else {
                 groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
             }
+            d3.select("#counties").select("svg")
+                .attr("height", function (d) {
+                return groups.data().length * barHeight * 2 + 10;
+            });
         }
         else {
+            d3.select("#counties").select("svg")
+                .attr("height", function (d) {
+                return groups.data().length * barHeight + 10;
+            });
             if (Object.keys(otherCurrentYearData).length) {
                 groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2);
                 groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
@@ -57906,8 +57915,6 @@ var Sidebar = /** @class */ (function () {
             .text(function (d) { return isNaN(d[i]) ? d[i] : f(d[i]); });
     };
     Sidebar.prototype.drawAllText = function (selection, barWidth, barHeight, leftMargin, doubleBars) {
-        console.log("drawing text");
-        wrgwrgw;
         var groups = selection.append('g');
         var f = d3.format('.0f');
         if (!doubleBars) {
@@ -58021,6 +58028,18 @@ var Sidebar = /** @class */ (function () {
     return Sidebar;
 }());
 exports.Sidebar = Sidebar;
+
+
+/***/ }),
+
+/***/ 0:
+/*!***************************!*\
+  !*** multi ./src/Main.ts ***!
+  \***************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(/*! ./src/Main.ts */"./src/Main.ts");
 
 
 /***/ })
