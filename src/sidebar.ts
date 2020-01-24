@@ -49,8 +49,9 @@ class Sidebar {
 	}
 
 	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []) {
-		console.log(selectedProfessions);
-		console.log(otherCurrentYearData);
+
+		console.log("INIT CALLED")
+
 		this.selectedProfessions = selectedProfessions;
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
@@ -85,6 +86,7 @@ class Sidebar {
 		var xScale = d3.scaleLinear()
 		.domain([0, domainMax])
 		.range([0, barWidth]);
+		console.log(this.map.currentYearData)
 		let countiesData = this.calculateCountiesData(currentYear, otherCurrentYearData, mapData.includes('100'));
 		var sortingFunction = this.getSortingOptions(0, true);
 
@@ -373,7 +375,7 @@ class Sidebar {
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#ffffff');
-				if (this.map.map)
+				if (this.map.useSecondMap)
 					this.map.map.updateSelections(this.selectedProfessions);
 				this.map.updateSelections(this.selectedProfessions);
 			} else {
@@ -381,7 +383,7 @@ class Sidebar {
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#cccccc');
-				if (this.map.map) {
+				if (this.map.useSecondMap) {
 					this.map.map.selectedCounty = this.map.selectedCounty;
 					this.map.map.updateSelections(this.selectedProfessions);
 				}
@@ -433,6 +435,7 @@ class Sidebar {
 	// 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth);
 	// 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
 	// }
+	console.log(mapData);
 	if (mapData.includes('100')) {
 		if (Object.keys(otherCurrentYearData).length){
 			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight/2, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
@@ -622,9 +625,7 @@ class Sidebar {
 	// 		.text(d => d[1])
 	// }
 	updateSidebar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []){
-		for(let current in currentYear){
-			d3.select("#plot" + this.removeSpaces(current))
-		}
+
 	}
 
 
@@ -753,12 +754,12 @@ class Sidebar {
 		return s.replace(/\s/g, '');
 	}
 
-	calculateCountiesData(currentYear, otherCurrentYearData, secondBar){
+	calculateCountiesData(currentYear, otherCurrentYearData, mapData){
 		let countiesData = [];
 		for (let county in currentYear) {
 			let d = currentYear[county];
 			let e = otherCurrentYearData[county] || {};
-			if (secondBar) {
+			if (mapData) {
 				countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K,
 				e.totalSupplyPer100K, e.totalDemandPer100K, e.totalDemandPer100K - e.totalSupplyPer100K]);
 			} else {

@@ -56687,6 +56687,7 @@ var Map = /** @class */ (function () {
      *
      */
     function Map() {
+        this.useSecondMap = false;
         this.selectedProfessions = {};
         this.linechart = new linechart_1.Linechart();
         this.selectedCounty = 'State of Utah';
@@ -56851,10 +56852,11 @@ var Map = /** @class */ (function () {
                     .attr("class", "county-borders")
                     .attr("transform", "translate(20,40)")
                     .attr("d", path(topojson.mesh(us, us.objects[map], function (a, b) { return a !== b; })));
-                if (_this.map) {
+                if (_this.useSecondMap) {
                     _this.otherCurrentYearData = _this.map.currentYearData;
                     _this.map.otherCurrentYearData = _this.currentYearData;
                 }
+                console.log(_this.currentYearData);
                 _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYearData, _this.selectedCounty, _this.otherCurrentYearData);
                 _this.linechart.initLineChart(_this.results);
             });
@@ -56952,7 +56954,7 @@ var Map = /** @class */ (function () {
             var selectedCounty = d.properties.NAME;
             d3.select(this).transition().duration(1000).attr('fill', colorScale(d, that, mapData));
         });
-        this.sidebar.updateSidebar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+        console.log(this.currentYearData);
         this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
     };
     /**
@@ -56961,6 +56963,7 @@ var Map = /** @class */ (function () {
      */
     Map.prototype.updateMapYear = function (year) {
         var _this = this;
+        console.log("updating this.currentYearData");
         var map = this.mapType;
         this.yearSelected = year;
         var modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
@@ -57000,10 +57003,11 @@ var Map = /** @class */ (function () {
         d3.selectAll('path').classed('selected', false);
         this.selectedCounty = name;
         this.linechart.initLineChart(this.results, this.selectedCounty);
-        if (this.map && this.map.linechart.results) {
+        if (this.useSecondMap && this.map.linechart.results) {
             this.map.linechart.updateLineChart(this.selectedCounty);
         }
-        this.sidebar.highlightBar(this.selectedCounty);
+        console.log(this.currentYearData);
+        this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
         // should be moved it id-based paths
         d3.selectAll('svg .counties').selectAll('path')
             .filter(function (d) { return d.properties.NAME == name; })
@@ -57052,7 +57056,12 @@ var MapEvents = /** @class */ (function () {
         var _this = this;
         document.getElementById("mapData").addEventListener('change', function () {
             var mapData = document.getElementById('mapData').value;
-            _this.map.updateMapType(mapData);
+            if (_this.id == 0) {
+                _this.map.updateMapType(mapData);
+            }
+            else if (_this.map.useSecondMap) {
+                _this.map.updateMapType(mapData);
+            }
         });
     };
     MapEvents.prototype.selectAllClicked = function () {
@@ -57093,10 +57102,16 @@ var MapEvents = /** @class */ (function () {
         document.getElementById("modelData").addEventListener('change', function () {
             _this.map.mapType = document.getElementById('mapType').value;
             var selectedOptions = document.getElementById('modelData').selectedOptions;
+            console.log(selectedOptions);
             if (selectedOptions[_this.id]) {
                 if (selectedOptions.length == 1) {
+                    _this.map.useSecondMap = false;
                     _this.map.map = null;
+                    console.log(_this.map.currentYearData);
                     _this.map.otherCurrentYearData = {};
+                }
+                else {
+                    _this.map.useSecondMap = true;
                 }
                 _this.map.modelData = selectedOptions[_this.id].value;
                 _this.map.drawMap();
@@ -57379,8 +57394,7 @@ var Sidebar = /** @class */ (function () {
         var _this = this;
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
         if (otherCurrentYearData === void 0) { otherCurrentYearData = []; }
-        console.log(selectedProfessions);
-        console.log(otherCurrentYearData);
+        console.log("INIT CALLED");
         this.selectedProfessions = selectedProfessions;
         this.countiesSvg.selectAll('*').remove();
         this.countiesHeaderSvg.selectAll('*').remove();
@@ -57410,6 +57424,7 @@ var Sidebar = /** @class */ (function () {
         var xScale = d3.scaleLinear()
             .domain([0, domainMax])
             .range([0, barWidth]);
+        console.log(this.map.currentYearData);
         var countiesData = this.calculateCountiesData(currentYear, otherCurrentYearData, mapData.includes('100'));
         var sortingFunction = this.getSortingOptions(0, true);
         /**
@@ -57660,7 +57675,7 @@ var Sidebar = /** @class */ (function () {
                 d3.select("#" + d[0])
                     .select('rect')
                     .attr('fill', '#ffffff');
-                if (_this.map.map)
+                if (_this.map.useSecondMap)
                     _this.map.map.updateSelections(_this.selectedProfessions);
                 _this.map.updateSelections(_this.selectedProfessions);
             }
@@ -57669,7 +57684,7 @@ var Sidebar = /** @class */ (function () {
                 d3.select("#" + d[0])
                     .select('rect')
                     .attr('fill', '#cccccc');
-                if (_this.map.map) {
+                if (_this.map.useSecondMap) {
                     _this.map.map.selectedCounty = _this.map.selectedCounty;
                     _this.map.map.updateSelections(_this.selectedProfessions);
                 }
@@ -57714,6 +57729,7 @@ var Sidebar = /** @class */ (function () {
         // 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth);
         // 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
         // }
+        console.log(mapData);
         if (mapData.includes('100')) {
             if (Object.keys(otherCurrentYearData).length) {
                 professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
@@ -57897,9 +57913,6 @@ var Sidebar = /** @class */ (function () {
     Sidebar.prototype.updateSidebar = function (selectedProfessions, currentYear, selectedCounty, otherCurrentYearData) {
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
         if (otherCurrentYearData === void 0) { otherCurrentYearData = []; }
-        for (var current in currentYear) {
-            d3.select("#plot" + this.removeSpaces(current));
-        }
     };
     Sidebar.prototype.drawText = function (selection, barWidth, barHeight, leftMargin, i, dx, dy) {
         if (i === void 0) { i = 0; }
@@ -58009,12 +58022,12 @@ var Sidebar = /** @class */ (function () {
     Sidebar.prototype.removeSpaces = function (s) {
         return s.replace(/\s/g, '');
     };
-    Sidebar.prototype.calculateCountiesData = function (currentYear, otherCurrentYearData, secondBar) {
+    Sidebar.prototype.calculateCountiesData = function (currentYear, otherCurrentYearData, mapData) {
         var countiesData = [];
         for (var county in currentYear) {
             var d = currentYear[county];
             var e = otherCurrentYearData[county] || {};
-            if (secondBar) {
+            if (mapData) {
                 countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K,
                     e.totalSupplyPer100K, e.totalDemandPer100K, e.totalDemandPer100K - e.totalSupplyPer100K]);
             }
