@@ -77,10 +77,15 @@ class MapEvents{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
 
+			console.log(selectedOptions);
 			if (selectedOptions[this.id]) {
 				if (selectedOptions.length == 1) {
+					this.map.useSecondMap = false;
 					this.map.map = null;
 					this.map.otherCurrentYearData = {};
+				}
+				else{
+					this.map.useSecondMap = true;
 				}
 				this.map.modelData = selectedOptions[this.id].value;
 				this.map.drawMap();

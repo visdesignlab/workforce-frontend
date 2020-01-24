@@ -9,6 +9,7 @@ import {Linechart} from './linechart'
 class Map{
 	svg:any;
 	map: Map;
+	useSecondMap:boolean
 	mapData:string;
 	mapType:string;
 	modelData:string;
@@ -26,6 +27,7 @@ class Map{
 	 *
 	 */
 	constructor(){
+		this.useSecondMap = false;
 		this.selectedProfessions = {}
 		this.linechart = new Linechart()
 		this.selectedCounty = 'State of Utah'
@@ -197,7 +199,7 @@ class Map{
 						.attr("d", path(topojson.mesh(us, us.objects[map], function(a, b) { return a !== b; })));
 
 
-					if (this.map) {
+					if (this.useSecondMap) {
 						this.otherCurrentYearData = this.map.currentYearData;
 						this.map.otherCurrentYearData = this.currentYearData;
 					}
@@ -302,7 +304,6 @@ class Map{
 			});
 
 		this.sidebar.updateSidebar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
-		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 	}
 	/**
 	 * This handles when the user selects a new year
@@ -348,7 +349,7 @@ class Map{
 		d3.selectAll('path').classed('selected', false);
 		this.selectedCounty = name;
 		this.linechart.initLineChart(this.results, this.selectedCounty);
-		if (this.map && this.map.linechart.results) {
+		if (this.useSecondMap && this.map.linechart.results) {
 			this.map.linechart.updateLineChart(this.selectedCounty);
 		}
 		this.sidebar.highlightBar(this.selectedCounty);
