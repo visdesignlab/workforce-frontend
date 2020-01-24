@@ -56856,6 +56856,7 @@ var Map = /** @class */ (function () {
                     _this.otherCurrentYearData = _this.map.currentYearData;
                     _this.map.otherCurrentYearData = _this.currentYearData;
                 }
+                console.log(_this.currentYearData);
                 _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYearData, _this.selectedCounty, _this.otherCurrentYearData);
                 _this.linechart.initLineChart(_this.results);
             });
@@ -56953,7 +56954,8 @@ var Map = /** @class */ (function () {
             var selectedCounty = d.properties.NAME;
             d3.select(this).transition().duration(1000).attr('fill', colorScale(d, that, mapData));
         });
-        this.sidebar.updateSidebar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+        console.log(this.currentYearData);
+        this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
     };
     /**
      * This handles when the user selects a new year
@@ -56961,6 +56963,7 @@ var Map = /** @class */ (function () {
      */
     Map.prototype.updateMapYear = function (year) {
         var _this = this;
+        console.log("updating this.currentYearData");
         var map = this.mapType;
         this.yearSelected = year;
         var modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
@@ -57003,7 +57006,8 @@ var Map = /** @class */ (function () {
         if (this.useSecondMap && this.map.linechart.results) {
             this.map.linechart.updateLineChart(this.selectedCounty);
         }
-        this.sidebar.highlightBar(this.selectedCounty);
+        console.log(this.currentYearData);
+        this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
         // should be moved it id-based paths
         d3.selectAll('svg .counties').selectAll('path')
             .filter(function (d) { return d.properties.NAME == name; })
@@ -57052,7 +57056,12 @@ var MapEvents = /** @class */ (function () {
         var _this = this;
         document.getElementById("mapData").addEventListener('change', function () {
             var mapData = document.getElementById('mapData').value;
-            _this.map.updateMapType(mapData);
+            if (_this.id == 0) {
+                _this.map.updateMapType(mapData);
+            }
+            else if (_this.map.useSecondMap) {
+                _this.map.updateMapType(mapData);
+            }
         });
     };
     MapEvents.prototype.selectAllClicked = function () {
@@ -57098,6 +57107,7 @@ var MapEvents = /** @class */ (function () {
                 if (selectedOptions.length == 1) {
                     _this.map.useSecondMap = false;
                     _this.map.map = null;
+                    console.log(_this.map.currentYearData);
                     _this.map.otherCurrentYearData = {};
                 }
                 else {
@@ -57414,6 +57424,7 @@ var Sidebar = /** @class */ (function () {
         var xScale = d3.scaleLinear()
             .domain([0, domainMax])
             .range([0, barWidth]);
+        console.log(this.map.currentYearData);
         var countiesData = this.calculateCountiesData(currentYear, otherCurrentYearData, mapData.includes('100'));
         var sortingFunction = this.getSortingOptions(0, true);
         /**
@@ -57900,405 +57911,8 @@ var Sidebar = /** @class */ (function () {
     // 		.text(d => d[1])
     // }
     Sidebar.prototype.updateSidebar = function (selectedProfessions, currentYear, selectedCounty, otherCurrentYearData) {
-        var _this = this;
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
         if (otherCurrentYearData === void 0) { otherCurrentYearData = []; }
-        console.log("UPDATE CALLED");
-        this.selectedProfessions = selectedProfessions;
-        this.countiesSvg.selectAll('*').remove();
-        this.countiesHeaderSvg.selectAll('*').remove();
-        var barWidth = 120;
-        this.margin = { left: 15, top: 0, bottom: 0, right: 15 };
-        var barHeight = 30;
-        if (Object.keys(otherCurrentYearData).length)
-            barHeight *= 2;
-        var mapData = document.getElementById('mapData').value;
-        var domainMax = 0;
-        var currState = Object.keys(currentYear).filter(function (d) {
-            return d.includes("State of");
-        })[0];
-        var temp = currentYear[currState];
-        delete currentYear[currState];
-        if (mapData.includes('100')) {
-            domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d]['totalSupplyPer100K'], currentYear[d]['totalDemandPer100K']); });
-        }
-        else {
-            domainMax = d3.max(Object.keys(currentYear), function (d) { return Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']); });
-        }
-        currentYear[currState] = temp;
-        var headers = [{ name: 'County', x: 0 },
-            { name: 'Supply', x: barWidth },
-            { name: 'Need', x: 2 * barWidth },
-            { name: 'Gap', x: 3 * barWidth }];
-        var xScale = d3.scaleLinear()
-            .domain([0, domainMax])
-            .range([0, barWidth]);
-        var countiesData = this.calculateCountiesData(currentYear, otherCurrentYearData, mapData.includes('100'));
-        var sortingFunction = this.getSortingOptions(0, true);
-        /**
-        * Pull out the state, put it in its own SVG above.
-        * TODO::  this is straight duplicating the code below it atm. Pull into a function.
-        // */
-        var stateSvg = d3.select('#state');
-        stateSvg.selectAll('*').remove();
-        stateSvg = stateSvg
-            .append('svg')
-            .attr('height', 30)
-            .attr('style', "width:100%");
-        var state = countiesData.filter(function (d) {
-            return d[0].includes("State of");
-        })[0];
-        var stateGroups = stateSvg.append('g')
-            .selectAll('g')
-            .data([state])
-            .enter()
-            .append('g')
-            .attr('class', 'pointerCursor');
-        stateGroups.append('rect')
-            .attr('width', 4 * barWidth + this.margin.left + this.margin.right)
-            .attr('height', barHeight)
-            .attr('id', function (d) { return d[0].replace(/\s/g, ''); })
-            .attr('class', 'background');
-        stateGroups.on('click', function (d) {
-            _this.highlightRect(d[0]);
-        });
-        stateGroups.on('mouseover', function (d) {
-            d3.select("#" + _this.removeSpaces(d[0]))
-                .classed('hoverCounty', true);
-        });
-        stateGroups.on('mouseout', function (d) {
-            d3.select('.hoverCounty')
-                .classed('hoverCounty', false);
-        });
-        countiesData = countiesData.filter(function (d) {
-            return !d[0].includes("State of");
-        });
-        var groups = this.countiesSvg.append('g')
-            .selectAll('g')
-            .data(countiesData.sort(sortingFunction))
-            .enter()
-            .append('g')
-            .attr('transform', function (d, i) { return "translate(0, " + i * barHeight + ")"; })
-            .attr('class', 'pointerCursor countiesG');
-        groups.append('rect')
-            .attr('width', 4 * barWidth + this.margin.left + this.margin.right)
-            .attr('height', barHeight)
-            .attr('id', function (d) { return d[0].replace(/\s/g, ''); })
-            .attr('class', 'background');
-        d3.select("#" + this.removeSpaces(selectedCounty))
-            .classed('selectedCounty', true);
-        groups.on('click', function (d) {
-            _this.highlightRect(d[0]);
-        });
-        groups.on('mouseover', function (d) {
-            d3.select("#" + _this.removeSpaces(d[0]))
-                .classed('hoverCounty', true);
-        });
-        groups.on('mouseout', function (d) {
-            d3.select('.hoverCounty')
-                .classed('hoverCounty', false);
-        });
-        var groupsHeaders = this.countiesHeaderSvg
-            .append('g')
-            .attr('id', 'sortCounties')
-            .selectAll('g')
-            .data(headers)
-            .enter()
-            .append('g');
-        groupsHeaders.call(this.drawHeaders, barWidth, barHeight);
-        var axis = this.countiesHeaderSvg.append('g');
-        var xAxis = function (g) { return g
-            .attr("transform", "translate(" + (3 * barWidth + _this.margin.left) + "," + 45 + ")")
-            .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
-        axis.call(xAxis);
-        groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
-        //
-        // if (Object.keys(otherCurrentYearData).length) {
-        // 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 1, barWidth );
-        // 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 2,  2 * barWidth);
-        // 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 4,  barWidth, barHeight / 2);
-        // 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 5,  2 * barWidth,barHeight / 2);
-        // }
-        // else{
-        // 	groups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
-        // 	groups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
-        // }
-        console.log(otherCurrentYearData);
-        if (mapData.includes('100')) {
-            if (Object.keys(otherCurrentYearData).length) {
-                groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
-                groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
-            }
-            else {
-                groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
-            }
-            d3.select("#counties").select("svg")
-                .attr("height", function (d) {
-                return groups.data().length * barHeight * 2 + 10;
-            });
-        }
-        else {
-            d3.select("#counties").select("svg")
-                .attr("height", function (d) {
-                return groups.data().length * barHeight + 10;
-            });
-            if (Object.keys(otherCurrentYearData).length) {
-                groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2);
-                groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
-            }
-            else {
-                groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2);
-            }
-        }
-        stateGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
-        if (Object.keys(otherCurrentYearData).length) {
-            stateSvg.attr("height", "60");
-        }
-        else {
-            stateSvg.attr("height", "30");
-        }
-        // 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth );
-        // 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 2,  2 * barWidth);
-        // 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 4,  barWidth, barHeight / 2);
-        // 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 5,  2 * barWidth,barHeight / 2);
-        // }
-        // else{
-        // 	stateSvg.attr("height", "30");
-        //
-        // 	stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
-        // 	stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
-        // }
-        d3.selectAll('#sortCounties .rectButtons')
-            .on('click', function (d, i) {
-            var sortingFunction;
-            //down
-            if (_this.lastSelected == "") {
-                d3.select("#sortCounties #" + d.name).transition().duration(500).text(function (d) { return "\uf0dd"; });
-                _this.lastSelected = d.name;
-                sortingFunction = _this.getSortingOptions(i, true);
-            }
-            else if (_this.lastSelected === d.name) {
-                if (_this.lastLastSelected === _this.lastSelected) {
-                    _this.lastLastSelected = "";
-                    sortingFunction = _this.getSortingOptions(i, true);
-                    d3.select("#sortCounties #" + d.name).transition().duration(500).text(function (d) { return '\uf0dd'; });
-                }
-                else {
-                    d3.select("#sortCounties #" + d.name).transition().duration(500).text(function (d) { return '\uf0de'; });
-                    sortingFunction = _this.getSortingOptions(i, false);
-                    _this.lastLastSelected = _this.lastSelected;
-                }
-            }
-            else {
-                d3.select("#sortCounties #" + _this.lastSelected).transition().duration(500).text(function (d) { return '\uf0dc'; });
-                d3.select("#sortCounties #" + d.name).transition().duration(500).text(function (d) { return "\uf0dd"; });
-                _this.lastSelected = d.name;
-                _this.lastLastSelected = "";
-                sortingFunction = _this.getSortingOptions(i, true);
-            }
-            //both
-            //	d3.select("#"+d.name).transition().duration(500).text(function(d) { return '\uf0dc'; });
-            //up
-            //	d3.select("#"+d.name).transition().duration(500).text(function(d){return "\uf0de"})
-            groups.sort(sortingFunction)
-                .transition()
-                .delay(function (d, i) {
-                return i * 50;
-            })
-                .duration(1000)
-                .attr("transform", function (d, i) {
-                var y = i * barHeight;
-                return "translate(" + 0 + ", " + y + ")";
-            });
-        });
-        this.professionsSvg.selectAll('*').remove();
-        var professions = Object.keys(currentYear[selectedCounty]['supply']);
-        var population = currentYear[selectedCounty]['population'];
-        var stats = {};
-        for (var _i = 0, professions_3 = professions; _i < professions_3.length; _i++) {
-            var prof = professions_3[_i];
-            stats[prof] = { totalDemandPer100K: 0, totalSupplyPer100K: 0, totalSupply: 0, totalDemand: 0,
-                otherTotalDemandPer100K: 0, otherTotalSupplyPer100K: 0, otherTotalSupply: 0, otherTotalDemand: 0 };
-        }
-        var f = d3.format('.0f');
-        for (var _a = 0, professions_4 = professions; _a < professions_4.length; _a++) {
-            var prof = professions_4[_a];
-            stats[prof].totalSupply += currentYear[selectedCounty]['supply'][prof];
-            stats[prof].totalDemand += currentYear[selectedCounty]['demand'][prof];
-            stats[prof].totalSupplyPer100K = Number(f(stats[prof].totalSupply / population * 100000));
-            stats[prof].totalDemandPer100K = Number(f(stats[prof].totalDemand / population * 100000));
-            if (Object.keys(otherCurrentYearData).length) {
-                stats[prof].otherTotalSupply += otherCurrentYearData[selectedCounty]['supply'][prof];
-                stats[prof].otherTotalDemand += otherCurrentYearData[selectedCounty]['demand'][prof];
-                stats[prof].otherTotalSupplyPer100K = Number(f(stats[prof].otherTotalSupply / population * 100000));
-                stats[prof].otherTotalDemandPer100K = Number(f(stats[prof].otherTotalDemand / population * 100000));
-            }
-        }
-        //}
-        var data = Object.keys(stats).map(function (d) {
-            if (mapData.includes('100')) {
-                return [stats[d].totalSupplyPer100K, stats[d].totalDemandPer100K, stats[d].totalDemandPer100K - stats[d].totalSupplyPer100K,
-                    stats[d].otherTotalSupplyPer100K, stats[d].otherTotalDemandPer100K, stats[d].otherTotalDemandPer100K - stats[d].otherTotalSupplyPer100K];
-            }
-            else {
-                return [stats[d].totalSupply, stats[d].totalDemand, stats[d].totalDemand - stats[d].totalSupply, stats[d].otherTotalSupply, stats[d].otherTotalDemand, stats[d].otherTotalDemand - stats[d].otherTotalSupply];
-            }
-        });
-        var xScale = d3.scaleLinear()
-            .domain([0, d3.max(data, function (d) { return d3.max(d); })])
-            .range([0, barWidth]);
-        var professionsData = [];
-        for (var i in data) {
-            professionsData.push([professions[i]].concat(data[i]));
-        }
-        ;
-        sortingFunction = this.getSortingOptions(0, true);
-        d3.select("#sortCounties #County").transition().duration(500).text(function (d) { return '\uf0dd'; });
-        this.lastSelected = "County";
-        this.lastLastSelected = "";
-        var professionsGroups = this.professionsSvg.append('g')
-            .selectAll('g')
-            .data(professionsData.sort(sortingFunction))
-            .enter()
-            .append('g')
-            .attr('transform', function (d, i) { return "translate(0, " + i * (barHeight) + ")"; })
-            .attr('class', 'professions')
-            .attr('id', function (d) { return d[0]; });
-        // Reducing bar height to account for the space between bars in professions. Makes sure everything is centered.
-        barHeight = barHeight - 2;
-        professionsGroups.append('rect')
-            .attr('width', 4 * barWidth + this.margin.left + this.margin.right)
-            .attr('height', barHeight)
-            .attr('fill', function (d) {
-            if (!_this.selectedProfessions.hasOwnProperty(d[0])
-                || _this.selectedProfessions[d[0]]) {
-                return '#cccccc';
-            }
-            return '#ffffff';
-        })
-            .attr('fill-opacity', 0.8);
-        professionsGroups.on('click', function (d, i, j) {
-            console.log(_this.map.map);
-            console.log(_this.map);
-            if (!_this.selectedProfessions.hasOwnProperty(d[0])
-                || _this.selectedProfessions[d[0]]) {
-                _this.selectedProfessions[d[0]] = false;
-                d3.select("#" + d[0])
-                    .select('rect')
-                    .attr('fill', '#ffffff');
-                if (_this.map.useSecondMap)
-                    _this.map.map.updateSelections(_this.selectedProfessions);
-                _this.map.updateSelections(_this.selectedProfessions);
-            }
-            else {
-                _this.selectedProfessions[d[0]] = true;
-                d3.select("#" + d[0])
-                    .select('rect')
-                    .attr('fill', '#cccccc');
-                if (_this.map.useSecondMap) {
-                    _this.map.map.selectedCounty = _this.map.selectedCounty;
-                    _this.map.map.updateSelections(_this.selectedProfessions);
-                }
-                _this.map.updateSelections(_this.selectedProfessions);
-            }
-        });
-        var professionsHeadData = [{ name: 'Profession', x: 0 },
-            { name: 'Supply', x: barWidth },
-            { name: 'Need', x: 2 * barWidth },
-            { name: 'Gap', x: 3 * barWidth }];
-        var professionHeaderSVG = d3.select('#professionsHeader');
-        professionHeaderSVG.selectAll('*').remove();
-        professionHeaderSVG = professionHeaderSVG
-            .append('svg')
-            .attr('height', 50)
-            .attr('width', 600);
-        var professionsHeaders = professionHeaderSVG
-            .append('g')
-            .attr('id', 'sortProfessions')
-            .selectAll('g')
-            .data(professionsHeadData)
-            .enter()
-            .append('g');
-        professionsHeaders.call(this.drawHeaders, barWidth, barHeight);
-        var axis = professionHeaderSVG.append('g');
-        d3.select("#sortProfessions #Profession").transition().duration(500).text(function (d) { return '\uf0dd'; });
-        this.professionsLastSelected = "Profession";
-        this.professionsLastLastSelected = "";
-        var xAxis = function (g) { return g
-            .attr("transform", "translate(" + (3 * barWidth + _this.margin.left) + "," + 42 + ")")
-            .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
-        axis.call(xAxis);
-        professionsGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
-        //
-        // if (Object.keys(otherCurrentYearData).length) {
-        // 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth);
-        // 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 2,  2 * barWidth);
-        // 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 4,  barWidth, barHeight / 2);
-        // 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 5,  2 * barWidth, barHeight / 2);
-        // }
-        // else{
-        // 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth);
-        // 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
-        // }
-        if (mapData.includes('100')) {
-            if (Object.keys(otherCurrentYearData).length) {
-                professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
-                professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
-            }
-            else {
-                professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
-            }
-        }
-        else {
-            if (Object.keys(otherCurrentYearData).length) {
-                professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2);
-                professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
-            }
-            else {
-                professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2);
-            }
-        }
-        var professionsSortDirection = [true];
-        d3.select('#sortProfessions')
-            .selectAll('.rectButtons')
-            .on('click', function (d, i) {
-            var sortingFunction;
-            //down
-            if (_this.professionsLastSelected == "") {
-                d3.select("#sortProfessions #" + d.name).transition().duration(500).text(function (d) { return "\uf0dd"; });
-                _this.professionsLastSelected = d.name;
-                sortingFunction = _this.getSortingOptions(i, true);
-            }
-            else if (_this.professionsLastSelected === d.name) {
-                if (_this.professionsLastLastSelected === _this.professionsLastSelected) {
-                    _this.professionsLastLastSelected = "";
-                    sortingFunction = _this.getSortingOptions(i, true);
-                    d3.select("#sortProfessions #" + d.name).transition().duration(500).text(function (d) { return '\uf0dd'; });
-                }
-                else {
-                    d3.select("#sortProfessions #" + d.name).transition().duration(500).text(function (d) { return '\uf0de'; });
-                    sortingFunction = _this.getSortingOptions(i, false);
-                    _this.professionsLastLastSelected = _this.professionsLastSelected;
-                }
-            }
-            else {
-                d3.select("#sortProfessions #" + _this.professionsLastSelected).transition().duration(500).text(function (d) { return '\uf0dc'; });
-                d3.select("#sortProfessions #" + d.name).transition().duration(500).text(function (d) { return "\uf0dd"; });
-                _this.professionsLastSelected = d.name;
-                _this.professionsLastLastSelected = "";
-                sortingFunction = _this.getSortingOptions(i, true);
-            }
-            professionsGroups.sort(sortingFunction)
-                .transition()
-                .delay(function (d, i) {
-                return i * 50;
-            })
-                .duration(1000)
-                .attr("transform", function (d, i) {
-                var y = i * barHeight;
-                return "translate(" + 0 + ", " + y + ")";
-            });
-        });
     };
     Sidebar.prototype.drawText = function (selection, barWidth, barHeight, leftMargin, i, dx, dy) {
         if (i === void 0) { i = 0; }
@@ -58408,12 +58022,12 @@ var Sidebar = /** @class */ (function () {
     Sidebar.prototype.removeSpaces = function (s) {
         return s.replace(/\s/g, '');
     };
-    Sidebar.prototype.calculateCountiesData = function (currentYear, otherCurrentYearData, secondBar) {
+    Sidebar.prototype.calculateCountiesData = function (currentYear, otherCurrentYearData, mapData) {
         var countiesData = [];
         for (var county in currentYear) {
             var d = currentYear[county];
             var e = otherCurrentYearData[county] || {};
-            if (secondBar) {
+            if (mapData) {
                 countiesData.push([county, d.totalSupplyPer100K, d.totalDemandPer100K, d.totalDemandPer100K - d.totalSupplyPer100K,
                     e.totalSupplyPer100K, e.totalDemandPer100K, e.totalDemandPer100K - e.totalSupplyPer100K]);
             }

@@ -203,6 +203,7 @@ class Map{
 						this.otherCurrentYearData = this.map.currentYearData;
 						this.map.otherCurrentYearData = this.currentYearData;
 					}
+					console.log(this.currentYearData)
 					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 					this.linechart.initLineChart(this.results);
 				});
@@ -303,13 +304,18 @@ class Map{
 
 			});
 
-		this.sidebar.updateSidebar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+		console.log(this.currentYearData)
+
+		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 	}
 	/**
 	 * This handles when the user selects a new year
 	 * @param year this is the new year selected by the user
 	 */
 	updateMapYear(year:string):void{
+
+		console.log("updating this.currentYearData")
+
 		const map = this.mapType;
 		this.yearSelected = year;
 		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
@@ -352,7 +358,10 @@ class Map{
 		if (this.useSecondMap && this.map.linechart.results) {
 			this.map.linechart.updateLineChart(this.selectedCounty);
 		}
-		this.sidebar.highlightBar(this.selectedCounty);
+
+		console.log(this.currentYearData)
+
+		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 		// should be moved it id-based paths
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => d.properties.NAME == name)

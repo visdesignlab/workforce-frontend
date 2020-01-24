@@ -30,7 +30,14 @@ class MapEvents{
 	updateType():void{
 		document.getElementById("mapData").addEventListener('change',()=>{
 			let mapData:string = (document.getElementById('mapData') as HTMLInputElement).value;
-			this.map.updateMapType(mapData)
+			if(this.id == 0)
+			{
+				this.map.updateMapType(mapData)
+			}
+			else if(this.map.useSecondMap)
+			{
+				this.map.updateMapType(mapData);
+			}
 		})
 	}
 	selectAllClicked():void{
@@ -82,6 +89,7 @@ class MapEvents{
 				if (selectedOptions.length == 1) {
 					this.map.useSecondMap = false;
 					this.map.map = null;
+					console.log(this.map.currentYearData)
 					this.map.otherCurrentYearData = {};
 				}
 				else{
