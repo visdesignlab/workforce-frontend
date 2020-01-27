@@ -88,6 +88,7 @@ class MapEvents{
 			if (selectedOptions[this.id]) {
 				if (selectedOptions.length == 1) {
 					this.map.useSecondMap = false;
+					this.map.map.useSecondMap = false;
 					this.map.map = null;
 					console.log(this.map.currentYearData)
 					this.map.otherCurrentYearData = {};

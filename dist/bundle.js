@@ -57106,6 +57106,7 @@ var MapEvents = /** @class */ (function () {
             if (selectedOptions[_this.id]) {
                 if (selectedOptions.length == 1) {
                     _this.map.useSecondMap = false;
+                    _this.map.map.useSecondMap = false;
                     _this.map.map = null;
                     console.log(_this.map.currentYearData);
                     _this.map.otherCurrentYearData = {};
@@ -57523,16 +57524,8 @@ var Sidebar = /** @class */ (function () {
             else {
                 groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
             }
-            d3.select("#counties").select("svg")
-                .attr("height", function (d) {
-                return groups.data().length * barHeight * 2 + 10;
-            });
         }
         else {
-            d3.select("#counties").select("svg")
-                .attr("height", function (d) {
-                return groups.data().length * barHeight + 10;
-            });
             if (Object.keys(otherCurrentYearData).length) {
                 groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2);
                 groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
@@ -57541,6 +57534,10 @@ var Sidebar = /** @class */ (function () {
                 groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3 * barWidth, 0, 1, 2);
             }
         }
+        d3.select("#counties").select("svg")
+            .attr("height", function (d) {
+            return groups.data().length * barHeight + 10;
+        });
         stateGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
         if (Object.keys(otherCurrentYearData).length) {
             stateSvg.attr("height", "60");
