@@ -74,8 +74,16 @@ class MapEvents{
 
 	changeMapType() {
 		document.getElementById("mapType").addEventListener('change',()=>{
-			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
-			this.map.drawMap();
+			if(this.id == 0)
+			{
+				this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
+				this.map.drawMap();
+			}
+			else if(this.map.useSecondMap)
+			{
+				this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
+				this.map.drawMap();
+			}
 		})
 	}
 

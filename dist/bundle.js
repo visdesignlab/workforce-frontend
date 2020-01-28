@@ -57093,8 +57093,14 @@ var MapEvents = /** @class */ (function () {
     MapEvents.prototype.changeMapType = function () {
         var _this = this;
         document.getElementById("mapType").addEventListener('change', function () {
-            _this.map.mapType = document.getElementById('mapType').value;
-            _this.map.drawMap();
+            if (_this.id == 0) {
+                _this.map.mapType = document.getElementById('mapType').value;
+                _this.map.drawMap();
+            }
+            else if (_this.map.useSecondMap) {
+                _this.map.mapType = document.getElementById('mapType').value;
+                _this.map.drawMap();
+            }
         });
     };
     MapEvents.prototype.changeModelData = function () {
