@@ -56650,12 +56650,16 @@ module.exports = g;
 Object.defineProperty(exports, "__esModule", { value: true });
 var Map_1 = __webpack_require__(/*! ./Map */ "./src/Map.ts");
 var MapEvents_1 = __webpack_require__(/*! ./MapEvents */ "./src/MapEvents.ts");
+var sidebar_1 = __webpack_require__(/*! ./sidebar */ "./src/sidebar.ts");
 __webpack_require__(/*! bootstrap */ "./node_modules/bootstrap/dist/js/bootstrap.js");
 __webpack_require__(/*! bootstrap-select */ "./node_modules/bootstrap-select/dist/js/bootstrap-select.js");
-var myMap = new Map_1.Map();
+var myMap = new Map_1.Map(true);
 myMap.drawMap();
 var myMapEvents = new MapEvents_1.MapEvents(myMap);
-var otherMap = new Map_1.Map();
+var otherMap = new Map_1.Map(false);
+var sideBar = new sidebar_1.Sidebar(myMap);
+myMap.setSideBar(sideBar);
+otherMap.setSideBar(sideBar);
 otherMap.map = myMap;
 myMap.map = otherMap;
 var otherMapEvents = new MapEvents_1.MapEvents(otherMap, 1);
@@ -56677,7 +56681,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
 var topojson = __webpack_require__(/*! topojson-client */ "./node_modules/topojson-client/index.js");
 var d3_svg_legend_1 = __webpack_require__(/*! d3-svg-legend */ "./node_modules/d3-svg-legend/indexRollupNext.js");
-var sidebar_1 = __webpack_require__(/*! ./sidebar */ "./src/sidebar.ts");
 var linechart_1 = __webpack_require__(/*! ./linechart */ "./src/linechart.ts");
 /**
  *
@@ -56686,7 +56689,8 @@ var Map = /** @class */ (function () {
     /**
      *
      */
-    function Map() {
+    function Map(firstMap) {
+        this.firstMap = firstMap;
         this.useSecondMap = false;
         this.selectedProfessions = {};
         this.linechart = new linechart_1.Linechart();
@@ -56698,13 +56702,15 @@ var Map = /** @class */ (function () {
         this.currentYearData = {};
         this.otherCurrentYearData = {};
         this.supplyScore = {};
-        this.sidebar = new sidebar_1.Sidebar(this);
         this.svg = d3.select("#map")
             .append('svg')
             .attr('width', 600)
             .attr('height', 600)
             .attr('transform', 'translate(0,0)');
     }
+    Map.prototype.setSideBar = function (sideBar) {
+        this.sidebar = sideBar;
+    };
     Map.prototype.destroy = function () {
         this.svg.selectAll('*').remove();
     };
@@ -56857,7 +56863,9 @@ var Map = /** @class */ (function () {
                     _this.map.otherCurrentYearData = _this.currentYearData;
                 }
                 console.log(_this.currentYearData);
-                _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYearData, _this.selectedCounty, _this.otherCurrentYearData);
+                if (_this.firstMap) {
+                    _this.sidebar.initSideBar(_this.selectedProfessions, _this.currentYearData, _this.selectedCounty, _this.otherCurrentYearData);
+                }
                 _this.linechart.initLineChart(_this.results);
             });
         });
@@ -56955,7 +56963,9 @@ var Map = /** @class */ (function () {
             d3.select(this).transition().duration(1000).attr('fill', colorScale(d, that, mapData));
         });
         console.log(this.currentYearData);
-        this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+        if (this.firstMap) {
+            this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+        }
     };
     /**
      * This handles when the user selects a new year
@@ -57007,7 +57017,9 @@ var Map = /** @class */ (function () {
             this.map.linechart.updateLineChart(this.selectedCounty);
         }
         console.log(this.currentYearData);
-        this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+        if (this.firstMap) {
+            this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+        }
         // should be moved it id-based paths
         d3.selectAll('svg .counties').selectAll('path')
             .filter(function (d) { return d.properties.NAME == name; })

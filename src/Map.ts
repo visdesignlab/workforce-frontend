@@ -22,11 +22,13 @@ class Map{
 	yearSelected: string;
 	linechart:Linechart;
 	sidebar:Sidebar;
+	firstMap:boolean;
 
 	/**
 	 *
 	 */
-	constructor(){
+	constructor(firstMap:boolean){
+		this.firstMap = firstMap;
 		this.useSecondMap = false;
 		this.selectedProfessions = {}
 		this.linechart = new Linechart()
@@ -38,7 +40,6 @@ class Map{
 		this.currentYearData = {};
 		this.otherCurrentYearData = {};
 		this.supplyScore = {};
-		this.sidebar = new Sidebar(this);
 		this.svg = d3.select("#map")
 			.append('svg')
 			.attr('width', 600)
@@ -46,6 +47,11 @@ class Map{
 			.attr('transform', 'translate(0,0)');
 
 	}
+
+	setSideBar(sideBar: Sidebar){
+		this.sidebar = sideBar;
+	}
+
 
 	destroy() {
 		this.svg.selectAll('*').remove();
@@ -204,7 +210,10 @@ class Map{
 						this.map.otherCurrentYearData = this.currentYearData;
 					}
 					console.log(this.currentYearData)
-					this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+					if(this.firstMap)
+					{
+						this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+					}
 					this.linechart.initLineChart(this.results);
 				});
 		});
@@ -305,8 +314,10 @@ class Map{
 			});
 
 		console.log(this.currentYearData)
-
-		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+		if(this.firstMap)
+		{
+			this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+		}
 	}
 	/**
 	 * This handles when the user selects a new year
@@ -360,8 +371,10 @@ class Map{
 		}
 
 		console.log(this.currentYearData)
-
-		this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+		if(this.firstMap)
+		{
+			this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+		}
 		// should be moved it id-based paths
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => d.properties.NAME == name)
