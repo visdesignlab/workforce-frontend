@@ -49,17 +49,18 @@ class Sidebar {
 	}
 
 	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []) {
-
-		console.log("INIT CALLED")
-
 		this.selectedProfessions = selectedProfessions;
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
-		let barWidth: number = 120;
 		this.margin = {left: 15, top:0, bottom: 0, right:15};
+
+		let barWidth: number = 120;
 		let barHeight: number = 30;
+
 		if (Object.keys(otherCurrentYearData).length)
+		{
 			barHeight *= 2;
+		}
 
 		let mapData = (<HTMLInputElement>document.getElementById('mapData')).value;
 		let domainMax = 0;
@@ -291,6 +292,7 @@ class Sidebar {
 
 
 		this.professionsSvg.selectAll('*').remove();
+		console.log(currentYear);
 		var professions = Object.keys(currentYear[selectedCounty]['supply']);
 		var population = currentYear[selectedCounty]['population'];
 		var stats = {};

@@ -40,8 +40,15 @@ class MapEvents{
 			}
 		})
 	}
+
 	selectAllClicked():void{
+		if(this.id == 1)
+		{
+			return;
+		}
 		d3.select("#selectAll").on('click',()=>{
+
+			console.log(this.map);
 			if(this.selectAll){
 				d3.select("#selectAll").transition().text('Unselect All');
 				Object.keys(this.map.selectedProfessions).forEach(profession => {
@@ -74,6 +81,7 @@ class MapEvents{
 
 	changeMapType() {
 		document.getElementById("mapType").addEventListener('change',()=>{
+			this.map.selectedCounty = "State of Utah";
 			if(this.id == 0)
 			{
 				this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;

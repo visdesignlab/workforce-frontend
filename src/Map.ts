@@ -60,8 +60,8 @@ class Map{
 	 * initial drawing of map.
 	 */
 	drawMap(customModel = false, initSidebar = true, otherCurrentYearData = []):void{
-			d3.select('#spinner')
-				.classed('d-flex', true)
+			// d3.select('#spinner')
+			// 	.classed('d-flex', true)
 		const map = this.mapType;
 		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
 		const serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
@@ -314,9 +314,11 @@ class Map{
 			});
 
 		console.log(this.currentYearData)
+
 		if(this.firstMap)
 		{
 			this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+			this.sideBar.updateSidebar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
 		}
 	}
 	/**
@@ -370,7 +372,6 @@ class Map{
 			this.map.linechart.updateLineChart(this.selectedCounty);
 		}
 
-		console.log(this.currentYearData)
 		if(this.firstMap)
 		{
 			this.sidebar.initSideBar(this.selectedProfessions,this.currentYearData, this.selectedCounty, this.otherCurrentYearData);

@@ -56655,13 +56655,13 @@ __webpack_require__(/*! bootstrap */ "./node_modules/bootstrap/dist/js/bootstrap
 __webpack_require__(/*! bootstrap-select */ "./node_modules/bootstrap-select/dist/js/bootstrap-select.js");
 var myMap = new Map_1.Map(true);
 myMap.drawMap();
-var myMapEvents = new MapEvents_1.MapEvents(myMap);
 var otherMap = new Map_1.Map(false);
 var sideBar = new sidebar_1.Sidebar(myMap);
 myMap.setSideBar(sideBar);
 otherMap.setSideBar(sideBar);
 otherMap.map = myMap;
 myMap.map = otherMap;
+var myMapEvents = new MapEvents_1.MapEvents(myMap);
 var otherMapEvents = new MapEvents_1.MapEvents(otherMap, 1);
 otherMap.otherCurrentYearData = myMap.currentYearData;
 
@@ -56722,8 +56722,8 @@ var Map = /** @class */ (function () {
         if (customModel === void 0) { customModel = false; }
         if (initSidebar === void 0) { initSidebar = true; }
         if (otherCurrentYearData === void 0) { otherCurrentYearData = []; }
-        d3.select('#spinner')
-            .classed('d-flex', true);
+        // d3.select('#spinner')
+        // 	.classed('d-flex', true)
         var map = this.mapType;
         var modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
         var serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
@@ -56965,6 +56965,7 @@ var Map = /** @class */ (function () {
         console.log(this.currentYearData);
         if (this.firstMap) {
             this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
+            this.sideBar.updateSidebar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
         }
     };
     /**
@@ -57016,7 +57017,6 @@ var Map = /** @class */ (function () {
         if (this.useSecondMap && this.map.linechart.results) {
             this.map.linechart.updateLineChart(this.selectedCounty);
         }
-        console.log(this.currentYearData);
         if (this.firstMap) {
             this.sidebar.initSideBar(this.selectedProfessions, this.currentYearData, this.selectedCounty, this.otherCurrentYearData);
         }
@@ -57078,7 +57078,11 @@ var MapEvents = /** @class */ (function () {
     };
     MapEvents.prototype.selectAllClicked = function () {
         var _this = this;
+        if (this.id == 1) {
+            return;
+        }
         d3.select("#selectAll").on('click', function () {
+            console.log(_this.map);
             if (_this.selectAll) {
                 d3.select("#selectAll").transition().text('Unselect All');
                 Object.keys(_this.map.selectedProfessions).forEach(function (profession) {
@@ -57105,6 +57109,7 @@ var MapEvents = /** @class */ (function () {
     MapEvents.prototype.changeMapType = function () {
         var _this = this;
         document.getElementById("mapType").addEventListener('change', function () {
+            _this.map.selectedCounty = "State of Utah";
             if (_this.id == 0) {
                 _this.map.mapType = document.getElementById('mapType').value;
                 _this.map.drawMap();
@@ -57413,15 +57418,15 @@ var Sidebar = /** @class */ (function () {
         var _this = this;
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }
         if (otherCurrentYearData === void 0) { otherCurrentYearData = []; }
-        console.log("INIT CALLED");
         this.selectedProfessions = selectedProfessions;
         this.countiesSvg.selectAll('*').remove();
         this.countiesHeaderSvg.selectAll('*').remove();
-        var barWidth = 120;
         this.margin = { left: 15, top: 0, bottom: 0, right: 15 };
+        var barWidth = 120;
         var barHeight = 30;
-        if (Object.keys(otherCurrentYearData).length)
+        if (Object.keys(otherCurrentYearData).length) {
             barHeight *= 2;
+        }
         var mapData = document.getElementById('mapData').value;
         var domainMax = 0;
         var currState = Object.keys(currentYear).filter(function (d) {
@@ -57618,6 +57623,7 @@ var Sidebar = /** @class */ (function () {
             });
         });
         this.professionsSvg.selectAll('*').remove();
+        console.log(currentYear);
         var professions = Object.keys(currentYear[selectedCounty]['supply']);
         var population = currentYear[selectedCounty]['population'];
         var stats = {};
