@@ -1,14 +1,13 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
-import {Map} from './Map'
+import {MapController} from './MapController'
 class MapEvents{
-	map: Map;
+	map: MapController;
 	selectAll : boolean;
-	id: number;
-	constructor(map:Map, id = 0){
+
+	constructor(map:MapController){
 		this.map = map;
-		this.id = id;
 		this.selectAll=false;
 		this.updateYear();
 		this.updateType();
@@ -22,30 +21,17 @@ class MapEvents{
 		d3.select("#year").on('change',()=>{
 			let year:string = (document.getElementById('year') as HTMLInputElement).value;
 			this.map.updateMapYear(year)
-			//update year of map
 			})
-
 	}
 
 	updateType():void{
 		document.getElementById("mapData").addEventListener('change',()=>{
 			let mapData:string = (document.getElementById('mapData') as HTMLInputElement).value;
-			if(this.id == 0)
-			{
-				this.map.updateMapType(mapData)
-			}
-			else if(this.map.useSecondMap)
-			{
-				this.map.updateMapType(mapData);
-			}
+			this.map.updateMapType(mapData);
 		})
 	}
 
 	selectAllClicked():void{
-		if(this.id == 1)
-		{
-			return;
-		}
 		d3.select("#selectAll").on('click',()=>{
 
 			console.log(this.map);
@@ -82,16 +68,8 @@ class MapEvents{
 	changeMapType() {
 		document.getElementById("mapType").addEventListener('change',()=>{
 			this.map.selectedCounty = "State of Utah";
-			if(this.id == 0)
-			{
-				this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
-				this.map.drawMap();
-			}
-			else if(this.map.useSecondMap)
-			{
-				this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
-				this.map.drawMap();
-			}
+			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
+			this.map.drawMap().then(() => this.map.drawSidebar());
 		})
 	}
 
@@ -99,25 +77,20 @@ class MapEvents{
 		document.getElementById("modelData").addEventListener('change',()=>{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
-
-			console.log(selectedOptions);
-			if (selectedOptions[this.id]) {
-				if (selectedOptions.length == 1) {
-					this.map.useSecondMap = false;
-					this.map.map.useSecondMap = false;
-					this.map.map = null;
-					console.log(this.map.currentYearData)
-					this.map.otherCurrentYearData = {};
-				}
-				else{
-					this.map.useSecondMap = true;
-				}
-				this.map.modelData = selectedOptions[this.id].value;
-				this.map.drawMap();
-			} else {
-				this.map.destroy();
-				this.map.linechart.destroy();
+			if (selectedOptions.length == 1) {
+				this.map.comparisonMode = false;
 			}
+			else{
+				this.map.comparisonMode = true;
+			}
+
+			this.map.modelsUsed = [];
+			for(let i= 0; i < selectedOptions.length; i++)
+			{
+				this.map.modelsUsed.push(selectedOptions[i].value)
+			}
+			console.log(this.map.modelsUsed);
+			this.map.drawMap().then(() => this.map.drawSidebar());
 		})
 	}
 

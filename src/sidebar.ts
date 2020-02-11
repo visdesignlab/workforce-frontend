@@ -1,25 +1,33 @@
 import * as d3 from 'd3';
-import {Map} from './Map';
+import {MapController} from './mapController';
 
 class Sidebar {
 	countiesSvg: any;
+	stateSvg: any;
 	professionsSvg: any;
 	selectedProfessions: any;
 	countiesHeaderSvg: any;
 	margin:any;
 	lastSelected:string;
-	lastLastSelected:string;
+	countiesAscending:boolean;
 	professionsLastSelected:string;
-	professionsLastLastSelected:string;
-	map:Map;
+	professionsAscending:boolean;
+	map:MapController;
+	countiesSortingFunction:any;
+	professionsSortingFunction:any;
+	currentlySelected:string;
 
-	constructor(map:Map) {
+	constructor(map:MapController) {
 		this.map = map;
 		this.selectedProfessions = {};
-		this.lastSelected = "";
-		this.lastLastSelected = "";
-		this.professionsLastSelected = "";
-		this.professionsLastLastSelected = "";
+		this.currentlySelected = "State of Utah";
+		this.lastSelected = "County";
+		this.countiesAscending = true;
+		this.professionsLastSelected = "Profession";
+		this.professionsAscending = true;
+		this.countiesSortingFunction = this.getSortingOptions(0, true);
+		this.professionsSortingFunction = this.getSortingOptions(0, true);
+
 
 		this.countiesSvg = d3.select('#counties').select('svg');
 
@@ -49,6 +57,8 @@ class Sidebar {
 	}
 
 	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []) {
+		this.currentlySelected = selectedCounty;
+		console.log(this.map.comparisonMode);
 		this.selectedProfessions = selectedProfessions;
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
@@ -57,7 +67,7 @@ class Sidebar {
 		let barWidth: number = 120;
 		let barHeight: number = 30;
 
-		if (Object.keys(otherCurrentYearData).length)
+		if (this.map.comparisonMode)
 		{
 			barHeight *= 2;
 		}
@@ -87,17 +97,15 @@ class Sidebar {
 		var xScale = d3.scaleLinear()
 		.domain([0, domainMax])
 		.range([0, barWidth]);
-		console.log(this.map.currentYearData)
 		let countiesData = this.calculateCountiesData(currentYear, otherCurrentYearData, mapData.includes('100'));
-		var sortingFunction = this.getSortingOptions(0, true);
 
 		/**
 		* Pull out the state, put it in its own SVG above.
 		* TODO::  this is straight duplicating the code below it atm. Pull into a function.
 		// */
-		let stateSvg = d3.select('#state');
-		stateSvg.selectAll('*').remove();
-		stateSvg = stateSvg
+		this.stateSvg = d3.select('#state');
+		this.stateSvg.selectAll('*').remove();
+		this.stateSvg = this.stateSvg
 				.append('svg')
 				.attr('height', 30)
 				.attr('style', "width:100%");
@@ -106,7 +114,7 @@ class Sidebar {
 			return d[0].includes("State of");
 		})[0];
 
-		let stateGroups = stateSvg.append('g')
+		let stateGroups = this.stateSvg.append('g')
 			.selectAll('g')
 			.data([state])
 			.enter()
@@ -139,7 +147,7 @@ class Sidebar {
 
 		var groups = this.countiesSvg.append('g')
 			.selectAll('g')
-			.data(countiesData.sort(sortingFunction))
+			.data(countiesData.sort(this.countiesSortingFunction))
 			.enter()
 			.append('g')
 			.attr('transform', (d, i) => `translate(0, ${i * barHeight})`)
@@ -151,8 +159,11 @@ class Sidebar {
 			.attr('id', d => d[0].replace(/\s/g, ''))
 			.attr('class', 'background')
 
-		d3.select(`#${this.removeSpaces(selectedCounty)}`)
+		console.log(selectedCounty);
+		let selection = d3.select(`#${this.removeSpaces(selectedCounty)}`)
 			.classed('selectedCounty', true);
+
+		console.log(selection);
 
 		groups.on('click', (d) => {
 				this.highlightRect(d[0]);
@@ -185,7 +196,7 @@ class Sidebar {
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		axis.call(xAxis);
 
-		groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
+		groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
 		//
 		// if (Object.keys(otherCurrentYearData).length) {
 		// 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 1, barWidth );
@@ -198,7 +209,7 @@ class Sidebar {
 		// 	groups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
 		// }
 		if (mapData.includes('100')) {
-			if (Object.keys(otherCurrentYearData).length){
+			if (this.map.comparisonMode){
 				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3*barWidth, barHeight / 2, 4, 5, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 			}
@@ -207,7 +218,7 @@ class Sidebar {
 			}
 
 		} else {
-			if (Object.keys(otherCurrentYearData).length){
+			if (this.map.comparisonMode){
 				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, 0, 1, 2);
 				groups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight / 2, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
 			}
@@ -222,55 +233,42 @@ class Sidebar {
 			})
 
 
-		stateGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
+		stateGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
 
-		if (Object.keys(otherCurrentYearData).length) {
-			stateSvg.attr("height", "60");
+		if (this.map.comparisonMode) {
+			this.stateSvg.attr("height", "60");
 		}
 		else{
-			stateSvg.attr("height", "30");
+			this.stateSvg.attr("height", "30");
 		}
-		// 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth );
-		// 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 2,  2 * barWidth);
-		// 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 4,  barWidth, barHeight / 2);
-		// 	stateGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 5,  2 * barWidth,barHeight / 2);
-		// }
-		// else{
-		// 	stateSvg.attr("height", "30");
-		//
-		// 	stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth );
-		// 	stateGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
-		// }
 
 		d3.selectAll('#sortCounties .rectButtons')
 		.on('click', (d, i) => {
-			let sortingFunction:any;
 			//down
 			if(this.lastSelected == ""){
 				d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
 				this.lastSelected = d.name
-				sortingFunction = this.getSortingOptions(i, true);
+				this.countiesSortingFunction = this.getSortingOptions(i, true);
 
 			}else if(this.lastSelected===d.name){
-				if(this.lastLastSelected === this.lastSelected){
-					this.lastLastSelected = "";
+				if(this.countiesAscending){
+					this.countiesAscending = false;
 
-					sortingFunction = this.getSortingOptions(i, true);
+					this.countiesSortingFunction = this.getSortingOptions(i, false);
 					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; });
 
 				}else{
 					d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; });
-					sortingFunction = this.getSortingOptions(i, false);
-					this.lastLastSelected = this.lastSelected
+					this.countiesSortingFunction = this.getSortingOptions(i, true);
+					this.countiesAscending = true;
 			}
 
 			}else{
 				d3.select("#sortCounties #"+this.lastSelected).transition().duration(500).text(function(d) { return '\uf0dc'; });
-
-				d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
+				d3.select("#sortCounties #"+d.name).transition().duration(500).text(function(d){return "\uf0de"});
 				this.lastSelected = d.name;
-				this.lastLastSelected = "";
-				sortingFunction = this.getSortingOptions(i, true);
+				this.countiesAscending = true;
+				this.countiesSortingFunction = this.getSortingOptions(i, true);
 			}
 			//both
 		//	d3.select("#"+d.name).transition().duration(500).text(function(d) { return '\uf0dc'; });
@@ -278,21 +276,11 @@ class Sidebar {
 		//	d3.select("#"+d.name).transition().duration(500).text(function(d){return "\uf0de"})
 
 
-			groups.sort(sortingFunction)
-				.transition()
-				.delay(function(d, i) {
-					return i * 50;
-				})
-				.duration(1000)
-				.attr("transform", function(d, i) {
-					let y = i * barHeight;
-					return "translate(" + 0 + ", " + y + ")";
-				});
+			this.sortCounties(groups, barHeight, 1000);
 		});
 
 
 		this.professionsSvg.selectAll('*').remove();
-		console.log(currentYear);
 		var professions = Object.keys(currentYear[selectedCounty]['supply']);
 		var population = currentYear[selectedCounty]['population'];
 		var stats = {};
@@ -308,7 +296,7 @@ class Sidebar {
 			stats[prof].totalDemand += currentYear[selectedCounty]['demand'][prof];
 			stats[prof].totalSupplyPer100K = Number(f(stats[prof].totalSupply / population * 100000));
 			stats[prof].totalDemandPer100K = Number(f(stats[prof].totalDemand / population * 100000));
-			if (Object.keys(otherCurrentYearData).length) {
+			if (this.map.comparisonMode) {
 				stats[prof].otherTotalSupply += otherCurrentYearData[selectedCounty]['supply'][prof];
 				stats[prof].otherTotalDemand += otherCurrentYearData[selectedCounty]['demand'][prof];
 				stats[prof].otherTotalSupplyPer100K = Number(f(stats[prof].otherTotalSupply / population * 100000));
@@ -335,14 +323,18 @@ class Sidebar {
 			professionsData.push([professions[i], ...data[i]]);
 	};
 
-	sortingFunction = this.getSortingOptions(0, true);
-	d3.select("#sortCounties #County").transition().duration(500).text(function(d) { return '\uf0dd'; });
-	this.lastSelected ="County"
-	this.lastLastSelected =""
+	if(this.countiesAscending)
+	{
+		d3.select("#sortCounties #"+this.lastSelected).transition().duration(500).text(function(d) { return '\uf0de'; });
+	}
+	else{
+		d3.select("#sortCounties #"+this.lastSelected).transition().duration(500).text(function(d) { return '\uf0dd'; });
+	}
+
 
 	var professionsGroups = this.professionsSvg.append('g')
 		.selectAll('g')
-		.data(professionsData.sort(sortingFunction))
+		.data(professionsData.sort(this.professionsSortingFunction))
 		.enter()
 		.append('g')
 		.attr('transform', (d, i) => `translate(0, ${i * (barHeight)})`)
@@ -371,20 +363,15 @@ class Sidebar {
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#ffffff');
-				if (this.map.useSecondMap)
-					this.map.map.updateSelections(this.selectedProfessions);
+
 				this.map.updateSelections(this.selectedProfessions);
+
 			} else {
 				this.selectedProfessions[d[0]] = true;
 				d3.select("#" + d[0])
 					.select('rect')
 					.attr('fill', '#cccccc');
-				if (this.map.useSecondMap) {
-					this.map.map.selectedCounty = this.map.selectedCounty;
-					this.map.map.updateSelections(this.selectedProfessions);
-				}
 				this.map.updateSelections(this.selectedProfessions);
-
 			}
 	})
 
@@ -410,16 +397,14 @@ class Sidebar {
 
 	professionsHeaders.call(this.drawHeaders, barWidth, barHeight);
 	var axis = professionHeaderSVG.append('g');
-	d3.select("#sortProfessions #Profession").transition().duration(500).text(function(d) { return '\uf0dd'; });
-	this.professionsLastSelected ="Profession";
-	this.professionsLastLastSelected = "";
+	d3.select("#sortProfessions #" + this.professionsLastSelected).transition().duration(500).text(function(d) { return '\uf0dd'; });
 
 	var xAxis = g => g
 		.attr("transform", `translate(${3*barWidth + this.margin.left},${42})`)
 		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 	axis.call(xAxis);
 
-	professionsGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, Object.keys(otherCurrentYearData).length != 0);
+	professionsGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
 	//
 	// if (Object.keys(otherCurrentYearData).length) {
 	// 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth);
@@ -431,9 +416,8 @@ class Sidebar {
 	// 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 1, barWidth);
 	// 	professionsGroups.call(this.drawText, barWidth, barHeight, this.margin.left, 2,  2 * barWidth);
 	// }
-	console.log(mapData);
 	if (mapData.includes('100')) {
-		if (Object.keys(otherCurrentYearData).length){
+		if (this.map.comparisonMode){
 			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight/2, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight/2, this.margin.left, 3*barWidth, barHeight / 2, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		}
@@ -441,7 +425,7 @@ class Sidebar {
 			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight, this.margin.left, 3*barWidth, 0, 1, 2, d3.interpolatePuOr(0), d3.interpolatePuOr(1));
 		}
 	} else {
-		if (Object.keys(otherCurrentYearData).length){
+		if (this.map.comparisonMode){
 			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight/2, this.margin.left, 3 * barWidth, 0, 1, 2);
 			professionsGroups.call(this.draw1DScatterPlot, xScale, barWidth, barHeight/2, this.margin.left, 3 * barWidth, barHeight / 2, 4, 5);
 		}
@@ -455,23 +439,22 @@ class Sidebar {
 		.selectAll('.rectButtons')
 		.on('click', (d, i) => {
 
-			let sortingFunction:any;
 			//down
 			if(this.professionsLastSelected == ""){
 				d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
 				this.professionsLastSelected = d.name
-				sortingFunction = this.getSortingOptions(i, true);
+				this.professionsSortingFunction = this.getSortingOptions(i, true);
 
 			}else if(this.professionsLastSelected===d.name){
-				if(this.professionsLastLastSelected === this.professionsLastSelected){
-					this.professionsLastLastSelected = "";
-					sortingFunction = this.getSortingOptions(i, true);
-					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; });
+				if(this.professionsAscending){
+					this.professionsAscending = false;
+					this.professionsSortingFunction = this.getSortingOptions(i, false);
+					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; });
 
 				}else{
-					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0de'; });
-					sortingFunction = this.getSortingOptions(i, false);
-					this.professionsLastLastSelected = this.professionsLastSelected
+					d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d) { return '\uf0dd'; });
+					this.professionsSortingFunction = this.getSortingOptions(i, true);
+					this.professionsAscending = true;
 			}
 
 			}else{
@@ -479,20 +462,14 @@ class Sidebar {
 
 				d3.select("#sortProfessions #"+d.name).transition().duration(500).text(function(d){return "\uf0dd"});
 				this.professionsLastSelected = d.name;
-				this.professionsLastLastSelected = "";
-				sortingFunction = this.getSortingOptions(i, true);
+				this.professionsAscending = true;
+				this.professionsSortingFunction = this.getSortingOptions(i, true);
 			}
-			professionsGroups.sort(sortingFunction)
-				.transition()
-				.delay(function(d, i) {
-					return i * 50;
-				})
-				.duration(1000)
-				.attr("transform", function(d, i) {
-					let y = i * barHeight;
-					return "translate(" + 0 + ", " + y + ")";
-				});
+			this.sortProfessions(professionsGroups, barHeight, 1000);
 		});
+
+		this.highlightBar(this.currentlySelected);
+
 	}
 
 	draw1DScatterPlot(svg, xScale, barWidth, barHeight, leftMargin, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
@@ -566,6 +543,34 @@ class Sidebar {
 			currentYear[county]['totalSupply'] = totalSupply;
 			currentYear[county]['totalDemand'] = totalDemand;
 		}
+	}
+
+	sortCounties(groups:any, barHeight:number, duration:number)
+	{
+		groups.sort(this.countiesSortingFunction)
+			.transition()
+			.delay(function(d, i) {
+				return i * 50;
+			})
+			.duration(duration)
+			.attr("transform", function(d, i) {
+				let y = i * (barHeight+2);
+				return "translate(" + 0 + ", " + y + ")";
+			});
+	}
+
+	sortProfessions(groups:any, barHeight:number, duration:number)
+	{
+		groups.sort(this.professionsSortingFunction)
+			.transition()
+			.delay(function(d, i) {
+				return i * 50;
+			})
+			.duration(duration)
+			.attr("transform", function(d, i) {
+				let y = i * (barHeight + 2);
+				return "translate(" + 0 + ", " + y + ")";
+			});
 	}
 
 
@@ -643,7 +648,7 @@ class Sidebar {
 		const f = d3.format('.0f');
 
 		if(!doubleBars){
-
+			console.log("1 bar")
 			// groups.selectAll('text')
 			// 	.data([0, 1, 2])
 			// 	.enter()
@@ -716,13 +721,21 @@ class Sidebar {
 
 	getSortingOptions(index, ascending) {
 
-		if (ascending) {
+		if (!ascending) {
 			const sortingFunction = function(a, b) {
+				if(index == 0)
+				{
+					return d3.descending(a[index], b[index]);
+				}
 				return d3.ascending(a[index], b[index]);
 			}
 			return sortingFunction;
 		} else {
 			const sortingFunction = function(a, b) {
+				if(index == 0)
+				{
+					return d3.ascending(a[index], b[index]);
+				}
 				return d3.descending(a[index], b[index]);
 			}
 			return sortingFunction;
@@ -737,8 +750,14 @@ class Sidebar {
 	}
 
 	highlightBar(id){
+		this.currentlySelected = id;
 		id = this.removeSpaces(id);
-		console.log("here");
+		this.stateSvg.select('.selectedCounty')
+			.classed('selectedCounty', false);
+
+		this.stateSvg.select(`#${id}`)
+			.classed('selectedCounty', true);
+
 		this.countiesSvg.select('.selectedCounty')
 			.classed('selectedCounty', false);
 

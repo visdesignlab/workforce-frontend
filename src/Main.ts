@@ -1,22 +1,13 @@
-import {Map} from './Map';
-import {MapEvents} from './MapEvents'
+import {Map} from './map';
+import {MapController} from './mapController';
+import {MapEvents} from './mapEvents'
 import {Sidebar} from './sidebar'
-
-
 import 'bootstrap';
 import 'bootstrap-select';
-let myMap: Map = new Map(true);
-myMap.drawMap();
-let otherMap: Map = new Map(false);
 
-let sideBar = new Sidebar(myMap);
+let mapController = new MapController();
 
-myMap.setSideBar(sideBar);
-otherMap.setSideBar(sideBar);
+let myMapEvents:MapEvents = new MapEvents(mapController);
 
-otherMap.map = myMap;
-myMap.map = otherMap;
-
-let myMapEvents:MapEvents = new MapEvents(myMap);
-let otherMapEvents:MapEvents = new MapEvents(otherMap, 1);
-otherMap.otherCurrentYearData = myMap.currentYearData;
+console.log("in main");
+mapController.drawMap().then(() => mapController.drawSidebar());
