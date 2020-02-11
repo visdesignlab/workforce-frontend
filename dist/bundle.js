@@ -57239,6 +57239,7 @@ var MapController = /** @class */ (function () {
     MapController.prototype.destroy = function () {
         this.originalMap.destroy();
         this.secondMap.destroy();
+        this.sidebar.destroy();
     };
     MapController.prototype.drawMap = function (customModel, initSidebar, otherCurrentYearData) {
         var _this = this;
@@ -57381,7 +57382,11 @@ var MapEvents = /** @class */ (function () {
         document.getElementById("modelData").addEventListener('change', function () {
             _this.map.mapType = document.getElementById('mapType').value;
             var selectedOptions = document.getElementById('modelData').selectedOptions;
-            if (selectedOptions.length == 1) {
+            if (selectedOptions.length == 0) {
+                _this.map.destroy();
+                return;
+            }
+            else if (selectedOptions.length == 1) {
                 _this.map.comparisonMode = false;
             }
             else {
@@ -57452,6 +57457,11 @@ var Sidebar = /** @class */ (function () {
                 .attr('width', 600);
         }
     }
+    Sidebar.prototype.destroy = function () {
+        this.countiesSvg.selectAll("*").remove();
+        this.professionsSvg.selectAll("*").remove();
+        this.stateSvg.selectAll("*").remove();
+    };
     Sidebar.prototype.initSideBar = function (selectedProfessions, currentYear, selectedCounty, otherCurrentYearData) {
         var _this = this;
         if (selectedCounty === void 0) { selectedCounty = 'State of Utah'; }

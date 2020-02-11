@@ -56,6 +56,13 @@ class Sidebar {
 		}
 	}
 
+	destroy()
+	{
+		this.countiesSvg.selectAll("*").remove();
+		this.professionsSvg.selectAll("*").remove();
+		this.stateSvg.selectAll("*").remove();
+	}
+
 	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []) {
 		this.currentlySelected = selectedCounty;
 		console.log(this.map.comparisonMode);

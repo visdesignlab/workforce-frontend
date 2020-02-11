@@ -77,7 +77,12 @@ class MapEvents{
 		document.getElementById("modelData").addEventListener('change',()=>{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
-			if (selectedOptions.length == 1) {
+			if(selectedOptions.length == 0)
+			{
+				this.map.destroy();
+				return;
+			}
+			else if (selectedOptions.length == 1) {
 				this.map.comparisonMode = false;
 			}
 			else{

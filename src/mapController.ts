@@ -43,6 +43,7 @@ class MapController{
 	destroy() {
 		this.originalMap.destroy();
 		this.secondMap.destroy();
+		this.sidebar.destroy();
 	}
 
 	drawMap(customModel = false, initSidebar = true, otherCurrentYearData = []):Promise<void>{
