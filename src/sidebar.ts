@@ -237,8 +237,6 @@ class Sidebar {
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		axis.call(xAxis);
 
-		console.log(groups)
-
 		groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
 		//
 		// if (Object.keys(otherCurrentYearData).length) {
@@ -365,8 +363,6 @@ class Sidebar {
 	for (let i in data) {
 			professionsData.push([professions[i], ...data[i]]);
 	};
-
-	console.log(professionsData);
 
 	if(this.countiesAscending)
 	{

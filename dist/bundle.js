@@ -56688,7 +56688,6 @@ var Linechart = /** @class */ (function () {
         var supply_demand = [];
         var professions = Object.keys(results[2019]['State of Utah']['supply']);
         var max = 1;
-        console.log(selectedCounties);
         for (var k in professions) {
             supply = [];
             demand = [];
@@ -56698,7 +56697,6 @@ var Linechart = /** @class */ (function () {
                 var counter = 0;
                 for (var _b = 0, selectedCounties_1 = selectedCounties; _b < selectedCounties_1.length; _b++) {
                     var j = selectedCounties_1[_b];
-                    console.log(j);
                     counter += results[i][j]['supply'][profession];
                 }
                 supply.push(counter);
@@ -56708,7 +56706,6 @@ var Linechart = /** @class */ (function () {
                 var counter = 0;
                 for (var _e = 0, selectedCounties_2 = selectedCounties; _e < selectedCounties_2.length; _e++) {
                     var j = selectedCounties_2[_e];
-                    console.log(j);
                     counter += results[i][j]['demand'][profession];
                 }
                 demand.push(counter);
@@ -56716,7 +56713,6 @@ var Linechart = /** @class */ (function () {
             supply_demand.push([supply, demand, profession]);
             max = d3.max([d3.max(demand), d3.max(supply), max]);
         }
-        console.log(supply_demand);
         for (var i in supply_demand) {
             this.createAreaChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
         }
@@ -57010,7 +57006,6 @@ var Map = /** @class */ (function () {
             for (var county in _this.currentYearData) {
                 var totalSupply = 0;
                 var totalDemand = 0;
-                console.log(selectedProfessions);
                 for (var _i = 0, professions_1 = professions; _i < professions_1.length; _i++) {
                     var profession = professions_1[_i];
                     if (selectedProfessions[profession] == undefined) {
@@ -57371,8 +57366,6 @@ var MapController = /** @class */ (function () {
         this.drawSidebar();
     };
     MapController.prototype.setAllHighlights = function () {
-        console.log(this.selectedProfessions);
-        console.log("setting highlights");
         for (var prof in this.selectedProfessions) {
             if (this.selectedProfessions[prof]) {
                 this.highlightProfession(prof);
@@ -57709,7 +57702,6 @@ var Sidebar = /** @class */ (function () {
             .attr("transform", "translate(" + (3 * barWidth + _this.margin.left) + "," + 45 + ")")
             .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
         axis.call(xAxis);
-        console.log(groups);
         groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
         //
         // if (Object.keys(otherCurrentYearData).length) {
@@ -57825,7 +57817,6 @@ var Sidebar = /** @class */ (function () {
             professionsData.push([professions[i]].concat(data[i]));
         }
         ;
-        console.log(professionsData);
         if (this.countiesAscending) {
             d3.select("#sortCounties #" + this.lastSelected).transition().duration(500).text(function (d) { return '\uf0de'; });
         }

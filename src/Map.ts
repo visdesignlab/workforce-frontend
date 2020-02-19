@@ -96,7 +96,6 @@ class Map{
 				for (let county in this.currentYearData) {
 					let totalSupply = 0;
 					let totalDemand = 0;
-					console.log(selectedProfessions)
 					for (let profession of professions) {
 						if(selectedProfessions[profession] == undefined){
 							selectedProfessions[profession] = true;

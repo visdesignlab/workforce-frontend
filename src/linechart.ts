@@ -57,7 +57,6 @@ class Linechart{
 		var professions = Object.keys(results[2019]['State of Utah']['supply']);
 		var max = 1;
 
-		console.log(selectedCounties)
 
 		for (let k in professions) {
 			supply = [];
@@ -67,7 +66,6 @@ class Linechart{
 				let counter = 0;
 				for(let j of selectedCounties)
 				{
-					console.log(j);
 					counter += results[i][j]['supply'][profession]
 				}
 
@@ -78,7 +76,6 @@ class Linechart{
 				let counter = 0;
 				for(let j of selectedCounties)
 				{
-					console.log(j)
 					counter += results[i][j]['demand'][profession]
 				}
 				demand.push(counter);
@@ -88,8 +85,6 @@ class Linechart{
 			max = d3.max([d3.max(demand), d3.max(supply), max])
 
 		}
-
-		console.log(supply_demand);
 
 		for (let i in supply_demand) {
 			this.createAreaChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));

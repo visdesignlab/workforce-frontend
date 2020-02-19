@@ -142,8 +142,6 @@ class MapController{
 	}
 
 	setAllHighlights(){
-		console.log(this.selectedProfessions)
-		console.log("setting highlights")
 
 		for(let prof in this.selectedProfessions)
 		{
