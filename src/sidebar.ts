@@ -15,12 +15,12 @@ class Sidebar {
 	map:MapController;
 	countiesSortingFunction:any;
 	professionsSortingFunction:any;
-	currentlySelected:string;
+	currentlySelected:Set<string>;
 
 	constructor(map:MapController) {
 		this.map = map;
 		this.selectedProfessions = {};
-		this.currentlySelected = "State of Utah";
+		this.currentlySelected = new Set<string>();
 		this.lastSelected = "County";
 		this.countiesAscending = true;
 		this.professionsLastSelected = "Profession";
@@ -63,9 +63,15 @@ class Sidebar {
 		this.stateSvg.selectAll("*").remove();
 	}
 
-	initSideBar(selectedProfessions, currentYear, selectedCounty = 'State of Utah', otherCurrentYearData = []) {
-		this.currentlySelected = selectedCounty;
-		console.log(this.map.comparisonMode);
+	initSideBar(selectedProfessions, currentYear, selectedCounties:Set<string>, otherCurrentYearData = []) {
+		if(selectedCounties.size == 0)
+		{
+			this.currentlySelected = new Set<string>();
+			this.currentlySelected.add("State of Utah");
+		}
+		else{
+			this.currentlySelected = new Set<string>(selectedCounties);
+		}
 		this.selectedProfessions = selectedProfessions;
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
@@ -133,6 +139,7 @@ class Sidebar {
 			.attr('height', barHeight)
 			.attr('id', d => d[0].replace(/\s/g, ''))
 			.attr('class', 'background')
+			.attr('fill', 'white')
 
 		stateGroups.on('click', (d) => {
 				this.highlightRect(d[0]);
@@ -152,6 +159,23 @@ class Sidebar {
 			return !d[0].includes("State of");
 		});
 
+
+		this.countiesSvg.selectAll('rect')
+			.data(countiesData.sort(this.countiesSortingFunction))
+			.enter()
+			.append('rect')
+			.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
+			.attr('height', barHeight)
+			.attr('y', (d, i) => i * barHeight)
+			.attr('x', 0)
+			.attr('fill', (d, i) => {
+				if (i % 2 == 0)
+				{
+					return '#F0F0F0';
+				}
+				return 'white';
+			})
+
 		var groups = this.countiesSvg.append('g')
 			.selectAll('g')
 			.data(countiesData.sort(this.countiesSortingFunction))
@@ -160,17 +184,27 @@ class Sidebar {
 			.attr('transform', (d, i) => `translate(0, ${i * barHeight})`)
 			.attr('class','pointerCursor countiesG')
 
+
 		groups.append('rect')
 			.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
 			.attr('height', barHeight)
 			.attr('id', d => d[0].replace(/\s/g, ''))
 			.attr('class', 'background')
+			.attr('fill', (d, i) => {
+				// if (i % 2 == 0)
+				// {
+				// 	return '#F0F0F0';
+				// }
+				return 'none';
+			})
+			.classed('visibleFillEvents', true)
 
-		console.log(selectedCounty);
-		let selection = d3.select(`#${this.removeSpaces(selectedCounty)}`)
-			.classed('selectedCounty', true);
 
-		console.log(selection);
+
+		this.currentlySelected.forEach(i => {
+			let selection = d3.select(`#${this.removeSpaces(i)}`)
+				.classed('selectedCounty', true);
+		});
 
 		groups.on('click', (d) => {
 				this.highlightRect(d[0]);
@@ -202,6 +236,8 @@ class Sidebar {
 			.attr("transform", `translate(${3*barWidth + this.margin.left},${45})`)
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		axis.call(xAxis);
+
+		console.log(groups)
 
 		groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
 		//
@@ -277,19 +313,16 @@ class Sidebar {
 				this.countiesAscending = true;
 				this.countiesSortingFunction = this.getSortingOptions(i, true);
 			}
-			//both
-		//	d3.select("#"+d.name).transition().duration(500).text(function(d) { return '\uf0dc'; });
-			//up
-		//	d3.select("#"+d.name).transition().duration(500).text(function(d){return "\uf0de"})
-
 
 			this.sortCounties(groups, barHeight, 1000);
+			// this.map.drawSidebar();
 		});
 
+		let tempSelectedList = Array.from(this.currentlySelected);
 
 		this.professionsSvg.selectAll('*').remove();
-		var professions = Object.keys(currentYear[selectedCounty]['supply']);
-		var population = currentYear[selectedCounty]['population'];
+		var professions = Object.keys(currentYear[tempSelectedList[0]]['supply']);
+		var population = currentYear[tempSelectedList[0]]['population'];
 		var stats = {};
 
 		for (let prof of professions) {
@@ -299,15 +332,18 @@ class Sidebar {
 
 		const f = d3.format('.0f');
 		for (let prof of professions) {
-			stats[prof].totalSupply += currentYear[selectedCounty]['supply'][prof];
-			stats[prof].totalDemand += currentYear[selectedCounty]['demand'][prof];
-			stats[prof].totalSupplyPer100K = Number(f(stats[prof].totalSupply / population * 100000));
-			stats[prof].totalDemandPer100K = Number(f(stats[prof].totalDemand / population * 100000));
-			if (this.map.comparisonMode) {
-				stats[prof].otherTotalSupply += otherCurrentYearData[selectedCounty]['supply'][prof];
-				stats[prof].otherTotalDemand += otherCurrentYearData[selectedCounty]['demand'][prof];
-				stats[prof].otherTotalSupplyPer100K = Number(f(stats[prof].otherTotalSupply / population * 100000));
-				stats[prof].otherTotalDemandPer100K = Number(f(stats[prof].otherTotalDemand / population * 100000));
+			for(let i = 0; i < tempSelectedList.length; i++)
+			{
+				stats[prof].totalSupply += currentYear[tempSelectedList[i]]['supply'][prof];
+				stats[prof].totalDemand += currentYear[tempSelectedList[i]]['demand'][prof];
+				stats[prof].totalSupplyPer100K = Number(f(stats[prof].totalSupply / population * 100000));
+				stats[prof].totalDemandPer100K = Number(f(stats[prof].totalDemand / population * 100000));
+				if (this.map.comparisonMode) {
+					stats[prof].otherTotalSupply += otherCurrentYearData[tempSelectedList[i]]['supply'][prof];
+					stats[prof].otherTotalDemand += otherCurrentYearData[tempSelectedList[i]]['demand'][prof];
+					stats[prof].otherTotalSupplyPer100K = Number(f(stats[prof].otherTotalSupply / population * 100000));
+					stats[prof].otherTotalDemandPer100K = Number(f(stats[prof].otherTotalDemand / population * 100000));
+				}
 			}
 		}
 	//}
@@ -330,6 +366,8 @@ class Sidebar {
 			professionsData.push([professions[i], ...data[i]]);
 	};
 
+	console.log(professionsData);
+
 	if(this.countiesAscending)
 	{
 		d3.select("#sortCounties #"+this.lastSelected).transition().duration(500).text(function(d) { return '\uf0de'; });
@@ -338,6 +376,21 @@ class Sidebar {
 		d3.select("#sortCounties #"+this.lastSelected).transition().duration(500).text(function(d) { return '\uf0dd'; });
 	}
 
+	this.professionsSvg.selectAll('rect')
+		.data(professionsData.sort(this.professionsSortingFunction))
+		.enter()
+		.append('rect')
+		.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
+		.attr('height', barHeight)
+		.attr('y', (d, i) => i * barHeight)
+		.attr('x', 0)
+		.attr('fill', (d, i) => {
+			if (i % 2 == 0)
+			{
+				return '#F0F0F0';
+			}
+			return 'white';
+		})
 
 	var professionsGroups = this.professionsSvg.append('g')
 		.selectAll('g')
@@ -348,19 +401,23 @@ class Sidebar {
 		.attr('class','professions')
 		.attr('id',(d)=>d[0])
 
+
+
+
 	// Reducing bar height to account for the space between bars in professions. Makes sure everything is centered.
 	barHeight = barHeight - 2;
 	professionsGroups.append('rect')
 		.attr('width', 4 * barWidth + this.margin.left + this.margin.right)
 		.attr('height', barHeight)
-		.attr('fill', (d) => {
+		.attr('fill', (d, i) => {
 			if (!this.selectedProfessions.hasOwnProperty(d[0])
 				|| this.selectedProfessions[d[0]]) {
-				return '#cccccc';
+				return '#A9A9A9';
 			}
-			return '#ffffff';
+			return 'none';
 		})
-		.attr('fill-opacity', 0.8)
+		.classed('visibleFillEvents', true)
+
 
 
 	professionsGroups.on('click', (d, i ,j)=> {
@@ -371,15 +428,32 @@ class Sidebar {
 					.select('rect')
 					.attr('fill', '#ffffff');
 
+				this.map.unHighlightProfession(d[0])
+
 				this.map.updateSelections(this.selectedProfessions);
 
 			} else {
 				this.selectedProfessions[d[0]] = true;
+				this.map.highlightProfession(d[0])
+
 				d3.select("#" + d[0])
 					.select('rect')
-					.attr('fill', '#cccccc');
+					.attr('fill', '#A9A9A9');
 				this.map.updateSelections(this.selectedProfessions);
 			}
+	})
+
+	professionsGroups.on('mouseover', d => {
+		if (!(!this.selectedProfessions.hasOwnProperty(d[0])
+			|| this.selectedProfessions[d[0]])) {
+				d3.select(`#${this.removeSpaces(d[0])}`).select('rect')
+					.classed('hoverProfession', true);
+		}
+	})
+
+	professionsGroups.on('mouseout', d => {
+		d3.select(`.hoverProfession`)
+			.classed('hoverProfession', false);
 	})
 
 	var professionsHeadData = [{name: 'Profession', x: 0},
@@ -474,9 +548,9 @@ class Sidebar {
 			}
 			this.sortProfessions(professionsGroups, barHeight, 1000);
 		});
-
-		this.highlightBar(this.currentlySelected);
-
+		// for(let i of this.currentlySelected){
+		// 	this.highlightBar(i);
+		// }
 	}
 
 	draw1DScatterPlot(svg, xScale, barWidth, barHeight, leftMargin, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
@@ -502,6 +576,7 @@ class Sidebar {
 				.append('rect')
 				.attr('class', 'scatterPlotRect')
 				.attr('height', 6)
+
 				.attr('width', d => Math.abs(xScale(d[i]) - xScale(d[j])))
 				.attr('x', d => {return x + xScale(d3.min([d[i], d[j]]))})
 				.attr('y', (d, i) => y + 0 * barHeight + barHeight / 2 - radius / 2)
@@ -655,7 +730,6 @@ class Sidebar {
 		const f = d3.format('.0f');
 
 		if(!doubleBars){
-			console.log("1 bar")
 			// groups.selectAll('text')
 			// 	.data([0, 1, 2])
 			// 	.enter()
@@ -750,26 +824,56 @@ class Sidebar {
 	}
 
 	highlightRect(id) {
-		this.map.highlightPath(id);
-		id = this.removeSpaces(id);
+		if(id == "State of Utah")
+		{
+			this.currentlySelected.forEach(id => {
+				if(id == "State of Utah")
+					return;
+				this.map.unHighlightPath(id);
+				this.unHighlightBar(id);
+			})
 
+			this.currentlySelected = new Set<string>().add("State of Utah");
+			return;
+		}
+
+		if(this.currentlySelected.has(id))
+		{
+			this.currentlySelected.delete(id);
+			this.map.unHighlightPath(id);
+			this.unHighlightBar(id);
+
+			if(this.currentlySelected.size == 0)
+			{
+				this.currentlySelected = new Set<string>().add("State of Utah");
+			}
+			return;
+		}
+
+		this.currentlySelected.add(id);
+		this.map.highlightPath(id);
 		this.highlightBar(id)
 	}
 
 	highlightBar(id){
-		this.currentlySelected = id;
 		id = this.removeSpaces(id);
-		this.stateSvg.select('.selectedCounty')
-			.classed('selectedCounty', false);
 
 		this.stateSvg.select(`#${id}`)
 			.classed('selectedCounty', true);
 
-		this.countiesSvg.select('.selectedCounty')
+		this.countiesSvg.select(`#${id}`)
+			.classed('selectedCounty', true);
+	}
+
+
+	unHighlightBar(id){
+		id = this.removeSpaces(id);
+
+		this.stateSvg.select(`#${id}`)
 			.classed('selectedCounty', false);
 
 		this.countiesSvg.select(`#${id}`)
-			.classed('selectedCounty', true);
+			.classed('selectedCounty', false);
 	}
 
 	removeSpaces(s) : string{

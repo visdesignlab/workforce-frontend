@@ -34,7 +34,6 @@ class MapEvents{
 	selectAllClicked():void{
 		d3.select("#selectAll").on('click',()=>{
 
-			console.log(this.map);
 			if(this.selectAll){
 				d3.select("#selectAll").transition().text('Unselect All');
 				Object.keys(this.map.selectedProfessions).forEach(profession => {
@@ -67,7 +66,7 @@ class MapEvents{
 
 	changeMapType() {
 		document.getElementById("mapType").addEventListener('change',()=>{
-			this.map.selectedCounty = "State of Utah";
+			this.map.selectedCounties = new Set<string>();
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			this.map.drawMap().then(() => this.map.drawSidebar());
 		})
@@ -94,7 +93,6 @@ class MapEvents{
 			{
 				this.map.modelsUsed.push(selectedOptions[i].value)
 			}
-			console.log(this.map.modelsUsed);
 			this.map.drawMap().then(() => this.map.drawSidebar());
 		})
 	}

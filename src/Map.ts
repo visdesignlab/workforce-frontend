@@ -22,7 +22,7 @@ class Map{
 	 */
 	constructor(controller){
 		this.controller = controller;
-		this.linechart = new Linechart()
+		this.linechart = new Linechart(controller)
 		this.currentYearData = {};
 		this.supplyScore = {};
 		this.svg = d3.select("#map")
@@ -40,51 +40,51 @@ class Map{
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap(mapData:any, modelUsed: any, selectedProfessions: any, yearSelected:string, selectedCounty:string, mapType:string, customModel = false, initSidebar = true):Promise<void>{
+	drawMap(mapData:any, modelUsed: any, selectedProfessions: any, yearSelected:string, selectedCounties:Set<string>, mapType:string, customModel = false, initSidebar = true):Promise<void>{
 			// d3.select('#spinner')
 			// 	.classed('d-flex', true)
 		this.modelData = modelUsed;
 		const map = mapType;
 		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
 		const serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
-		const option = (document.getElementById('customModel') as HTMLInputElement).value;
-		let request = {
-			method:"POST",
-			mode: "cors",
-			body: JSON.stringify({
-				"geo": selectedCounty,
-				"year": yearSelected,
-				"option": option,
-				"sub_option":"all_combination",
-				"wage_max":"0",
-				"wage_weight":"0"
-			}),
-			headers: {
-				"Content-type": "application/json; charset=UTF-8"
-			}
-		};
+		// const option = (document.getElementById('customModel') as HTMLInputElement).value;
+		// let request = {
+		// 	method:"POST",
+		// 	mode: "cors",
+		// 	body: JSON.stringify({
+		// 		"geo": selectedCounties[0],
+		// 		"year": yearSelected,
+		// 		"option": option,
+		// 		"sub_option":"all_combination",
+		// 		"wage_max":"0",
+		// 		"wage_weight":"0"
+		// 	}),
+		// 	headers: {
+		// 		"Content-type": "application/json; charset=UTF-8"
+		// 	}
+		// };
 		let promise;
-		if (!customModel) {
+		// if (!customModel) {
 			promise = d3.json(`../data/${modelFile}`);
-		}
-		else {
-			promise = d3.json(serverUrl, request);
-		}
+		// }
+		// else {
+		// 	promise = d3.json(serverUrl, request);
+		// }
 
-		return promise.then((results)=> {
-			if (!customModel) {
+		promise = promise.then((results)=> {
+			// if (!customModel) {
 				results = results[map];
 				this.results = results;
-			} else {
-				this.results[yearSelected][selectedCounty].demand = results.result.demand['w_0.1'] || results.result.demand;
-			}
+			// } else {
+			// 	this.results[yearSelected][selectedCounties[0]].demand = results.result.demand['w_0.1'] || results.result.demand;
+			// }
 			this.svg.selectAll('*').remove();
 			this.svg.append('line')
 			.attr('stroke', 'black')
-			.attr('stroke-width', 2)
+			.attr('stroke-width', 1)
 			.attr('x1', 600)
 			.attr('x2', 600)
-			.attr('y1', 0)
+			.attr('y1', 10)
 			.attr('y2', 600);
 			this.currentYearData = this.results[yearSelected]
 			d3.select('#spinner')
@@ -96,10 +96,15 @@ class Map{
 				for (let county in this.currentYearData) {
 					let totalSupply = 0;
 					let totalDemand = 0;
+					console.log(selectedProfessions)
 					for (let profession of professions) {
-						selectedProfessions[profession]= true;
-						totalSupply += this.currentYearData[county]['supply'][profession];
-						totalDemand += this.currentYearData[county]['demand'][profession];
+						if(selectedProfessions[profession] == undefined){
+							selectedProfessions[profession] = true;
+						}
+						if (selectedProfessions[profession] == true) {
+							totalSupply += this.currentYearData[county]['supply'][profession];
+							totalDemand += this.currentYearData[county]['demand'][profession];
+						}
 					}
 						let population = this.currentYearData[county].population;
 						this.currentYearData[county]['totalSupply'] = totalSupply;
@@ -183,11 +188,12 @@ class Map{
 						.attr("transform", "translate(20,40)")
 						.attr("d", path(topojson.mesh(us, us.objects[map], function(a, b) { return a !== b; })));
 
-
-					this.linechart.initLineChart(this.results);
 					this.updateMapType(mapData, 0);
 				});
+				this.linechart.initLineChart(this.results, Array.from(this.controller.selectedCounties));
+
 		});
+		return promise;
 	}
 	/**
 	 *
@@ -278,12 +284,8 @@ class Map{
 
 		d3.selectAll('g.legendLinear').call(legendLinear)
 		this.svg.select('g.counties').selectAll('path').each(function(d){
-			var selectedCounty:string = d.properties.NAME
 			d3.select(this).transition().duration(duration).attr('fill',colorScale(d,that,mapData));
-
 		});
-
-
 	}
 	/**
 	 * This handles when the user selects a new year
@@ -324,12 +326,27 @@ class Map{
 	}
 
 	highlightPath(name:string) {
-		d3.selectAll('path').classed('selected', false);
-		this.linechart.initLineChart(this.results, name);
+		// d3.selectAll('path').classed('selected', false);
+		this.linechart.initLineChart(this.results, Array.from(this.controller.selectedCounties));
 		// should be moved it id-based paths
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => d.properties.NAME == name)
 			.classed('selected', true);
+	}
+
+	unHighlightPath(name:string) {
+		// d3.selectAll('path').classed('selected', false);
+		this.linechart.initLineChart(this.results, Array.from(this.controller.selectedCounties));
+
+		// this.linechart.initLineChart(this.results, name);
+		// should be moved it id-based paths
+		d3.selectAll('svg .counties').selectAll('path')
+			.filter(d => d.properties.NAME == name)
+			.classed('selected', false);
+	}
+
+	removeSpaces(s) : string{
+		return s.replace(/\s/g, '');
 	}
 
 }

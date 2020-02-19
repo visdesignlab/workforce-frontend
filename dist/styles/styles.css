@@ -24,15 +24,27 @@
 }
 
 .background {
-	fill:#ffffff;
 }
 
 .hoverCounty {
 	fill: #D3D3D3;
 }
 
+.hoverProfession {
+	fill: #D3D3D3;
+}
+
 .selectedCounty {
 	fill: #A9A9A9;
+}
+
+.highlightProfRect{
+	stroke:black;
+	fill: #E8E8E8
+}
+
+.visibleFillEvents{
+	pointer-events:visibleFill;
 }
 
 #tooltip {

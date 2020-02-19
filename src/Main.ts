@@ -10,4 +10,6 @@ let mapController = new MapController();
 let myMapEvents:MapEvents = new MapEvents(mapController);
 
 console.log("in main");
-mapController.drawMap().then(() => mapController.drawSidebar());
+mapController.drawMap().then(() => {
+  mapController.drawSidebar();
+});

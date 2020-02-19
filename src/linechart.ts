@@ -1,4 +1,6 @@
 import * as d3 from 'd3';
+import {MapController} from './mapController';
+
 class Linechart{
 	data:any;
 	width:any;
@@ -7,33 +9,46 @@ class Linechart{
 	clipPathID:any;
 	lineChartSvg:any;
 	results: any;
-	constructor(){
-	this.data = {dates: {}, series: {}};
-	this.width = 200;
-	this.height = 200
-	this.margin = {top: 20, right: 20, bottom: 40, left: 40};
-	this.lineChartSvg = d3.select('#linechart').append("svg").attr("width", 600).attr('height', 800);
-	this.clipPathID = 0;
+	controller:MapController;
+
+	constructor(controller:MapController){
+		this.controller = controller;
+		this.data = {dates: {}, series: {}};
+		this.width = 200;
+		this.height = 200
+		this.margin = {top: 20, right: 20, bottom: 40, left: 40};
+		this.lineChartSvg = d3.select('#linechart').append("svg").attr("width", 600).attr('height', 800);
+		this.clipPathID = 0;
 
 	}
 
-	public updateLineChart(selectedCounty) {
-		this.initLineChart(this.results, selectedCounty);
+	public updateLineChart(selectedCounties:string[]) {
+		if(selectedCounties.length == 0)
+		{
+			this.initLineChart(this.results, ['State of Utah']);
+			return;
+		}
+		this.initLineChart(this.results, selectedCounties);
 	}
 
 	public destroy() {
 		this.lineChartSvg.selectAll('*').remove();
 	}
 
-	public initLineChart(results, selectedCounty = 'State of Utah') {
+	public initLineChart(results, selectedCounties:string[]) {
+		if(selectedCounties.length == 0)
+		{
+			this.initLineChart(results, ['State of Utah']);
+			return;
+		}
 		this.lineChartSvg.selectAll('*').remove();
-		this.lineChartSvg.append('line')
-			.attr('stroke', 'black')
-			.attr('stroke-width', 2)
-			.attr('x1', 600)
-			.attr('x2', 600)
-			.attr('y1', 0)
-			.attr('y2', 800);
+		// this.lineChartSvg.append('line')
+		// 	.attr('stroke', 'black')
+		// 	.attr('stroke-width', 2)
+		// 	.attr('x1', 600)
+		// 	.attr('x2', 600)
+		// 	.attr('y1', 0)
+		// 	.attr('y2', 800);
 		this.results = results;
 		var supply = [];
 		var demand = [];
@@ -41,23 +56,40 @@ class Linechart{
 
 		var professions = Object.keys(results[2019]['State of Utah']['supply']);
 		var max = 1;
+
+		console.log(selectedCounties)
+
 		for (let k in professions) {
 			supply = [];
 			demand = [];
 			let profession = professions[k];
-
 			for (let i of Object.keys(results)) {
-				supply.push(results[i][selectedCounty]['supply'][profession]);
+				let counter = 0;
+				for(let j of selectedCounties)
+				{
+					console.log(j);
+					counter += results[i][j]['supply'][profession]
+				}
+
+				supply.push(counter);
 			}
 
 			for (let i of Object.keys(results)) {
-				demand.push(results[i][selectedCounty]['demand'][profession]);
+				let counter = 0;
+				for(let j of selectedCounties)
+				{
+					console.log(j)
+					counter += results[i][j]['demand'][profession]
+				}
+				demand.push(counter);
 			}
 			supply_demand.push([supply, demand, profession]);
 
 			max = d3.max([d3.max(demand), d3.max(supply), max])
 
 		}
+
+		console.log(supply_demand);
 
 		for (let i in supply_demand) {
 			this.createAreaChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
@@ -159,6 +191,18 @@ class Linechart{
 		var lineChartGroup = this.lineChartSvg.append('g')
 			.attr('transform', `translate(${xi * this.width}, ${yi * this.height})`)
 
+		lineChartGroup.append('rect')
+			.attr('x', 0)
+			.attr('y', 0)
+			.attr('width', this.width)
+			.attr('height', this.height)
+			.attr('fill', "none")
+			.attr('stroke', 'black')
+			.attr('class', `${profession}rect visibleFillEvents`)
+			.style('cursor', 'pointer')
+
+
+
 		lineChartGroup.append('text')
 			.attr("x", (this.width / 2))
 			.attr("y", (this.margin.top))
@@ -173,6 +217,14 @@ class Linechart{
 
 		lineChartGroup.append("g")
 			.call(yAxis);
+
+		// lineChartGroup.on('mouseover', d=> {
+		// 	console.log(profession);
+		// })
+
+		lineChartGroup.on('click', d=>{
+			this.controller.profClicked(profession);
+		})
 
 		var aboveUid = 'above' + this.clipPathID;;
 		var belowUid = 'below' + this.clipPathID;;
@@ -236,6 +288,8 @@ class Linechart{
 			.style("mix-blend-mode", "multiply")
 			.attr("d", d => line(d));
 	}
+
+
 }
 
 export {Linechart};
