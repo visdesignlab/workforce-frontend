@@ -78,6 +78,8 @@ class MapEvents{
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
 			if(selectedOptions.length == 0)
 			{
+				this.map.selectedCounties = new Set<string>();
+				this.map.selectedProfessions = {};
 				this.map.destroy();
 				return;
 			}

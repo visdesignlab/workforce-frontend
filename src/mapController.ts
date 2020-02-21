@@ -78,7 +78,11 @@ class MapController{
 		this.mapData = mapData;
 
 		this.originalMap.updateMapType(mapData, 1000);
-		this.secondMap.updateMapType(mapData, 1000);
+		if(this.comparisonMode)
+		{
+			this.secondMap.updateMapType(mapData, 1000);
+
+		}
 		this.drawSidebar();
 	}
 

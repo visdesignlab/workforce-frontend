@@ -71,6 +71,8 @@ class Map{
 		// 	promise = d3.json(serverUrl, request);
 		// }
 
+
+
 		promise = promise.then((results)=> {
 			// if (!customModel) {
 				results = results[map];
@@ -86,6 +88,15 @@ class Map{
 			.attr('x2', 600)
 			.attr('y1', 10)
 			.attr('y2', 600);
+
+			this.svg.append('text')
+				.text(this.modelData == 'model1' ? 'Model 1' : 'Model 2')
+				.attr("x", 500)
+				.attr("y", 30)
+				.attr('alignment-baseline', 'middle')
+				.style('font-weight', 'bold')
+				.style('font-size', '24px')
+
 			this.currentYearData = this.results[yearSelected]
 			d3.select('#spinner')
 				.classed('d-flex', false)
@@ -172,7 +183,7 @@ class Map{
 							"<tr><td>Supply/Need:</td><td>"+(supplyDemandRatio)+"</td></tr>"+
 							"<tr><td>Population:</td><td>"+(population)+"</td></tr>"+
 							"<tr><td>Supply/100K:</td><td>"+(supplyPer100k)+"</td></tr>"+
-							"<tr><td>Demand/100K:</td><td>"+(demandPer100k)+"</td></tr>"+
+							"<tr><td>Need/100K:</td><td>"+(demandPer100k)+"</td></tr>"+
 							"</table>";
 
 								d3.select("#tooltip").transition().duration(200).style("opacity", .9);
@@ -280,6 +291,9 @@ class Map{
 					.labelFormat(d3.format(".0f"))
 					.orient('horizontal')
 					.scale(linear);
+
+		console.log(mapData);
+		// console.log(colorScale);
 
 		d3.selectAll('g.legendLinear').call(legendLinear)
 		this.svg.select('g.counties').selectAll('path').each(function(d){

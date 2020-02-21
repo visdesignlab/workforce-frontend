@@ -9226,7 +9226,7 @@ function brush(dim) {
       filter = defaultFilter,
       touchable = defaultTouchable,
       keys = true,
-      listeners = Object(d3_dispatch__WEBPACK_IMPORTED_MODULE_0__["dispatch"])(brush, "start", "brush", "end"),
+      listeners = Object(d3_dispatch__WEBPACK_IMPORTED_MODULE_0__["dispatch"])("start", "brush", "end"),
       handleSize = 6,
       touchending;
 
@@ -9633,6 +9633,10 @@ function brush(dim) {
 
   brush.filter = function(_) {
     return arguments.length ? (filter = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_5__["default"])(!!_), brush) : filter;
+  };
+
+  brush.touchable = function(_) {
+    return arguments.length ? (touchable = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_5__["default"])(!!_), brush) : touchable;
   };
 
   brush.handleSize = function(_) {
@@ -11658,7 +11662,7 @@ var noop = {value: function() {}};
 
 function dispatch() {
   for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
-    if (!(t = arguments[i] + "") || (t in _)) throw new Error("illegal type: " + t);
+    if (!(t = arguments[i] + "") || (t in _) || /[\s.]/.test(t)) throw new Error("illegal type: " + t);
     _[t] = [];
   }
   return new Dispatch(_);
@@ -11751,8 +11755,8 @@ function set(type, name, callback) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _dispatch__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dispatch */ "./node_modules/d3-dispatch/src/dispatch.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "dispatch", function() { return _dispatch__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _dispatch_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dispatch.js */ "./node_modules/d3-dispatch/src/dispatch.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "dispatch", function() { return _dispatch_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
 
 
@@ -12098,19 +12102,24 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return autoType; });
 function autoType(object) {
   for (var key in object) {
-    var value = object[key].trim(), number;
+    var value = object[key].trim(), number, m;
     if (!value) value = null;
     else if (value === "true") value = true;
     else if (value === "false") value = false;
     else if (value === "NaN") value = NaN;
     else if (!isNaN(number = +value)) value = number;
-    else if (/^([-+]\d{2})?\d{4}(-\d{2}(-\d{2})?)?(T\d{2}:\d{2}(:\d{2}(\.\d{3})?)?(Z|[-+]\d{2}:\d{2})?)?$/.test(value)) value = new Date(value);
+    else if (m = value.match(/^([-+]\d{2})?\d{4}(-\d{2}(-\d{2})?)?(T\d{2}:\d{2}(:\d{2}(\.\d{3})?)?(Z|[-+]\d{2}:\d{2})?)?$/)) {
+      if (fixtz && !!m[4] && !m[7]) value = value.replace(/-/g, "/").replace(/T/, " ");
+      value = new Date(value);
+    }
     else continue;
     object[key] = value;
   }
   return object;
 }
 
+// https://github.com/d3/d3-dsv/issues/45
+var fixtz = new Date("2019-01-01T00:00").getHours() || new Date("2019-07-01T00:00").getHours();
 
 /***/ }),
 
@@ -12118,7 +12127,7 @@ function autoType(object) {
 /*!****************************************!*\
   !*** ./node_modules/d3-dsv/src/csv.js ***!
   \****************************************/
-/*! exports provided: csvParse, csvParseRows, csvFormat, csvFormatBody, csvFormatRows */
+/*! exports provided: csvParse, csvParseRows, csvFormat, csvFormatBody, csvFormatRows, csvFormatRow, csvFormatValue */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12128,16 +12137,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "csvFormat", function() { return csvFormat; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "csvFormatBody", function() { return csvFormatBody; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "csvFormatRows", function() { return csvFormatRows; });
-/* harmony import */ var _dsv__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dsv */ "./node_modules/d3-dsv/src/dsv.js");
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "csvFormatRow", function() { return csvFormatRow; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "csvFormatValue", function() { return csvFormatValue; });
+/* harmony import */ var _dsv_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dsv.js */ "./node_modules/d3-dsv/src/dsv.js");
 
 
-var csv = Object(_dsv__WEBPACK_IMPORTED_MODULE_0__["default"])(",");
+var csv = Object(_dsv_js__WEBPACK_IMPORTED_MODULE_0__["default"])(",");
 
 var csvParse = csv.parse;
 var csvParseRows = csv.parseRows;
 var csvFormat = csv.format;
 var csvFormatBody = csv.formatBody;
 var csvFormatRows = csv.formatRows;
+var csvFormatRow = csv.formatRow;
+var csvFormatValue = csv.formatValue;
 
 
 /***/ }),
@@ -12159,7 +12172,7 @@ var EOL = {},
 
 function objectConverter(columns) {
   return new Function("d", "return {" + columns.map(function(name, i) {
-    return JSON.stringify(name) + ": d[" + i + "]";
+    return JSON.stringify(name) + ": d[" + i + "] || \"\"";
   }).join(",") + "}");
 }
 
@@ -12310,7 +12323,9 @@ function formatDate(date) {
     parseRows: parseRows,
     format: format,
     formatBody: formatBody,
-    formatRows: formatRows
+    formatRows: formatRows,
+    formatRow: formatRow,
+    formatValue: formatValue
   };
 });
 
@@ -12321,38 +12336,46 @@ function formatDate(date) {
 /*!******************************************!*\
   !*** ./node_modules/d3-dsv/src/index.js ***!
   \******************************************/
-/*! exports provided: dsvFormat, csvParse, csvParseRows, csvFormat, csvFormatBody, csvFormatRows, tsvParse, tsvParseRows, tsvFormat, tsvFormatBody, tsvFormatRows, autoType */
+/*! exports provided: dsvFormat, csvParse, csvParseRows, csvFormat, csvFormatBody, csvFormatRows, csvFormatRow, csvFormatValue, tsvParse, tsvParseRows, tsvFormat, tsvFormatBody, tsvFormatRows, tsvFormatRow, tsvFormatValue, autoType */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _dsv__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dsv */ "./node_modules/d3-dsv/src/dsv.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "dsvFormat", function() { return _dsv__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _dsv_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dsv.js */ "./node_modules/d3-dsv/src/dsv.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "dsvFormat", function() { return _dsv_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
-/* harmony import */ var _csv__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./csv */ "./node_modules/d3-dsv/src/csv.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvParse", function() { return _csv__WEBPACK_IMPORTED_MODULE_1__["csvParse"]; });
+/* harmony import */ var _csv_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./csv.js */ "./node_modules/d3-dsv/src/csv.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvParse", function() { return _csv_js__WEBPACK_IMPORTED_MODULE_1__["csvParse"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvParseRows", function() { return _csv__WEBPACK_IMPORTED_MODULE_1__["csvParseRows"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvParseRows", function() { return _csv_js__WEBPACK_IMPORTED_MODULE_1__["csvParseRows"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormat", function() { return _csv__WEBPACK_IMPORTED_MODULE_1__["csvFormat"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormat", function() { return _csv_js__WEBPACK_IMPORTED_MODULE_1__["csvFormat"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatBody", function() { return _csv__WEBPACK_IMPORTED_MODULE_1__["csvFormatBody"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatBody", function() { return _csv_js__WEBPACK_IMPORTED_MODULE_1__["csvFormatBody"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatRows", function() { return _csv__WEBPACK_IMPORTED_MODULE_1__["csvFormatRows"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatRows", function() { return _csv_js__WEBPACK_IMPORTED_MODULE_1__["csvFormatRows"]; });
 
-/* harmony import */ var _tsv__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./tsv */ "./node_modules/d3-dsv/src/tsv.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvParse", function() { return _tsv__WEBPACK_IMPORTED_MODULE_2__["tsvParse"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatRow", function() { return _csv_js__WEBPACK_IMPORTED_MODULE_1__["csvFormatRow"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvParseRows", function() { return _tsv__WEBPACK_IMPORTED_MODULE_2__["tsvParseRows"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatValue", function() { return _csv_js__WEBPACK_IMPORTED_MODULE_1__["csvFormatValue"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormat", function() { return _tsv__WEBPACK_IMPORTED_MODULE_2__["tsvFormat"]; });
+/* harmony import */ var _tsv_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./tsv.js */ "./node_modules/d3-dsv/src/tsv.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvParse", function() { return _tsv_js__WEBPACK_IMPORTED_MODULE_2__["tsvParse"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatBody", function() { return _tsv__WEBPACK_IMPORTED_MODULE_2__["tsvFormatBody"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvParseRows", function() { return _tsv_js__WEBPACK_IMPORTED_MODULE_2__["tsvParseRows"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatRows", function() { return _tsv__WEBPACK_IMPORTED_MODULE_2__["tsvFormatRows"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormat", function() { return _tsv_js__WEBPACK_IMPORTED_MODULE_2__["tsvFormat"]; });
 
-/* harmony import */ var _autoType__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./autoType */ "./node_modules/d3-dsv/src/autoType.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "autoType", function() { return _autoType__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatBody", function() { return _tsv_js__WEBPACK_IMPORTED_MODULE_2__["tsvFormatBody"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatRows", function() { return _tsv_js__WEBPACK_IMPORTED_MODULE_2__["tsvFormatRows"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatRow", function() { return _tsv_js__WEBPACK_IMPORTED_MODULE_2__["tsvFormatRow"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatValue", function() { return _tsv_js__WEBPACK_IMPORTED_MODULE_2__["tsvFormatValue"]; });
+
+/* harmony import */ var _autoType_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./autoType.js */ "./node_modules/d3-dsv/src/autoType.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "autoType", function() { return _autoType_js__WEBPACK_IMPORTED_MODULE_3__["default"]; });
 
 
 
@@ -12366,7 +12389,7 @@ __webpack_require__.r(__webpack_exports__);
 /*!****************************************!*\
   !*** ./node_modules/d3-dsv/src/tsv.js ***!
   \****************************************/
-/*! exports provided: tsvParse, tsvParseRows, tsvFormat, tsvFormatBody, tsvFormatRows */
+/*! exports provided: tsvParse, tsvParseRows, tsvFormat, tsvFormatBody, tsvFormatRows, tsvFormatRow, tsvFormatValue */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12376,16 +12399,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tsvFormat", function() { return tsvFormat; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tsvFormatBody", function() { return tsvFormatBody; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tsvFormatRows", function() { return tsvFormatRows; });
-/* harmony import */ var _dsv__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dsv */ "./node_modules/d3-dsv/src/dsv.js");
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tsvFormatRow", function() { return tsvFormatRow; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tsvFormatValue", function() { return tsvFormatValue; });
+/* harmony import */ var _dsv_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dsv.js */ "./node_modules/d3-dsv/src/dsv.js");
 
 
-var tsv = Object(_dsv__WEBPACK_IMPORTED_MODULE_0__["default"])("\t");
+var tsv = Object(_dsv_js__WEBPACK_IMPORTED_MODULE_0__["default"])("\t");
 
 var tsvParse = tsv.parse;
 var tsvParseRows = tsv.parseRows;
 var tsvFormat = tsv.format;
 var tsvFormatBody = tsv.formatBody;
 var tsvFormatRows = tsv.formatRows;
+var tsvFormatRow = tsv.formatRow;
+var tsvFormatValue = tsv.formatValue;
 
 
 /***/ }),
@@ -14584,18 +14611,18 @@ function add(adder, a, b) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "areaRingSum", function() { return areaRingSum; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "areaStream", function() { return areaStream; });
-/* harmony import */ var _adder__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./adder */ "./node_modules/d3-geo/src/adder.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./noop */ "./node_modules/d3-geo/src/noop.js");
-/* harmony import */ var _stream__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./stream */ "./node_modules/d3-geo/src/stream.js");
+/* harmony import */ var _adder_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./adder.js */ "./node_modules/d3-geo/src/adder.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./noop.js */ "./node_modules/d3-geo/src/noop.js");
+/* harmony import */ var _stream_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./stream.js */ "./node_modules/d3-geo/src/stream.js");
 
 
 
 
 
-var areaRingSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])();
+var areaRingSum = Object(_adder_js__WEBPACK_IMPORTED_MODULE_0__["default"])();
 
-var areaSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])(),
+var areaSum = Object(_adder_js__WEBPACK_IMPORTED_MODULE_0__["default"])(),
     lambda00,
     phi00,
     lambda0,
@@ -14603,9 +14630,9 @@ var areaSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])(),
     sinPhi0;
 
 var areaStream = {
-  point: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
-  lineStart: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
-  lineEnd: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
+  point: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  lineStart: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  lineEnd: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
   polygonStart: function() {
     areaRingSum.reset();
     areaStream.lineStart = areaRingStart;
@@ -14613,11 +14640,11 @@ var areaStream = {
   },
   polygonEnd: function() {
     var areaRing = +areaRingSum;
-    areaSum.add(areaRing < 0 ? _math__WEBPACK_IMPORTED_MODULE_1__["tau"] + areaRing : areaRing);
-    this.lineStart = this.lineEnd = this.point = _noop__WEBPACK_IMPORTED_MODULE_2__["default"];
+    areaSum.add(areaRing < 0 ? _math_js__WEBPACK_IMPORTED_MODULE_1__["tau"] + areaRing : areaRing);
+    this.lineStart = this.lineEnd = this.point = _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"];
   },
   sphere: function() {
-    areaSum.add(_math__WEBPACK_IMPORTED_MODULE_1__["tau"]);
+    areaSum.add(_math_js__WEBPACK_IMPORTED_MODULE_1__["tau"]);
   }
 };
 
@@ -14632,13 +14659,13 @@ function areaRingEnd() {
 function areaPointFirst(lambda, phi) {
   areaStream.point = areaPoint;
   lambda00 = lambda, phi00 = phi;
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_1__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_1__["radians"];
-  lambda0 = lambda, cosPhi0 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi = phi / 2 + _math__WEBPACK_IMPORTED_MODULE_1__["quarterPi"]), sinPhi0 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi);
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"];
+  lambda0 = lambda, cosPhi0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi = phi / 2 + _math_js__WEBPACK_IMPORTED_MODULE_1__["quarterPi"]), sinPhi0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi);
 }
 
 function areaPoint(lambda, phi) {
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_1__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_1__["radians"];
-  phi = phi / 2 + _math__WEBPACK_IMPORTED_MODULE_1__["quarterPi"]; // half the angular distance from south pole
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"];
+  phi = phi / 2 + _math_js__WEBPACK_IMPORTED_MODULE_1__["quarterPi"]; // half the angular distance from south pole
 
   // Spherical excess E for a spherical triangle with vertices: south pole,
   // previous point, current point.  Uses a formula derived from Cagnoli’s
@@ -14646,12 +14673,12 @@ function areaPoint(lambda, phi) {
   var dLambda = lambda - lambda0,
       sdLambda = dLambda >= 0 ? 1 : -1,
       adLambda = sdLambda * dLambda,
-      cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi),
-      sinPhi = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi),
+      cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi),
+      sinPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi),
       k = sinPhi0 * sinPhi,
-      u = cosPhi0 * cosPhi + k * Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(adLambda),
-      v = k * sdLambda * Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(adLambda);
-  areaRingSum.add(Object(_math__WEBPACK_IMPORTED_MODULE_1__["atan2"])(v, u));
+      u = cosPhi0 * cosPhi + k * Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(adLambda),
+      v = k * sdLambda * Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(adLambda);
+  areaRingSum.add(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["atan2"])(v, u));
 
   // Advance the previous points.
   lambda0 = lambda, cosPhi0 = cosPhi, sinPhi0 = sinPhi;
@@ -14659,7 +14686,7 @@ function areaPoint(lambda, phi) {
 
 /* harmony default export */ __webpack_exports__["default"] = (function(object) {
   areaSum.reset();
-  Object(_stream__WEBPACK_IMPORTED_MODULE_3__["default"])(object, areaStream);
+  Object(_stream_js__WEBPACK_IMPORTED_MODULE_3__["default"])(object, areaStream);
   return areaSum * 2;
 });
 
@@ -14675,11 +14702,11 @@ function areaPoint(lambda, phi) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _adder__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./adder */ "./node_modules/d3-geo/src/adder.js");
-/* harmony import */ var _area__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./area */ "./node_modules/d3-geo/src/area.js");
-/* harmony import */ var _cartesian__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./cartesian */ "./node_modules/d3-geo/src/cartesian.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _stream__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./stream */ "./node_modules/d3-geo/src/stream.js");
+/* harmony import */ var _adder_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./adder.js */ "./node_modules/d3-geo/src/adder.js");
+/* harmony import */ var _area_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./area.js */ "./node_modules/d3-geo/src/area.js");
+/* harmony import */ var _cartesian_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./cartesian.js */ "./node_modules/d3-geo/src/cartesian.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _stream_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./stream.js */ "./node_modules/d3-geo/src/stream.js");
 
 
 
@@ -14690,7 +14717,7 @@ var lambda0, phi0, lambda1, phi1, // bounds
     lambda2, // previous lambda-coordinate
     lambda00, phi00, // first point
     p0, // previous 3D point
-    deltaSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])(),
+    deltaSum = Object(_adder_js__WEBPACK_IMPORTED_MODULE_0__["default"])(),
     ranges,
     range;
 
@@ -14703,16 +14730,16 @@ var boundsStream = {
     boundsStream.lineStart = boundsRingStart;
     boundsStream.lineEnd = boundsRingEnd;
     deltaSum.reset();
-    _area__WEBPACK_IMPORTED_MODULE_1__["areaStream"].polygonStart();
+    _area_js__WEBPACK_IMPORTED_MODULE_1__["areaStream"].polygonStart();
   },
   polygonEnd: function() {
-    _area__WEBPACK_IMPORTED_MODULE_1__["areaStream"].polygonEnd();
+    _area_js__WEBPACK_IMPORTED_MODULE_1__["areaStream"].polygonEnd();
     boundsStream.point = boundsPoint;
     boundsStream.lineStart = boundsLineStart;
     boundsStream.lineEnd = boundsLineEnd;
-    if (_area__WEBPACK_IMPORTED_MODULE_1__["areaRingSum"] < 0) lambda0 = -(lambda1 = 180), phi0 = -(phi1 = 90);
-    else if (deltaSum > _math__WEBPACK_IMPORTED_MODULE_3__["epsilon"]) phi1 = 90;
-    else if (deltaSum < -_math__WEBPACK_IMPORTED_MODULE_3__["epsilon"]) phi0 = -90;
+    if (_area_js__WEBPACK_IMPORTED_MODULE_1__["areaRingSum"] < 0) lambda0 = -(lambda1 = 180), phi0 = -(phi1 = 90);
+    else if (deltaSum > _math_js__WEBPACK_IMPORTED_MODULE_3__["epsilon"]) phi1 = 90;
+    else if (deltaSum < -_math_js__WEBPACK_IMPORTED_MODULE_3__["epsilon"]) phi0 = -90;
     range[0] = lambda0, range[1] = lambda1;
   },
   sphere: function() {
@@ -14727,23 +14754,23 @@ function boundsPoint(lambda, phi) {
 }
 
 function linePoint(lambda, phi) {
-  var p = Object(_cartesian__WEBPACK_IMPORTED_MODULE_2__["cartesian"])([lambda * _math__WEBPACK_IMPORTED_MODULE_3__["radians"], phi * _math__WEBPACK_IMPORTED_MODULE_3__["radians"]]);
+  var p = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_2__["cartesian"])([lambda * _math_js__WEBPACK_IMPORTED_MODULE_3__["radians"], phi * _math_js__WEBPACK_IMPORTED_MODULE_3__["radians"]]);
   if (p0) {
-    var normal = Object(_cartesian__WEBPACK_IMPORTED_MODULE_2__["cartesianCross"])(p0, p),
+    var normal = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_2__["cartesianCross"])(p0, p),
         equatorial = [normal[1], -normal[0], 0],
-        inflection = Object(_cartesian__WEBPACK_IMPORTED_MODULE_2__["cartesianCross"])(equatorial, normal);
-    Object(_cartesian__WEBPACK_IMPORTED_MODULE_2__["cartesianNormalizeInPlace"])(inflection);
-    inflection = Object(_cartesian__WEBPACK_IMPORTED_MODULE_2__["spherical"])(inflection);
+        inflection = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_2__["cartesianCross"])(equatorial, normal);
+    Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_2__["cartesianNormalizeInPlace"])(inflection);
+    inflection = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_2__["spherical"])(inflection);
     var delta = lambda - lambda2,
         sign = delta > 0 ? 1 : -1,
-        lambdai = inflection[0] * _math__WEBPACK_IMPORTED_MODULE_3__["degrees"] * sign,
+        lambdai = inflection[0] * _math_js__WEBPACK_IMPORTED_MODULE_3__["degrees"] * sign,
         phii,
-        antimeridian = Object(_math__WEBPACK_IMPORTED_MODULE_3__["abs"])(delta) > 180;
+        antimeridian = Object(_math_js__WEBPACK_IMPORTED_MODULE_3__["abs"])(delta) > 180;
     if (antimeridian ^ (sign * lambda2 < lambdai && lambdai < sign * lambda)) {
-      phii = inflection[1] * _math__WEBPACK_IMPORTED_MODULE_3__["degrees"];
+      phii = inflection[1] * _math_js__WEBPACK_IMPORTED_MODULE_3__["degrees"];
       if (phii > phi1) phi1 = phii;
     } else if (lambdai = (lambdai + 360) % 360 - 180, antimeridian ^ (sign * lambda2 < lambdai && lambdai < sign * lambda)) {
-      phii = -inflection[1] * _math__WEBPACK_IMPORTED_MODULE_3__["degrees"];
+      phii = -inflection[1] * _math_js__WEBPACK_IMPORTED_MODULE_3__["degrees"];
       if (phii < phi0) phi0 = phii;
     } else {
       if (phi < phi0) phi0 = phi;
@@ -14788,22 +14815,22 @@ function boundsLineEnd() {
 function boundsRingPoint(lambda, phi) {
   if (p0) {
     var delta = lambda - lambda2;
-    deltaSum.add(Object(_math__WEBPACK_IMPORTED_MODULE_3__["abs"])(delta) > 180 ? delta + (delta > 0 ? 360 : -360) : delta);
+    deltaSum.add(Object(_math_js__WEBPACK_IMPORTED_MODULE_3__["abs"])(delta) > 180 ? delta + (delta > 0 ? 360 : -360) : delta);
   } else {
     lambda00 = lambda, phi00 = phi;
   }
-  _area__WEBPACK_IMPORTED_MODULE_1__["areaStream"].point(lambda, phi);
+  _area_js__WEBPACK_IMPORTED_MODULE_1__["areaStream"].point(lambda, phi);
   linePoint(lambda, phi);
 }
 
 function boundsRingStart() {
-  _area__WEBPACK_IMPORTED_MODULE_1__["areaStream"].lineStart();
+  _area_js__WEBPACK_IMPORTED_MODULE_1__["areaStream"].lineStart();
 }
 
 function boundsRingEnd() {
   boundsRingPoint(lambda00, phi00);
-  _area__WEBPACK_IMPORTED_MODULE_1__["areaStream"].lineEnd();
-  if (Object(_math__WEBPACK_IMPORTED_MODULE_3__["abs"])(deltaSum) > _math__WEBPACK_IMPORTED_MODULE_3__["epsilon"]) lambda0 = -(lambda1 = 180);
+  _area_js__WEBPACK_IMPORTED_MODULE_1__["areaStream"].lineEnd();
+  if (Object(_math_js__WEBPACK_IMPORTED_MODULE_3__["abs"])(deltaSum) > _math_js__WEBPACK_IMPORTED_MODULE_3__["epsilon"]) lambda0 = -(lambda1 = 180);
   range[0] = lambda0, range[1] = lambda1;
   p0 = null;
 }
@@ -14828,7 +14855,7 @@ function rangeContains(range, x) {
 
   phi1 = lambda1 = -(lambda0 = phi0 = Infinity);
   ranges = [];
-  Object(_stream__WEBPACK_IMPORTED_MODULE_4__["default"])(feature, boundsStream);
+  Object(_stream_js__WEBPACK_IMPORTED_MODULE_4__["default"])(feature, boundsStream);
 
   // First, sort ranges by their minimum longitudes.
   if (n = ranges.length) {
@@ -14879,16 +14906,16 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cartesianAddInPlace", function() { return cartesianAddInPlace; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cartesianScale", function() { return cartesianScale; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cartesianNormalizeInPlace", function() { return cartesianNormalizeInPlace; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 function spherical(cartesian) {
-  return [Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(cartesian[1], cartesian[0]), Object(_math__WEBPACK_IMPORTED_MODULE_0__["asin"])(cartesian[2])];
+  return [Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(cartesian[1], cartesian[0]), Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"])(cartesian[2])];
 }
 
 function cartesian(spherical) {
-  var lambda = spherical[0], phi = spherical[1], cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi);
-  return [cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda), cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda), Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi)];
+  var lambda = spherical[0], phi = spherical[1], cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi);
+  return [cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda), cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda), Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi)];
 }
 
 function cartesianDot(a, b) {
@@ -14910,7 +14937,7 @@ function cartesianScale(vector, k) {
 
 // TODO return d
 function cartesianNormalizeInPlace(d) {
-  var l = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+  var l = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
   d[0] /= l, d[1] /= l, d[2] /= l;
 }
 
@@ -14926,9 +14953,9 @@ function cartesianNormalizeInPlace(d) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./noop */ "./node_modules/d3-geo/src/noop.js");
-/* harmony import */ var _stream__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./stream */ "./node_modules/d3-geo/src/stream.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./noop.js */ "./node_modules/d3-geo/src/noop.js");
+/* harmony import */ var _stream_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./stream.js */ "./node_modules/d3-geo/src/stream.js");
 
 
 
@@ -14941,7 +14968,7 @@ var W0, W1,
     x0, y0, z0; // previous point
 
 var centroidStream = {
-  sphere: _noop__WEBPACK_IMPORTED_MODULE_1__["default"],
+  sphere: _noop_js__WEBPACK_IMPORTED_MODULE_1__["default"],
   point: centroidPoint,
   lineStart: centroidLineStart,
   lineEnd: centroidLineEnd,
@@ -14957,9 +14984,9 @@ var centroidStream = {
 
 // Arithmetic mean of Cartesian vectors.
 function centroidPoint(lambda, phi) {
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"];
-  var cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi);
-  centroidPointCartesian(cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda), cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda), Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi));
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"];
+  var cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi);
+  centroidPointCartesian(cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda), cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda), Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi));
 }
 
 function centroidPointCartesian(x, y, z) {
@@ -14974,22 +15001,22 @@ function centroidLineStart() {
 }
 
 function centroidLinePointFirst(lambda, phi) {
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"];
-  var cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi);
-  x0 = cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda);
-  y0 = cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda);
-  z0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi);
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"];
+  var cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi);
+  x0 = cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda);
+  y0 = cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda);
+  z0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi);
   centroidStream.point = centroidLinePoint;
   centroidPointCartesian(x0, y0, z0);
 }
 
 function centroidLinePoint(lambda, phi) {
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"];
-  var cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi),
-      x = cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda),
-      y = cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda),
-      z = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi),
-      w = Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])((w = y0 * z - z0 * y) * w + (w = z0 * x - x0 * z) * w + (w = x0 * y - y0 * x) * w), x0 * x + y0 * y + z0 * z);
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"];
+  var cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi),
+      x = cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda),
+      y = cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda),
+      z = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi),
+      w = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])((w = y0 * z - z0 * y) * w + (w = z0 * x - x0 * z) * w + (w = x0 * y - y0 * x) * w), x0 * x + y0 * y + z0 * z);
   W1 += w;
   X1 += w * (x0 + (x0 = x));
   Y1 += w * (y0 + (y0 = y));
@@ -15014,26 +15041,26 @@ function centroidRingEnd() {
 
 function centroidRingPointFirst(lambda, phi) {
   lambda00 = lambda, phi00 = phi;
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"];
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"];
   centroidStream.point = centroidRingPoint;
-  var cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi);
-  x0 = cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda);
-  y0 = cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda);
-  z0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi);
+  var cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi);
+  x0 = cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda);
+  y0 = cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda);
+  z0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi);
   centroidPointCartesian(x0, y0, z0);
 }
 
 function centroidRingPoint(lambda, phi) {
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_0__["radians"];
-  var cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi),
-      x = cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda),
-      y = cosPhi * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda),
-      z = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi),
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"];
+  var cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi),
+      x = cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(lambda),
+      y = cosPhi * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(lambda),
+      z = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi),
       cx = y0 * z - z0 * y,
       cy = z0 * x - x0 * z,
       cz = x0 * y - y0 * x,
-      m = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(cx * cx + cy * cy + cz * cz),
-      w = Object(_math__WEBPACK_IMPORTED_MODULE_0__["asin"])(m), // line weight = angle
+      m = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(cx * cx + cy * cy + cz * cz),
+      w = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"])(m), // line weight = angle
       v = m && -w / m; // area weight multiplier
   X2 += v * cx;
   Y2 += v * cy;
@@ -15050,7 +15077,7 @@ function centroidRingPoint(lambda, phi) {
   X0 = Y0 = Z0 =
   X1 = Y1 = Z1 =
   X2 = Y2 = Z2 = 0;
-  Object(_stream__WEBPACK_IMPORTED_MODULE_2__["default"])(object, centroidStream);
+  Object(_stream_js__WEBPACK_IMPORTED_MODULE_2__["default"])(object, centroidStream);
 
   var x = X2,
       y = Y2,
@@ -15058,16 +15085,16 @@ function centroidRingPoint(lambda, phi) {
       m = x * x + y * y + z * z;
 
   // If the area-weighted ccentroid is undefined, fall back to length-weighted ccentroid.
-  if (m < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon2"]) {
+  if (m < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon2"]) {
     x = X1, y = Y1, z = Z1;
     // If the feature has zero length, fall back to arithmetic mean of point vectors.
-    if (W1 < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) x = X0, y = Y0, z = Z0;
+    if (W1 < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) x = X0, y = Y0, z = Z0;
     m = x * x + y * y + z * z;
     // If the feature still has an undefined ccentroid, then return.
-    if (m < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon2"]) return [NaN, NaN];
+    if (m < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon2"]) return [NaN, NaN];
   }
 
-  return [Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(y, x) * _math__WEBPACK_IMPORTED_MODULE_0__["degrees"], Object(_math__WEBPACK_IMPORTED_MODULE_0__["asin"])(z / Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(m)) * _math__WEBPACK_IMPORTED_MODULE_0__["degrees"]];
+  return [Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(y, x) * _math_js__WEBPACK_IMPORTED_MODULE_0__["degrees"], Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"])(z / Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(m)) * _math_js__WEBPACK_IMPORTED_MODULE_0__["degrees"]];
 });
 
 
@@ -15083,10 +15110,10 @@ function centroidRingPoint(lambda, phi) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "circleStream", function() { return circleStream; });
-/* harmony import */ var _cartesian__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cartesian */ "./node_modules/d3-geo/src/cartesian.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant */ "./node_modules/d3-geo/src/constant.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _rotation__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./rotation */ "./node_modules/d3-geo/src/rotation.js");
+/* harmony import */ var _cartesian_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cartesian.js */ "./node_modules/d3-geo/src/cartesian.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant.js */ "./node_modules/d3-geo/src/constant.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _rotation_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./rotation.js */ "./node_modules/d3-geo/src/rotation.js");
 
 
 
@@ -15095,50 +15122,50 @@ __webpack_require__.r(__webpack_exports__);
 // Generates a circle centered at [0°, 0°], with a given radius and precision.
 function circleStream(stream, radius, delta, direction, t0, t1) {
   if (!delta) return;
-  var cosRadius = Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(radius),
-      sinRadius = Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(radius),
+  var cosRadius = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(radius),
+      sinRadius = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(radius),
       step = direction * delta;
   if (t0 == null) {
-    t0 = radius + direction * _math__WEBPACK_IMPORTED_MODULE_2__["tau"];
+    t0 = radius + direction * _math_js__WEBPACK_IMPORTED_MODULE_2__["tau"];
     t1 = radius - step / 2;
   } else {
     t0 = circleRadius(cosRadius, t0);
     t1 = circleRadius(cosRadius, t1);
-    if (direction > 0 ? t0 < t1 : t0 > t1) t0 += direction * _math__WEBPACK_IMPORTED_MODULE_2__["tau"];
+    if (direction > 0 ? t0 < t1 : t0 > t1) t0 += direction * _math_js__WEBPACK_IMPORTED_MODULE_2__["tau"];
   }
   for (var point, t = t0; direction > 0 ? t > t1 : t < t1; t -= step) {
-    point = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["spherical"])([cosRadius, -sinRadius * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(t), -sinRadius * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(t)]);
+    point = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["spherical"])([cosRadius, -sinRadius * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(t), -sinRadius * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(t)]);
     stream.point(point[0], point[1]);
   }
 }
 
 // Returns the signed angle of a cartesian point relative to [cosRadius, 0, 0].
 function circleRadius(cosRadius, point) {
-  point = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesian"])(point), point[0] -= cosRadius;
-  Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianNormalizeInPlace"])(point);
-  var radius = Object(_math__WEBPACK_IMPORTED_MODULE_2__["acos"])(-point[1]);
-  return ((-point[2] < 0 ? -radius : radius) + _math__WEBPACK_IMPORTED_MODULE_2__["tau"] - _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) % _math__WEBPACK_IMPORTED_MODULE_2__["tau"];
+  point = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesian"])(point), point[0] -= cosRadius;
+  Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianNormalizeInPlace"])(point);
+  var radius = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["acos"])(-point[1]);
+  return ((-point[2] < 0 ? -radius : radius) + _math_js__WEBPACK_IMPORTED_MODULE_2__["tau"] - _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) % _math_js__WEBPACK_IMPORTED_MODULE_2__["tau"];
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var center = Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])([0, 0]),
-      radius = Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(90),
-      precision = Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(6),
+  var center = Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])([0, 0]),
+      radius = Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(90),
+      precision = Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(6),
       ring,
       rotate,
       stream = {point: point};
 
   function point(x, y) {
     ring.push(x = rotate(x, y));
-    x[0] *= _math__WEBPACK_IMPORTED_MODULE_2__["degrees"], x[1] *= _math__WEBPACK_IMPORTED_MODULE_2__["degrees"];
+    x[0] *= _math_js__WEBPACK_IMPORTED_MODULE_2__["degrees"], x[1] *= _math_js__WEBPACK_IMPORTED_MODULE_2__["degrees"];
   }
 
   function circle() {
     var c = center.apply(this, arguments),
-        r = radius.apply(this, arguments) * _math__WEBPACK_IMPORTED_MODULE_2__["radians"],
-        p = precision.apply(this, arguments) * _math__WEBPACK_IMPORTED_MODULE_2__["radians"];
+        r = radius.apply(this, arguments) * _math_js__WEBPACK_IMPORTED_MODULE_2__["radians"],
+        p = precision.apply(this, arguments) * _math_js__WEBPACK_IMPORTED_MODULE_2__["radians"];
     ring = [];
-    rotate = Object(_rotation__WEBPACK_IMPORTED_MODULE_3__["rotateRadians"])(-c[0] * _math__WEBPACK_IMPORTED_MODULE_2__["radians"], -c[1] * _math__WEBPACK_IMPORTED_MODULE_2__["radians"], 0).invert;
+    rotate = Object(_rotation_js__WEBPACK_IMPORTED_MODULE_3__["rotateRadians"])(-c[0] * _math_js__WEBPACK_IMPORTED_MODULE_2__["radians"], -c[1] * _math_js__WEBPACK_IMPORTED_MODULE_2__["radians"], 0).invert;
     circleStream(stream, r, p, 1);
     c = {type: "Polygon", coordinates: [ring]};
     ring = rotate = null;
@@ -15146,15 +15173,15 @@ function circleRadius(cosRadius, point) {
   }
 
   circle.center = function(_) {
-    return arguments.length ? (center = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])([+_[0], +_[1]]), circle) : center;
+    return arguments.length ? (center = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])([+_[0], +_[1]]), circle) : center;
   };
 
   circle.radius = function(_) {
-    return arguments.length ? (radius = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), circle) : radius;
+    return arguments.length ? (radius = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), circle) : radius;
   };
 
   circle.precision = function(_) {
-    return arguments.length ? (precision = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), circle) : precision;
+    return arguments.length ? (precision = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), circle) : precision;
   };
 
   return circle;
@@ -15172,16 +15199,16 @@ function circleRadius(cosRadius, point) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/clip/index.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/clip/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 
-/* harmony default export */ __webpack_exports__["default"] = (Object(_index__WEBPACK_IMPORTED_MODULE_0__["default"])(
+/* harmony default export */ __webpack_exports__["default"] = (Object(_index_js__WEBPACK_IMPORTED_MODULE_0__["default"])(
   function() { return true; },
   clipAntimeridianLine,
   clipAntimeridianInterpolate,
-  [-_math__WEBPACK_IMPORTED_MODULE_1__["pi"], -_math__WEBPACK_IMPORTED_MODULE_1__["halfPi"]]
+  [-_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"], -_math_js__WEBPACK_IMPORTED_MODULE_1__["halfPi"]]
 ));
 
 // Takes a line and cuts into visible segments. Return values: 0 - there were
@@ -15199,19 +15226,19 @@ function clipAntimeridianLine(stream) {
       clean = 1;
     },
     point: function(lambda1, phi1) {
-      var sign1 = lambda1 > 0 ? _math__WEBPACK_IMPORTED_MODULE_1__["pi"] : -_math__WEBPACK_IMPORTED_MODULE_1__["pi"],
-          delta = Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda1 - lambda0);
-      if (Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(delta - _math__WEBPACK_IMPORTED_MODULE_1__["pi"]) < _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]) { // line crosses a pole
-        stream.point(lambda0, phi0 = (phi0 + phi1) / 2 > 0 ? _math__WEBPACK_IMPORTED_MODULE_1__["halfPi"] : -_math__WEBPACK_IMPORTED_MODULE_1__["halfPi"]);
+      var sign1 = lambda1 > 0 ? _math_js__WEBPACK_IMPORTED_MODULE_1__["pi"] : -_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"],
+          delta = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda1 - lambda0);
+      if (Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(delta - _math_js__WEBPACK_IMPORTED_MODULE_1__["pi"]) < _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]) { // line crosses a pole
+        stream.point(lambda0, phi0 = (phi0 + phi1) / 2 > 0 ? _math_js__WEBPACK_IMPORTED_MODULE_1__["halfPi"] : -_math_js__WEBPACK_IMPORTED_MODULE_1__["halfPi"]);
         stream.point(sign0, phi0);
         stream.lineEnd();
         stream.lineStart();
         stream.point(sign1, phi0);
         stream.point(lambda1, phi0);
         clean = 0;
-      } else if (sign0 !== sign1 && delta >= _math__WEBPACK_IMPORTED_MODULE_1__["pi"]) { // line crosses antimeridian
-        if (Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda0 - sign0) < _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]) lambda0 -= sign0 * _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]; // handle degeneracies
-        if (Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda1 - sign1) < _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]) lambda1 -= sign1 * _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"];
+      } else if (sign0 !== sign1 && delta >= _math_js__WEBPACK_IMPORTED_MODULE_1__["pi"]) { // line crosses antimeridian
+        if (Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda0 - sign0) < _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]) lambda0 -= sign0 * _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]; // handle degeneracies
+        if (Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda1 - sign1) < _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]) lambda1 -= sign1 * _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"];
         phi0 = clipAntimeridianIntersect(lambda0, phi0, lambda1, phi1);
         stream.point(sign0, phi0);
         stream.lineEnd();
@@ -15235,10 +15262,10 @@ function clipAntimeridianLine(stream) {
 function clipAntimeridianIntersect(lambda0, phi0, lambda1, phi1) {
   var cosPhi0,
       cosPhi1,
-      sinLambda0Lambda1 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda0 - lambda1);
-  return Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(sinLambda0Lambda1) > _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]
-      ? Object(_math__WEBPACK_IMPORTED_MODULE_1__["atan"])((Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi0) * (cosPhi1 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi1)) * Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda1)
-          - Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi1) * (cosPhi0 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi0)) * Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda0))
+      sinLambda0Lambda1 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda0 - lambda1);
+  return Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(sinLambda0Lambda1) > _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]
+      ? Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["atan"])((Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi0) * (cosPhi1 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi1)) * Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda1)
+          - Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi1) * (cosPhi0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi0)) * Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda0))
           / (cosPhi0 * cosPhi1 * sinLambda0Lambda1))
       : (phi0 + phi1) / 2;
 }
@@ -15246,18 +15273,18 @@ function clipAntimeridianIntersect(lambda0, phi0, lambda1, phi1) {
 function clipAntimeridianInterpolate(from, to, direction, stream) {
   var phi;
   if (from == null) {
-    phi = direction * _math__WEBPACK_IMPORTED_MODULE_1__["halfPi"];
-    stream.point(-_math__WEBPACK_IMPORTED_MODULE_1__["pi"], phi);
+    phi = direction * _math_js__WEBPACK_IMPORTED_MODULE_1__["halfPi"];
+    stream.point(-_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"], phi);
     stream.point(0, phi);
-    stream.point(_math__WEBPACK_IMPORTED_MODULE_1__["pi"], phi);
-    stream.point(_math__WEBPACK_IMPORTED_MODULE_1__["pi"], 0);
-    stream.point(_math__WEBPACK_IMPORTED_MODULE_1__["pi"], -phi);
+    stream.point(_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"], phi);
+    stream.point(_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"], 0);
+    stream.point(_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"], -phi);
     stream.point(0, -phi);
-    stream.point(-_math__WEBPACK_IMPORTED_MODULE_1__["pi"], -phi);
-    stream.point(-_math__WEBPACK_IMPORTED_MODULE_1__["pi"], 0);
-    stream.point(-_math__WEBPACK_IMPORTED_MODULE_1__["pi"], phi);
-  } else if (Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(from[0] - to[0]) > _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]) {
-    var lambda = from[0] < to[0] ? _math__WEBPACK_IMPORTED_MODULE_1__["pi"] : -_math__WEBPACK_IMPORTED_MODULE_1__["pi"];
+    stream.point(-_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"], -phi);
+    stream.point(-_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"], 0);
+    stream.point(-_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"], phi);
+  } else if (Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(from[0] - to[0]) > _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]) {
+    var lambda = from[0] < to[0] ? _math_js__WEBPACK_IMPORTED_MODULE_1__["pi"] : -_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"];
     phi = direction * lambda / 2;
     stream.point(-lambda, phi);
     stream.point(0, phi);
@@ -15279,7 +15306,7 @@ function clipAntimeridianInterpolate(from, to, direction, stream) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-geo/src/noop.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-geo/src/noop.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
@@ -15292,7 +15319,7 @@ __webpack_require__.r(__webpack_exports__);
     lineStart: function() {
       lines.push(line = []);
     },
-    lineEnd: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
+    lineEnd: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
     rejoin: function() {
       if (lines.length > 1) lines.push(lines.pop().concat(lines.shift()));
     },
@@ -15317,11 +15344,11 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _cartesian__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../cartesian */ "./node_modules/d3-geo/src/cartesian.js");
-/* harmony import */ var _circle__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../circle */ "./node_modules/d3-geo/src/circle.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _pointEqual__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../pointEqual */ "./node_modules/d3-geo/src/pointEqual.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/clip/index.js");
+/* harmony import */ var _cartesian_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../cartesian.js */ "./node_modules/d3-geo/src/cartesian.js");
+/* harmony import */ var _circle_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../circle.js */ "./node_modules/d3-geo/src/circle.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _pointEqual_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../pointEqual.js */ "./node_modules/d3-geo/src/pointEqual.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/clip/index.js");
 
 
 
@@ -15329,17 +15356,17 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(radius) {
-  var cr = Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(radius),
-      delta = 6 * _math__WEBPACK_IMPORTED_MODULE_2__["radians"],
+  var cr = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(radius),
+      delta = 6 * _math_js__WEBPACK_IMPORTED_MODULE_2__["radians"],
       smallRadius = cr > 0,
-      notHemisphere = Object(_math__WEBPACK_IMPORTED_MODULE_2__["abs"])(cr) > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]; // TODO optimise for this common case
+      notHemisphere = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["abs"])(cr) > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]; // TODO optimise for this common case
 
   function interpolate(from, to, direction, stream) {
-    Object(_circle__WEBPACK_IMPORTED_MODULE_1__["circleStream"])(stream, radius, delta, direction, from, to);
+    Object(_circle_js__WEBPACK_IMPORTED_MODULE_1__["circleStream"])(stream, radius, delta, direction, from, to);
   }
 
   function visible(lambda, phi) {
-    return Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(lambda) * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(phi) > cr;
+    return Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(lambda) * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(phi) > cr;
   }
 
   // Takes a line and cuts into visible segments. Return values used for polygon
@@ -15363,15 +15390,15 @@ __webpack_require__.r(__webpack_exports__);
             v = visible(lambda, phi),
             c = smallRadius
               ? v ? 0 : code(lambda, phi)
-              : v ? code(lambda + (lambda < 0 ? _math__WEBPACK_IMPORTED_MODULE_2__["pi"] : -_math__WEBPACK_IMPORTED_MODULE_2__["pi"]), phi) : 0;
+              : v ? code(lambda + (lambda < 0 ? _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"] : -_math_js__WEBPACK_IMPORTED_MODULE_2__["pi"]), phi) : 0;
         if (!point0 && (v00 = v0 = v)) stream.lineStart();
         // Handle degeneracies.
         // TODO ignore if not clipping polygons.
         if (v !== v0) {
           point2 = intersect(point0, point1);
-          if (!point2 || Object(_pointEqual__WEBPACK_IMPORTED_MODULE_3__["default"])(point0, point2) || Object(_pointEqual__WEBPACK_IMPORTED_MODULE_3__["default"])(point1, point2)) {
-            point1[0] += _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
-            point1[1] += _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
+          if (!point2 || Object(_pointEqual_js__WEBPACK_IMPORTED_MODULE_3__["default"])(point0, point2) || Object(_pointEqual_js__WEBPACK_IMPORTED_MODULE_3__["default"])(point1, point2)) {
+            point1[0] += _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
+            point1[1] += _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
             v = visible(point1[0], point1[1]);
           }
         }
@@ -15408,7 +15435,7 @@ __webpack_require__.r(__webpack_exports__);
             }
           }
         }
-        if (v && (!point0 || !Object(_pointEqual__WEBPACK_IMPORTED_MODULE_3__["default"])(point0, point1))) {
+        if (v && (!point0 || !Object(_pointEqual_js__WEBPACK_IMPORTED_MODULE_3__["default"])(point0, point1))) {
           stream.point(point1[0], point1[1]);
         }
         point0 = point1, v0 = v, c0 = c;
@@ -15427,14 +15454,14 @@ __webpack_require__.r(__webpack_exports__);
 
   // Intersects the great circle between a and b with the clip circle.
   function intersect(a, b, two) {
-    var pa = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesian"])(a),
-        pb = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesian"])(b);
+    var pa = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesian"])(a),
+        pb = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesian"])(b);
 
     // We have two planes, n1.p = d1 and n2.p = d2.
     // Find intersection line p(t) = c1 n1 + c2 n2 + t (n1 ⨯ n2).
     var n1 = [1, 0, 0], // normal
-        n2 = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianCross"])(pa, pb),
-        n2n2 = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianDot"])(n2, n2),
+        n2 = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianCross"])(pa, pb),
+        n2n2 = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianDot"])(n2, n2),
         n1n2 = n2[0], // cartesianDot(n1, n2),
         determinant = n2n2 - n1n2 * n1n2;
 
@@ -15443,23 +15470,23 @@ __webpack_require__.r(__webpack_exports__);
 
     var c1 =  cr * n2n2 / determinant,
         c2 = -cr * n1n2 / determinant,
-        n1xn2 = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianCross"])(n1, n2),
-        A = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianScale"])(n1, c1),
-        B = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianScale"])(n2, c2);
-    Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianAddInPlace"])(A, B);
+        n1xn2 = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianCross"])(n1, n2),
+        A = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianScale"])(n1, c1),
+        B = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianScale"])(n2, c2);
+    Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianAddInPlace"])(A, B);
 
     // Solve |p(t)|^2 = 1.
     var u = n1xn2,
-        w = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianDot"])(A, u),
-        uu = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianDot"])(u, u),
-        t2 = w * w - uu * (Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianDot"])(A, A) - 1);
+        w = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianDot"])(A, u),
+        uu = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianDot"])(u, u),
+        t2 = w * w - uu * (Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianDot"])(A, A) - 1);
 
     if (t2 < 0) return;
 
-    var t = Object(_math__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(t2),
-        q = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianScale"])(u, (-w - t) / uu);
-    Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianAddInPlace"])(q, A);
-    q = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["spherical"])(q);
+    var t = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(t2),
+        q = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianScale"])(u, (-w - t) / uu);
+    Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianAddInPlace"])(q, A);
+    q = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["spherical"])(q);
 
     if (!two) return q;
 
@@ -15473,27 +15500,27 @@ __webpack_require__.r(__webpack_exports__);
     if (lambda1 < lambda0) z = lambda0, lambda0 = lambda1, lambda1 = z;
 
     var delta = lambda1 - lambda0,
-        polar = Object(_math__WEBPACK_IMPORTED_MODULE_2__["abs"])(delta - _math__WEBPACK_IMPORTED_MODULE_2__["pi"]) < _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"],
-        meridian = polar || delta < _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
+        polar = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["abs"])(delta - _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"]) < _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"],
+        meridian = polar || delta < _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
 
     if (!polar && phi1 < phi0) z = phi0, phi0 = phi1, phi1 = z;
 
     // Check that the first point is between a and b.
     if (meridian
         ? polar
-          ? phi0 + phi1 > 0 ^ q[1] < (Object(_math__WEBPACK_IMPORTED_MODULE_2__["abs"])(q[0] - lambda0) < _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"] ? phi0 : phi1)
+          ? phi0 + phi1 > 0 ^ q[1] < (Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["abs"])(q[0] - lambda0) < _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"] ? phi0 : phi1)
           : phi0 <= q[1] && q[1] <= phi1
-        : delta > _math__WEBPACK_IMPORTED_MODULE_2__["pi"] ^ (lambda0 <= q[0] && q[0] <= lambda1)) {
-      var q1 = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianScale"])(u, (-w + t) / uu);
-      Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesianAddInPlace"])(q1, A);
-      return [q, Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["spherical"])(q1)];
+        : delta > _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"] ^ (lambda0 <= q[0] && q[0] <= lambda1)) {
+      var q1 = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianScale"])(u, (-w + t) / uu);
+      Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesianAddInPlace"])(q1, A);
+      return [q, Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["spherical"])(q1)];
     }
   }
 
   // Generates a 4-bit vector representing the location of a point relative to
   // the small circle's bounding box.
   function code(lambda, phi) {
-    var r = smallRadius ? radius : _math__WEBPACK_IMPORTED_MODULE_2__["pi"] - radius,
+    var r = smallRadius ? radius : _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"] - radius,
         code = 0;
     if (lambda < -r) code |= 1; // left
     else if (lambda > r) code |= 2; // right
@@ -15502,7 +15529,7 @@ __webpack_require__.r(__webpack_exports__);
     return code;
   }
 
-  return Object(_index__WEBPACK_IMPORTED_MODULE_4__["default"])(visible, clipLine, interpolate, smallRadius ? [0, -radius] : [-_math__WEBPACK_IMPORTED_MODULE_2__["pi"], radius - _math__WEBPACK_IMPORTED_MODULE_2__["pi"]]);
+  return Object(_index_js__WEBPACK_IMPORTED_MODULE_4__["default"])(visible, clipLine, interpolate, smallRadius ? [0, -radius] : [-_math_js__WEBPACK_IMPORTED_MODULE_2__["pi"], radius - _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"]]);
 });
 
 
@@ -15517,7 +15544,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _rectangle__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./rectangle */ "./node_modules/d3-geo/src/clip/rectangle.js");
+/* harmony import */ var _rectangle_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./rectangle.js */ "./node_modules/d3-geo/src/clip/rectangle.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
@@ -15531,7 +15558,7 @@ __webpack_require__.r(__webpack_exports__);
 
   return clip = {
     stream: function(stream) {
-      return cache && cacheStream === stream ? cache : cache = Object(_rectangle__WEBPACK_IMPORTED_MODULE_0__["default"])(x0, y0, x1, y1)(cacheStream = stream);
+      return cache && cacheStream === stream ? cache : cache = Object(_rectangle_js__WEBPACK_IMPORTED_MODULE_0__["default"])(x0, y0, x1, y1)(cacheStream = stream);
     },
     extent: function(_) {
       return arguments.length ? (x0 = +_[0][0], y0 = +_[0][1], x1 = +_[1][0], y1 = +_[1][1], cache = cacheStream = null, clip) : [[x0, y0], [x1, y1]];
@@ -15551,10 +15578,10 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _buffer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./buffer */ "./node_modules/d3-geo/src/clip/buffer.js");
-/* harmony import */ var _rejoin__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./rejoin */ "./node_modules/d3-geo/src/clip/rejoin.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _polygonContains__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../polygonContains */ "./node_modules/d3-geo/src/polygonContains.js");
+/* harmony import */ var _buffer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./buffer.js */ "./node_modules/d3-geo/src/clip/buffer.js");
+/* harmony import */ var _rejoin_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./rejoin.js */ "./node_modules/d3-geo/src/clip/rejoin.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _polygonContains_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../polygonContains.js */ "./node_modules/d3-geo/src/polygonContains.js");
 /* harmony import */ var d3_array__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! d3-array */ "./node_modules/d3-array/src/index.js");
 
 
@@ -15565,7 +15592,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = (function(pointVisible, clipLine, interpolate, start) {
   return function(sink) {
     var line = clipLine(sink),
-        ringBuffer = Object(_buffer__WEBPACK_IMPORTED_MODULE_0__["default"])(),
+        ringBuffer = Object(_buffer_js__WEBPACK_IMPORTED_MODULE_0__["default"])(),
         ringSink = clipLine(ringBuffer),
         polygonStarted = false,
         polygon,
@@ -15588,10 +15615,10 @@ __webpack_require__.r(__webpack_exports__);
         clip.lineStart = lineStart;
         clip.lineEnd = lineEnd;
         segments = Object(d3_array__WEBPACK_IMPORTED_MODULE_4__["merge"])(segments);
-        var startInside = Object(_polygonContains__WEBPACK_IMPORTED_MODULE_3__["default"])(polygon, start);
+        var startInside = Object(_polygonContains_js__WEBPACK_IMPORTED_MODULE_3__["default"])(polygon, start);
         if (segments.length) {
           if (!polygonStarted) sink.polygonStart(), polygonStarted = true;
-          Object(_rejoin__WEBPACK_IMPORTED_MODULE_1__["default"])(segments, compareIntersection, startInside, interpolate, sink);
+          Object(_rejoin_js__WEBPACK_IMPORTED_MODULE_1__["default"])(segments, compareIntersection, startInside, interpolate, sink);
         } else if (startInside) {
           if (!polygonStarted) sink.polygonStart(), polygonStarted = true;
           sink.lineStart();
@@ -15684,8 +15711,8 @@ function validSegment(segment) {
 // Intersections are sorted along the clip edge. For both antimeridian cutting
 // and circle clipping, the same comparison is used.
 function compareIntersection(a, b) {
-  return ((a = a.x)[0] < 0 ? a[1] - _math__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"] : _math__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - a[1])
-       - ((b = b.x)[0] < 0 ? b[1] - _math__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"] : _math__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - b[1]);
+  return ((a = a.x)[0] < 0 ? a[1] - _math_js__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"] : _math_js__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - a[1])
+       - ((b = b.x)[0] < 0 ? b[1] - _math_js__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"] : _math_js__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - b[1]);
 }
 
 
@@ -15773,10 +15800,10 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return clipRectangle; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _buffer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./buffer */ "./node_modules/d3-geo/src/clip/buffer.js");
-/* harmony import */ var _line__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./line */ "./node_modules/d3-geo/src/clip/line.js");
-/* harmony import */ var _rejoin__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./rejoin */ "./node_modules/d3-geo/src/clip/rejoin.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _buffer_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./buffer.js */ "./node_modules/d3-geo/src/clip/buffer.js");
+/* harmony import */ var _line_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./line.js */ "./node_modules/d3-geo/src/clip/line.js");
+/* harmony import */ var _rejoin_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./rejoin.js */ "./node_modules/d3-geo/src/clip/rejoin.js");
 /* harmony import */ var d3_array__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! d3-array */ "./node_modules/d3-array/src/index.js");
 
 
@@ -15808,9 +15835,9 @@ function clipRectangle(x0, y0, x1, y1) {
   }
 
   function corner(p, direction) {
-    return Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(p[0] - x0) < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"] ? direction > 0 ? 0 : 3
-        : Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(p[0] - x1) < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"] ? direction > 0 ? 2 : 1
-        : Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(p[1] - y0) < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"] ? direction > 0 ? 1 : 0
+    return Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(p[0] - x0) < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"] ? direction > 0 ? 0 : 3
+        : Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(p[0] - x1) < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"] ? direction > 0 ? 2 : 1
+        : Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(p[1] - y0) < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"] ? direction > 0 ? 1 : 0
         : direction > 0 ? 3 : 2; // abs(p[1] - y1) < epsilon
   }
 
@@ -15830,7 +15857,7 @@ function clipRectangle(x0, y0, x1, y1) {
 
   return function(stream) {
     var activeStream = stream,
-        bufferStream = Object(_buffer__WEBPACK_IMPORTED_MODULE_1__["default"])(),
+        bufferStream = Object(_buffer_js__WEBPACK_IMPORTED_MODULE_1__["default"])(),
         segments,
         polygon,
         ring,
@@ -15882,7 +15909,7 @@ function clipRectangle(x0, y0, x1, y1) {
           stream.lineEnd();
         }
         if (visible) {
-          Object(_rejoin__WEBPACK_IMPORTED_MODULE_3__["default"])(segments, compareIntersection, startInside, interpolate, stream);
+          Object(_rejoin_js__WEBPACK_IMPORTED_MODULE_3__["default"])(segments, compareIntersection, startInside, interpolate, stream);
         }
         stream.polygonEnd();
       }
@@ -15925,7 +15952,7 @@ function clipRectangle(x0, y0, x1, y1) {
         else {
           var a = [x_ = Math.max(clipMin, Math.min(clipMax, x_)), y_ = Math.max(clipMin, Math.min(clipMax, y_))],
               b = [x = Math.max(clipMin, Math.min(clipMax, x)), y = Math.max(clipMin, Math.min(clipMax, y))];
-          if (Object(_line__WEBPACK_IMPORTED_MODULE_2__["default"])(a, b, x0, y0, x1, y1)) {
+          if (Object(_line_js__WEBPACK_IMPORTED_MODULE_2__["default"])(a, b, x0, y0, x1, y1)) {
             if (!v_) {
               activeStream.lineStart();
               activeStream.point(a[0], a[1]);
@@ -15959,7 +15986,7 @@ function clipRectangle(x0, y0, x1, y1) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _pointEqual__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../pointEqual */ "./node_modules/d3-geo/src/pointEqual.js");
+/* harmony import */ var _pointEqual_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../pointEqual.js */ "./node_modules/d3-geo/src/pointEqual.js");
 
 
 function Intersection(point, points, other, entry) {
@@ -15987,7 +16014,7 @@ function Intersection(point, points, other, entry) {
     // If the first and last points of a segment are coincident, then treat as a
     // closed ring. TODO if all rings are closed, then the winding order of the
     // exterior ring should be checked.
-    if (Object(_pointEqual__WEBPACK_IMPORTED_MODULE_0__["default"])(p0, p1)) {
+    if (Object(_pointEqual_js__WEBPACK_IMPORTED_MODULE_0__["default"])(p0, p1)) {
       stream.lineStart();
       for (i = 0; i < n; ++i) stream.point((p0 = segment[i])[0], p0[1]);
       stream.lineEnd();
@@ -16117,9 +16144,9 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _polygonContains__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./polygonContains */ "./node_modules/d3-geo/src/polygonContains.js");
-/* harmony import */ var _distance__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./distance */ "./node_modules/d3-geo/src/distance.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _polygonContains_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./polygonContains.js */ "./node_modules/d3-geo/src/polygonContains.js");
+/* harmony import */ var _distance_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./distance.js */ "./node_modules/d3-geo/src/distance.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 
@@ -16177,21 +16204,21 @@ function containsGeometry(geometry, point) {
 }
 
 function containsPoint(coordinates, point) {
-  return Object(_distance__WEBPACK_IMPORTED_MODULE_1__["default"])(coordinates, point) === 0;
+  return Object(_distance_js__WEBPACK_IMPORTED_MODULE_1__["default"])(coordinates, point) === 0;
 }
 
 function containsLine(coordinates, point) {
   var ao, bo, ab;
   for (var i = 0, n = coordinates.length; i < n; i++) {
-    bo = Object(_distance__WEBPACK_IMPORTED_MODULE_1__["default"])(coordinates[i], point);
+    bo = Object(_distance_js__WEBPACK_IMPORTED_MODULE_1__["default"])(coordinates[i], point);
     if (bo === 0) return true;
     if (i > 0) {
-      ab = Object(_distance__WEBPACK_IMPORTED_MODULE_1__["default"])(coordinates[i], coordinates[i - 1]);
+      ab = Object(_distance_js__WEBPACK_IMPORTED_MODULE_1__["default"])(coordinates[i], coordinates[i - 1]);
       if (
         ab > 0 &&
         ao <= ab &&
         bo <= ab &&
-        (ao + bo - ab) * (1 - Math.pow((ao - bo) / ab, 2)) < _math__WEBPACK_IMPORTED_MODULE_2__["epsilon2"] * ab
+        (ao + bo - ab) * (1 - Math.pow((ao - bo) / ab, 2)) < _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon2"] * ab
       )
         return true;
     }
@@ -16201,7 +16228,7 @@ function containsLine(coordinates, point) {
 }
 
 function containsPolygon(coordinates, point) {
-  return !!Object(_polygonContains__WEBPACK_IMPORTED_MODULE_0__["default"])(coordinates.map(ringRadians), pointRadians(point));
+  return !!Object(_polygonContains_js__WEBPACK_IMPORTED_MODULE_0__["default"])(coordinates.map(ringRadians), pointRadians(point));
 }
 
 function ringRadians(ring) {
@@ -16209,7 +16236,7 @@ function ringRadians(ring) {
 }
 
 function pointRadians(point) {
-  return [point[0] * _math__WEBPACK_IMPORTED_MODULE_2__["radians"], point[1] * _math__WEBPACK_IMPORTED_MODULE_2__["radians"]];
+  return [point[0] * _math_js__WEBPACK_IMPORTED_MODULE_2__["radians"], point[1] * _math_js__WEBPACK_IMPORTED_MODULE_2__["radians"]];
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function(object, point) {
@@ -16230,7 +16257,7 @@ function pointRadians(point) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _length__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./length */ "./node_modules/d3-geo/src/length.js");
+/* harmony import */ var _length_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./length.js */ "./node_modules/d3-geo/src/length.js");
 
 
 var coordinates = [null, null],
@@ -16239,7 +16266,7 @@ var coordinates = [null, null],
 /* harmony default export */ __webpack_exports__["default"] = (function(a, b) {
   coordinates[0] = a;
   coordinates[1] = b;
-  return Object(_length__WEBPACK_IMPORTED_MODULE_0__["default"])(object);
+  return Object(_length_js__WEBPACK_IMPORTED_MODULE_0__["default"])(object);
 });
 
 
@@ -16257,17 +16284,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return graticule; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "graticule10", function() { return graticule10; });
 /* harmony import */ var d3_array__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-array */ "./node_modules/d3-array/src/index.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 
 function graticuleX(y0, y1, dy) {
-  var y = Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(y0, y1 - _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"], dy).concat(y1);
+  var y = Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(y0, y1 - _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"], dy).concat(y1);
   return function(x) { return y.map(function(y) { return [x, y]; }); };
 }
 
 function graticuleY(x0, x1, dx) {
-  var x = Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(x0, x1 - _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"], dx).concat(x1);
+  var x = Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(x0, x1 - _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"], dx).concat(x1);
   return function(y) { return x.map(function(x) { return [x, y]; }); };
 }
 
@@ -16283,10 +16310,10 @@ function graticule() {
   }
 
   function lines() {
-    return Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(Object(_math__WEBPACK_IMPORTED_MODULE_1__["ceil"])(X0 / DX) * DX, X1, DX).map(X)
-        .concat(Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(Object(_math__WEBPACK_IMPORTED_MODULE_1__["ceil"])(Y0 / DY) * DY, Y1, DY).map(Y))
-        .concat(Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(Object(_math__WEBPACK_IMPORTED_MODULE_1__["ceil"])(x0 / dx) * dx, x1, dx).filter(function(x) { return Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(x % DX) > _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]; }).map(x))
-        .concat(Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(Object(_math__WEBPACK_IMPORTED_MODULE_1__["ceil"])(y0 / dy) * dy, y1, dy).filter(function(y) { return Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(y % DY) > _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]; }).map(y));
+    return Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["ceil"])(X0 / DX) * DX, X1, DX).map(X)
+        .concat(Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["ceil"])(Y0 / DY) * DY, Y1, DY).map(Y))
+        .concat(Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["ceil"])(x0 / dx) * dx, x1, dx).filter(function(x) { return Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(x % DX) > _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]; }).map(x))
+        .concat(Object(d3_array__WEBPACK_IMPORTED_MODULE_0__["range"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["ceil"])(y0 / dy) * dy, y1, dy).filter(function(y) { return Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(y % DY) > _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]; }).map(y));
   }
 
   graticule.lines = function() {
@@ -16356,8 +16383,8 @@ function graticule() {
   };
 
   return graticule
-      .extentMajor([[-180, -90 + _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]], [180, 90 - _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]]])
-      .extentMinor([[-180, -80 - _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]], [180, 80 + _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"]]]);
+      .extentMajor([[-180, -90 + _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]], [180, 90 - _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]]])
+      .extentMinor([[-180, -80 - _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]], [180, 80 + _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"]]]);
 }
 
 function graticule10() {
@@ -16392,137 +16419,137 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _area__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./area */ "./node_modules/d3-geo/src/area.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoArea", function() { return _area__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _area_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./area.js */ "./node_modules/d3-geo/src/area.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoArea", function() { return _area_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
-/* harmony import */ var _bounds__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./bounds */ "./node_modules/d3-geo/src/bounds.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoBounds", function() { return _bounds__WEBPACK_IMPORTED_MODULE_1__["default"]; });
+/* harmony import */ var _bounds_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./bounds.js */ "./node_modules/d3-geo/src/bounds.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoBounds", function() { return _bounds_js__WEBPACK_IMPORTED_MODULE_1__["default"]; });
 
-/* harmony import */ var _centroid__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./centroid */ "./node_modules/d3-geo/src/centroid.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoCentroid", function() { return _centroid__WEBPACK_IMPORTED_MODULE_2__["default"]; });
+/* harmony import */ var _centroid_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./centroid.js */ "./node_modules/d3-geo/src/centroid.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoCentroid", function() { return _centroid_js__WEBPACK_IMPORTED_MODULE_2__["default"]; });
 
-/* harmony import */ var _circle__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./circle */ "./node_modules/d3-geo/src/circle.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoCircle", function() { return _circle__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+/* harmony import */ var _circle_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./circle.js */ "./node_modules/d3-geo/src/circle.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoCircle", function() { return _circle_js__WEBPACK_IMPORTED_MODULE_3__["default"]; });
 
-/* harmony import */ var _clip_antimeridian__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./clip/antimeridian */ "./node_modules/d3-geo/src/clip/antimeridian.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoClipAntimeridian", function() { return _clip_antimeridian__WEBPACK_IMPORTED_MODULE_4__["default"]; });
+/* harmony import */ var _clip_antimeridian_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./clip/antimeridian.js */ "./node_modules/d3-geo/src/clip/antimeridian.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoClipAntimeridian", function() { return _clip_antimeridian_js__WEBPACK_IMPORTED_MODULE_4__["default"]; });
 
-/* harmony import */ var _clip_circle__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./clip/circle */ "./node_modules/d3-geo/src/clip/circle.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoClipCircle", function() { return _clip_circle__WEBPACK_IMPORTED_MODULE_5__["default"]; });
+/* harmony import */ var _clip_circle_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./clip/circle.js */ "./node_modules/d3-geo/src/clip/circle.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoClipCircle", function() { return _clip_circle_js__WEBPACK_IMPORTED_MODULE_5__["default"]; });
 
-/* harmony import */ var _clip_extent__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./clip/extent */ "./node_modules/d3-geo/src/clip/extent.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoClipExtent", function() { return _clip_extent__WEBPACK_IMPORTED_MODULE_6__["default"]; });
+/* harmony import */ var _clip_extent_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./clip/extent.js */ "./node_modules/d3-geo/src/clip/extent.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoClipExtent", function() { return _clip_extent_js__WEBPACK_IMPORTED_MODULE_6__["default"]; });
 
-/* harmony import */ var _clip_rectangle__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./clip/rectangle */ "./node_modules/d3-geo/src/clip/rectangle.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoClipRectangle", function() { return _clip_rectangle__WEBPACK_IMPORTED_MODULE_7__["default"]; });
+/* harmony import */ var _clip_rectangle_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./clip/rectangle.js */ "./node_modules/d3-geo/src/clip/rectangle.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoClipRectangle", function() { return _clip_rectangle_js__WEBPACK_IMPORTED_MODULE_7__["default"]; });
 
-/* harmony import */ var _contains__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./contains */ "./node_modules/d3-geo/src/contains.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoContains", function() { return _contains__WEBPACK_IMPORTED_MODULE_8__["default"]; });
+/* harmony import */ var _contains_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./contains.js */ "./node_modules/d3-geo/src/contains.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoContains", function() { return _contains_js__WEBPACK_IMPORTED_MODULE_8__["default"]; });
 
-/* harmony import */ var _distance__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./distance */ "./node_modules/d3-geo/src/distance.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoDistance", function() { return _distance__WEBPACK_IMPORTED_MODULE_9__["default"]; });
+/* harmony import */ var _distance_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./distance.js */ "./node_modules/d3-geo/src/distance.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoDistance", function() { return _distance_js__WEBPACK_IMPORTED_MODULE_9__["default"]; });
 
-/* harmony import */ var _graticule__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./graticule */ "./node_modules/d3-geo/src/graticule.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoGraticule", function() { return _graticule__WEBPACK_IMPORTED_MODULE_10__["default"]; });
+/* harmony import */ var _graticule_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./graticule.js */ "./node_modules/d3-geo/src/graticule.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoGraticule", function() { return _graticule_js__WEBPACK_IMPORTED_MODULE_10__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoGraticule10", function() { return _graticule__WEBPACK_IMPORTED_MODULE_10__["graticule10"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoGraticule10", function() { return _graticule_js__WEBPACK_IMPORTED_MODULE_10__["graticule10"]; });
 
-/* harmony import */ var _interpolate__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./interpolate */ "./node_modules/d3-geo/src/interpolate.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoInterpolate", function() { return _interpolate__WEBPACK_IMPORTED_MODULE_11__["default"]; });
+/* harmony import */ var _interpolate_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./interpolate.js */ "./node_modules/d3-geo/src/interpolate.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoInterpolate", function() { return _interpolate_js__WEBPACK_IMPORTED_MODULE_11__["default"]; });
 
-/* harmony import */ var _length__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./length */ "./node_modules/d3-geo/src/length.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoLength", function() { return _length__WEBPACK_IMPORTED_MODULE_12__["default"]; });
+/* harmony import */ var _length_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./length.js */ "./node_modules/d3-geo/src/length.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoLength", function() { return _length_js__WEBPACK_IMPORTED_MODULE_12__["default"]; });
 
-/* harmony import */ var _path_index__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./path/index */ "./node_modules/d3-geo/src/path/index.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoPath", function() { return _path_index__WEBPACK_IMPORTED_MODULE_13__["default"]; });
+/* harmony import */ var _path_index_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./path/index.js */ "./node_modules/d3-geo/src/path/index.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoPath", function() { return _path_index_js__WEBPACK_IMPORTED_MODULE_13__["default"]; });
 
-/* harmony import */ var _projection_albers__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./projection/albers */ "./node_modules/d3-geo/src/projection/albers.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAlbers", function() { return _projection_albers__WEBPACK_IMPORTED_MODULE_14__["default"]; });
+/* harmony import */ var _projection_albers_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./projection/albers.js */ "./node_modules/d3-geo/src/projection/albers.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAlbers", function() { return _projection_albers_js__WEBPACK_IMPORTED_MODULE_14__["default"]; });
 
-/* harmony import */ var _projection_albersUsa__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./projection/albersUsa */ "./node_modules/d3-geo/src/projection/albersUsa.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAlbersUsa", function() { return _projection_albersUsa__WEBPACK_IMPORTED_MODULE_15__["default"]; });
+/* harmony import */ var _projection_albersUsa_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./projection/albersUsa.js */ "./node_modules/d3-geo/src/projection/albersUsa.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAlbersUsa", function() { return _projection_albersUsa_js__WEBPACK_IMPORTED_MODULE_15__["default"]; });
 
-/* harmony import */ var _projection_azimuthalEqualArea__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./projection/azimuthalEqualArea */ "./node_modules/d3-geo/src/projection/azimuthalEqualArea.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAzimuthalEqualArea", function() { return _projection_azimuthalEqualArea__WEBPACK_IMPORTED_MODULE_16__["default"]; });
+/* harmony import */ var _projection_azimuthalEqualArea_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./projection/azimuthalEqualArea.js */ "./node_modules/d3-geo/src/projection/azimuthalEqualArea.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAzimuthalEqualArea", function() { return _projection_azimuthalEqualArea_js__WEBPACK_IMPORTED_MODULE_16__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAzimuthalEqualAreaRaw", function() { return _projection_azimuthalEqualArea__WEBPACK_IMPORTED_MODULE_16__["azimuthalEqualAreaRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAzimuthalEqualAreaRaw", function() { return _projection_azimuthalEqualArea_js__WEBPACK_IMPORTED_MODULE_16__["azimuthalEqualAreaRaw"]; });
 
-/* harmony import */ var _projection_azimuthalEquidistant__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./projection/azimuthalEquidistant */ "./node_modules/d3-geo/src/projection/azimuthalEquidistant.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAzimuthalEquidistant", function() { return _projection_azimuthalEquidistant__WEBPACK_IMPORTED_MODULE_17__["default"]; });
+/* harmony import */ var _projection_azimuthalEquidistant_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./projection/azimuthalEquidistant.js */ "./node_modules/d3-geo/src/projection/azimuthalEquidistant.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAzimuthalEquidistant", function() { return _projection_azimuthalEquidistant_js__WEBPACK_IMPORTED_MODULE_17__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAzimuthalEquidistantRaw", function() { return _projection_azimuthalEquidistant__WEBPACK_IMPORTED_MODULE_17__["azimuthalEquidistantRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoAzimuthalEquidistantRaw", function() { return _projection_azimuthalEquidistant_js__WEBPACK_IMPORTED_MODULE_17__["azimuthalEquidistantRaw"]; });
 
-/* harmony import */ var _projection_conicConformal__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./projection/conicConformal */ "./node_modules/d3-geo/src/projection/conicConformal.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicConformal", function() { return _projection_conicConformal__WEBPACK_IMPORTED_MODULE_18__["default"]; });
+/* harmony import */ var _projection_conicConformal_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./projection/conicConformal.js */ "./node_modules/d3-geo/src/projection/conicConformal.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicConformal", function() { return _projection_conicConformal_js__WEBPACK_IMPORTED_MODULE_18__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicConformalRaw", function() { return _projection_conicConformal__WEBPACK_IMPORTED_MODULE_18__["conicConformalRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicConformalRaw", function() { return _projection_conicConformal_js__WEBPACK_IMPORTED_MODULE_18__["conicConformalRaw"]; });
 
-/* harmony import */ var _projection_conicEqualArea__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./projection/conicEqualArea */ "./node_modules/d3-geo/src/projection/conicEqualArea.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicEqualArea", function() { return _projection_conicEqualArea__WEBPACK_IMPORTED_MODULE_19__["default"]; });
+/* harmony import */ var _projection_conicEqualArea_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./projection/conicEqualArea.js */ "./node_modules/d3-geo/src/projection/conicEqualArea.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicEqualArea", function() { return _projection_conicEqualArea_js__WEBPACK_IMPORTED_MODULE_19__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicEqualAreaRaw", function() { return _projection_conicEqualArea__WEBPACK_IMPORTED_MODULE_19__["conicEqualAreaRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicEqualAreaRaw", function() { return _projection_conicEqualArea_js__WEBPACK_IMPORTED_MODULE_19__["conicEqualAreaRaw"]; });
 
-/* harmony import */ var _projection_conicEquidistant__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./projection/conicEquidistant */ "./node_modules/d3-geo/src/projection/conicEquidistant.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicEquidistant", function() { return _projection_conicEquidistant__WEBPACK_IMPORTED_MODULE_20__["default"]; });
+/* harmony import */ var _projection_conicEquidistant_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./projection/conicEquidistant.js */ "./node_modules/d3-geo/src/projection/conicEquidistant.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicEquidistant", function() { return _projection_conicEquidistant_js__WEBPACK_IMPORTED_MODULE_20__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicEquidistantRaw", function() { return _projection_conicEquidistant__WEBPACK_IMPORTED_MODULE_20__["conicEquidistantRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoConicEquidistantRaw", function() { return _projection_conicEquidistant_js__WEBPACK_IMPORTED_MODULE_20__["conicEquidistantRaw"]; });
 
-/* harmony import */ var _projection_equalEarth__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./projection/equalEarth */ "./node_modules/d3-geo/src/projection/equalEarth.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoEqualEarth", function() { return _projection_equalEarth__WEBPACK_IMPORTED_MODULE_21__["default"]; });
+/* harmony import */ var _projection_equalEarth_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./projection/equalEarth.js */ "./node_modules/d3-geo/src/projection/equalEarth.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoEqualEarth", function() { return _projection_equalEarth_js__WEBPACK_IMPORTED_MODULE_21__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoEqualEarthRaw", function() { return _projection_equalEarth__WEBPACK_IMPORTED_MODULE_21__["equalEarthRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoEqualEarthRaw", function() { return _projection_equalEarth_js__WEBPACK_IMPORTED_MODULE_21__["equalEarthRaw"]; });
 
-/* harmony import */ var _projection_equirectangular__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./projection/equirectangular */ "./node_modules/d3-geo/src/projection/equirectangular.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoEquirectangular", function() { return _projection_equirectangular__WEBPACK_IMPORTED_MODULE_22__["default"]; });
+/* harmony import */ var _projection_equirectangular_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./projection/equirectangular.js */ "./node_modules/d3-geo/src/projection/equirectangular.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoEquirectangular", function() { return _projection_equirectangular_js__WEBPACK_IMPORTED_MODULE_22__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoEquirectangularRaw", function() { return _projection_equirectangular__WEBPACK_IMPORTED_MODULE_22__["equirectangularRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoEquirectangularRaw", function() { return _projection_equirectangular_js__WEBPACK_IMPORTED_MODULE_22__["equirectangularRaw"]; });
 
-/* harmony import */ var _projection_gnomonic__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./projection/gnomonic */ "./node_modules/d3-geo/src/projection/gnomonic.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoGnomonic", function() { return _projection_gnomonic__WEBPACK_IMPORTED_MODULE_23__["default"]; });
+/* harmony import */ var _projection_gnomonic_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./projection/gnomonic.js */ "./node_modules/d3-geo/src/projection/gnomonic.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoGnomonic", function() { return _projection_gnomonic_js__WEBPACK_IMPORTED_MODULE_23__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoGnomonicRaw", function() { return _projection_gnomonic__WEBPACK_IMPORTED_MODULE_23__["gnomonicRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoGnomonicRaw", function() { return _projection_gnomonic_js__WEBPACK_IMPORTED_MODULE_23__["gnomonicRaw"]; });
 
-/* harmony import */ var _projection_identity__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./projection/identity */ "./node_modules/d3-geo/src/projection/identity.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoIdentity", function() { return _projection_identity__WEBPACK_IMPORTED_MODULE_24__["default"]; });
+/* harmony import */ var _projection_identity_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./projection/identity.js */ "./node_modules/d3-geo/src/projection/identity.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoIdentity", function() { return _projection_identity_js__WEBPACK_IMPORTED_MODULE_24__["default"]; });
 
-/* harmony import */ var _projection_index__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./projection/index */ "./node_modules/d3-geo/src/projection/index.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoProjection", function() { return _projection_index__WEBPACK_IMPORTED_MODULE_25__["default"]; });
+/* harmony import */ var _projection_index_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./projection/index.js */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoProjection", function() { return _projection_index_js__WEBPACK_IMPORTED_MODULE_25__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoProjectionMutator", function() { return _projection_index__WEBPACK_IMPORTED_MODULE_25__["projectionMutator"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoProjectionMutator", function() { return _projection_index_js__WEBPACK_IMPORTED_MODULE_25__["projectionMutator"]; });
 
-/* harmony import */ var _projection_mercator__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./projection/mercator */ "./node_modules/d3-geo/src/projection/mercator.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoMercator", function() { return _projection_mercator__WEBPACK_IMPORTED_MODULE_26__["default"]; });
+/* harmony import */ var _projection_mercator_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./projection/mercator.js */ "./node_modules/d3-geo/src/projection/mercator.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoMercator", function() { return _projection_mercator_js__WEBPACK_IMPORTED_MODULE_26__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoMercatorRaw", function() { return _projection_mercator__WEBPACK_IMPORTED_MODULE_26__["mercatorRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoMercatorRaw", function() { return _projection_mercator_js__WEBPACK_IMPORTED_MODULE_26__["mercatorRaw"]; });
 
-/* harmony import */ var _projection_naturalEarth1__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./projection/naturalEarth1 */ "./node_modules/d3-geo/src/projection/naturalEarth1.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoNaturalEarth1", function() { return _projection_naturalEarth1__WEBPACK_IMPORTED_MODULE_27__["default"]; });
+/* harmony import */ var _projection_naturalEarth1_js__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./projection/naturalEarth1.js */ "./node_modules/d3-geo/src/projection/naturalEarth1.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoNaturalEarth1", function() { return _projection_naturalEarth1_js__WEBPACK_IMPORTED_MODULE_27__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoNaturalEarth1Raw", function() { return _projection_naturalEarth1__WEBPACK_IMPORTED_MODULE_27__["naturalEarth1Raw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoNaturalEarth1Raw", function() { return _projection_naturalEarth1_js__WEBPACK_IMPORTED_MODULE_27__["naturalEarth1Raw"]; });
 
-/* harmony import */ var _projection_orthographic__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ./projection/orthographic */ "./node_modules/d3-geo/src/projection/orthographic.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoOrthographic", function() { return _projection_orthographic__WEBPACK_IMPORTED_MODULE_28__["default"]; });
+/* harmony import */ var _projection_orthographic_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ./projection/orthographic.js */ "./node_modules/d3-geo/src/projection/orthographic.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoOrthographic", function() { return _projection_orthographic_js__WEBPACK_IMPORTED_MODULE_28__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoOrthographicRaw", function() { return _projection_orthographic__WEBPACK_IMPORTED_MODULE_28__["orthographicRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoOrthographicRaw", function() { return _projection_orthographic_js__WEBPACK_IMPORTED_MODULE_28__["orthographicRaw"]; });
 
-/* harmony import */ var _projection_stereographic__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ./projection/stereographic */ "./node_modules/d3-geo/src/projection/stereographic.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoStereographic", function() { return _projection_stereographic__WEBPACK_IMPORTED_MODULE_29__["default"]; });
+/* harmony import */ var _projection_stereographic_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ./projection/stereographic.js */ "./node_modules/d3-geo/src/projection/stereographic.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoStereographic", function() { return _projection_stereographic_js__WEBPACK_IMPORTED_MODULE_29__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoStereographicRaw", function() { return _projection_stereographic__WEBPACK_IMPORTED_MODULE_29__["stereographicRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoStereographicRaw", function() { return _projection_stereographic_js__WEBPACK_IMPORTED_MODULE_29__["stereographicRaw"]; });
 
-/* harmony import */ var _projection_transverseMercator__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ./projection/transverseMercator */ "./node_modules/d3-geo/src/projection/transverseMercator.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoTransverseMercator", function() { return _projection_transverseMercator__WEBPACK_IMPORTED_MODULE_30__["default"]; });
+/* harmony import */ var _projection_transverseMercator_js__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ./projection/transverseMercator.js */ "./node_modules/d3-geo/src/projection/transverseMercator.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoTransverseMercator", function() { return _projection_transverseMercator_js__WEBPACK_IMPORTED_MODULE_30__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoTransverseMercatorRaw", function() { return _projection_transverseMercator__WEBPACK_IMPORTED_MODULE_30__["transverseMercatorRaw"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoTransverseMercatorRaw", function() { return _projection_transverseMercator_js__WEBPACK_IMPORTED_MODULE_30__["transverseMercatorRaw"]; });
 
-/* harmony import */ var _rotation__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ./rotation */ "./node_modules/d3-geo/src/rotation.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoRotation", function() { return _rotation__WEBPACK_IMPORTED_MODULE_31__["default"]; });
+/* harmony import */ var _rotation_js__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ./rotation.js */ "./node_modules/d3-geo/src/rotation.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoRotation", function() { return _rotation_js__WEBPACK_IMPORTED_MODULE_31__["default"]; });
 
-/* harmony import */ var _stream__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ./stream */ "./node_modules/d3-geo/src/stream.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoStream", function() { return _stream__WEBPACK_IMPORTED_MODULE_32__["default"]; });
+/* harmony import */ var _stream_js__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ./stream.js */ "./node_modules/d3-geo/src/stream.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoStream", function() { return _stream_js__WEBPACK_IMPORTED_MODULE_32__["default"]; });
 
-/* harmony import */ var _transform__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ./transform */ "./node_modules/d3-geo/src/transform.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoTransform", function() { return _transform__WEBPACK_IMPORTED_MODULE_33__["default"]; });
+/* harmony import */ var _transform_js__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ./transform.js */ "./node_modules/d3-geo/src/transform.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "geoTransform", function() { return _transform_js__WEBPACK_IMPORTED_MODULE_33__["default"]; });
 
 
 
@@ -16571,37 +16598,37 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(a, b) {
-  var x0 = a[0] * _math__WEBPACK_IMPORTED_MODULE_0__["radians"],
-      y0 = a[1] * _math__WEBPACK_IMPORTED_MODULE_0__["radians"],
-      x1 = b[0] * _math__WEBPACK_IMPORTED_MODULE_0__["radians"],
-      y1 = b[1] * _math__WEBPACK_IMPORTED_MODULE_0__["radians"],
-      cy0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y0),
-      sy0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y0),
-      cy1 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y1),
-      sy1 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y1),
-      kx0 = cy0 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(x0),
-      ky0 = cy0 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(x0),
-      kx1 = cy1 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(x1),
-      ky1 = cy1 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(x1),
-      d = 2 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["asin"])(Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(Object(_math__WEBPACK_IMPORTED_MODULE_0__["haversin"])(y1 - y0) + cy0 * cy1 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["haversin"])(x1 - x0))),
-      k = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(d);
+  var x0 = a[0] * _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"],
+      y0 = a[1] * _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"],
+      x1 = b[0] * _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"],
+      y1 = b[1] * _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"],
+      cy0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y0),
+      sy0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y0),
+      cy1 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y1),
+      sy1 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y1),
+      kx0 = cy0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(x0),
+      ky0 = cy0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(x0),
+      kx1 = cy1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(x1),
+      ky1 = cy1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(x1),
+      d = 2 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["haversin"])(y1 - y0) + cy0 * cy1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["haversin"])(x1 - x0))),
+      k = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(d);
 
   var interpolate = d ? function(t) {
-    var B = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(t *= d) / k,
-        A = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(d - t) / k,
+    var B = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(t *= d) / k,
+        A = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(d - t) / k,
         x = A * kx0 + B * kx1,
         y = A * ky0 + B * ky1,
         z = A * sy0 + B * sy1;
     return [
-      Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(y, x) * _math__WEBPACK_IMPORTED_MODULE_0__["degrees"],
-      Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(z, Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(x * x + y * y)) * _math__WEBPACK_IMPORTED_MODULE_0__["degrees"]
+      Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(y, x) * _math_js__WEBPACK_IMPORTED_MODULE_0__["degrees"],
+      Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(z, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(x * x + y * y)) * _math_js__WEBPACK_IMPORTED_MODULE_0__["degrees"]
     ];
   } : function() {
-    return [x0 * _math__WEBPACK_IMPORTED_MODULE_0__["degrees"], y0 * _math__WEBPACK_IMPORTED_MODULE_0__["degrees"]];
+    return [x0 * _math_js__WEBPACK_IMPORTED_MODULE_0__["degrees"], y0 * _math_js__WEBPACK_IMPORTED_MODULE_0__["degrees"]];
   };
 
   interpolate.distance = d;
@@ -16621,27 +16648,27 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _adder__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./adder */ "./node_modules/d3-geo/src/adder.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./noop */ "./node_modules/d3-geo/src/noop.js");
-/* harmony import */ var _stream__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./stream */ "./node_modules/d3-geo/src/stream.js");
+/* harmony import */ var _adder_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./adder.js */ "./node_modules/d3-geo/src/adder.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./noop.js */ "./node_modules/d3-geo/src/noop.js");
+/* harmony import */ var _stream_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./stream.js */ "./node_modules/d3-geo/src/stream.js");
 
 
 
 
 
-var lengthSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])(),
+var lengthSum = Object(_adder_js__WEBPACK_IMPORTED_MODULE_0__["default"])(),
     lambda0,
     sinPhi0,
     cosPhi0;
 
 var lengthStream = {
-  sphere: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
-  point: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
+  sphere: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  point: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
   lineStart: lengthLineStart,
-  lineEnd: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
-  polygonStart: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
-  polygonEnd: _noop__WEBPACK_IMPORTED_MODULE_2__["default"]
+  lineEnd: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  polygonStart: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  polygonEnd: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"]
 };
 
 function lengthLineStart() {
@@ -16650,32 +16677,32 @@ function lengthLineStart() {
 }
 
 function lengthLineEnd() {
-  lengthStream.point = lengthStream.lineEnd = _noop__WEBPACK_IMPORTED_MODULE_2__["default"];
+  lengthStream.point = lengthStream.lineEnd = _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"];
 }
 
 function lengthPointFirst(lambda, phi) {
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_1__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_1__["radians"];
-  lambda0 = lambda, sinPhi0 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi), cosPhi0 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi);
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"];
+  lambda0 = lambda, sinPhi0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi), cosPhi0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi);
   lengthStream.point = lengthPoint;
 }
 
 function lengthPoint(lambda, phi) {
-  lambda *= _math__WEBPACK_IMPORTED_MODULE_1__["radians"], phi *= _math__WEBPACK_IMPORTED_MODULE_1__["radians"];
-  var sinPhi = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi),
-      cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi),
-      delta = Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda - lambda0),
-      cosDelta = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(delta),
-      sinDelta = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(delta),
+  lambda *= _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"], phi *= _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"];
+  var sinPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi),
+      cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi),
+      delta = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda - lambda0),
+      cosDelta = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(delta),
+      sinDelta = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(delta),
       x = cosPhi * sinDelta,
       y = cosPhi0 * sinPhi - sinPhi0 * cosPhi * cosDelta,
       z = sinPhi0 * sinPhi + cosPhi0 * cosPhi * cosDelta;
-  lengthSum.add(Object(_math__WEBPACK_IMPORTED_MODULE_1__["atan2"])(Object(_math__WEBPACK_IMPORTED_MODULE_1__["sqrt"])(x * x + y * y), z));
+  lengthSum.add(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["atan2"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sqrt"])(x * x + y * y), z));
   lambda0 = lambda, sinPhi0 = sinPhi, cosPhi0 = cosPhi;
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function(object) {
   lengthSum.reset();
-  Object(_stream__WEBPACK_IMPORTED_MODULE_3__["default"])(object, lengthStream);
+  Object(_stream_js__WEBPACK_IMPORTED_MODULE_3__["default"])(object, lengthStream);
   return +lengthSum;
 });
 
@@ -16778,31 +16805,31 @@ function noop() {}
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _adder__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../adder */ "./node_modules/d3-geo/src/adder.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-geo/src/noop.js");
+/* harmony import */ var _adder_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../adder.js */ "./node_modules/d3-geo/src/adder.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-geo/src/noop.js");
 
 
 
 
-var areaSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])(),
-    areaRingSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])(),
+var areaSum = Object(_adder_js__WEBPACK_IMPORTED_MODULE_0__["default"])(),
+    areaRingSum = Object(_adder_js__WEBPACK_IMPORTED_MODULE_0__["default"])(),
     x00,
     y00,
     x0,
     y0;
 
 var areaStream = {
-  point: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
-  lineStart: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
-  lineEnd: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
+  point: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  lineStart: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  lineEnd: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
   polygonStart: function() {
     areaStream.lineStart = areaRingStart;
     areaStream.lineEnd = areaRingEnd;
   },
   polygonEnd: function() {
-    areaStream.lineStart = areaStream.lineEnd = areaStream.point = _noop__WEBPACK_IMPORTED_MODULE_2__["default"];
-    areaSum.add(Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(areaRingSum));
+    areaStream.lineStart = areaStream.lineEnd = areaStream.point = _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"];
+    areaSum.add(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(areaRingSum));
     areaRingSum.reset();
   },
   result: function() {
@@ -16844,7 +16871,7 @@ function areaRingEnd() {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-geo/src/noop.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-geo/src/noop.js");
 
 
 var x0 = Infinity,
@@ -16854,10 +16881,10 @@ var x0 = Infinity,
 
 var boundsStream = {
   point: boundsPoint,
-  lineStart: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
-  lineEnd: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
-  polygonStart: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
-  polygonEnd: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
+  lineStart: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
+  lineEnd: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
+  polygonStart: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
+  polygonEnd: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
   result: function() {
     var bounds = [[x0, y0], [x1, y1]];
     x1 = y1 = -(y0 = x0 = Infinity);
@@ -16886,7 +16913,7 @@ function boundsPoint(x, y) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 // TODO Enforce positive area for exterior, negative area for interior?
@@ -16946,7 +16973,7 @@ function centroidPointFirstLine(x, y) {
 }
 
 function centroidPointLine(x, y) {
-  var dx = x - x0, dy = y - y0, z = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(dx * dx + dy * dy);
+  var dx = x - x0, dy = y - y0, z = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(dx * dx + dy * dy);
   X1 += z * (x0 + x) / 2;
   Y1 += z * (y0 + y) / 2;
   Z1 += z;
@@ -16973,7 +17000,7 @@ function centroidPointFirstRing(x, y) {
 function centroidPointRing(x, y) {
   var dx = x - x0,
       dy = y - y0,
-      z = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(dx * dx + dy * dy);
+      z = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(dx * dx + dy * dy);
 
   X1 += z * (x0 + x) / 2;
   Y1 += z * (y0 + y) / 2;
@@ -17001,8 +17028,8 @@ function centroidPointRing(x, y) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return PathContext; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-geo/src/noop.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-geo/src/noop.js");
 
 
 
@@ -17041,12 +17068,12 @@ PathContext.prototype = {
       }
       default: {
         this._context.moveTo(x + this._radius, y);
-        this._context.arc(x, y, this._radius, 0, _math__WEBPACK_IMPORTED_MODULE_0__["tau"]);
+        this._context.arc(x, y, this._radius, 0, _math_js__WEBPACK_IMPORTED_MODULE_0__["tau"]);
         break;
       }
     }
   },
-  result: _noop__WEBPACK_IMPORTED_MODULE_1__["default"]
+  result: _noop_js__WEBPACK_IMPORTED_MODULE_1__["default"]
 };
 
 
@@ -17061,14 +17088,14 @@ PathContext.prototype = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _identity__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../identity */ "./node_modules/d3-geo/src/identity.js");
-/* harmony import */ var _stream__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../stream */ "./node_modules/d3-geo/src/stream.js");
-/* harmony import */ var _area__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./area */ "./node_modules/d3-geo/src/path/area.js");
-/* harmony import */ var _bounds__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./bounds */ "./node_modules/d3-geo/src/path/bounds.js");
-/* harmony import */ var _centroid__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./centroid */ "./node_modules/d3-geo/src/path/centroid.js");
-/* harmony import */ var _context__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./context */ "./node_modules/d3-geo/src/path/context.js");
-/* harmony import */ var _measure__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./measure */ "./node_modules/d3-geo/src/path/measure.js");
-/* harmony import */ var _string__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./string */ "./node_modules/d3-geo/src/path/string.js");
+/* harmony import */ var _identity_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../identity.js */ "./node_modules/d3-geo/src/identity.js");
+/* harmony import */ var _stream_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../stream.js */ "./node_modules/d3-geo/src/stream.js");
+/* harmony import */ var _area_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./area.js */ "./node_modules/d3-geo/src/path/area.js");
+/* harmony import */ var _bounds_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./bounds.js */ "./node_modules/d3-geo/src/path/bounds.js");
+/* harmony import */ var _centroid_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./centroid.js */ "./node_modules/d3-geo/src/path/centroid.js");
+/* harmony import */ var _context_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./context.js */ "./node_modules/d3-geo/src/path/context.js");
+/* harmony import */ var _measure_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./measure.js */ "./node_modules/d3-geo/src/path/measure.js");
+/* harmony import */ var _string_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./string.js */ "./node_modules/d3-geo/src/path/string.js");
 
 
 
@@ -17086,38 +17113,38 @@ __webpack_require__.r(__webpack_exports__);
   function path(object) {
     if (object) {
       if (typeof pointRadius === "function") contextStream.pointRadius(+pointRadius.apply(this, arguments));
-      Object(_stream__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(contextStream));
+      Object(_stream_js__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(contextStream));
     }
     return contextStream.result();
   }
 
   path.area = function(object) {
-    Object(_stream__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(_area__WEBPACK_IMPORTED_MODULE_2__["default"]));
-    return _area__WEBPACK_IMPORTED_MODULE_2__["default"].result();
+    Object(_stream_js__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(_area_js__WEBPACK_IMPORTED_MODULE_2__["default"]));
+    return _area_js__WEBPACK_IMPORTED_MODULE_2__["default"].result();
   };
 
   path.measure = function(object) {
-    Object(_stream__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(_measure__WEBPACK_IMPORTED_MODULE_6__["default"]));
-    return _measure__WEBPACK_IMPORTED_MODULE_6__["default"].result();
+    Object(_stream_js__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(_measure_js__WEBPACK_IMPORTED_MODULE_6__["default"]));
+    return _measure_js__WEBPACK_IMPORTED_MODULE_6__["default"].result();
   };
 
   path.bounds = function(object) {
-    Object(_stream__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(_bounds__WEBPACK_IMPORTED_MODULE_3__["default"]));
-    return _bounds__WEBPACK_IMPORTED_MODULE_3__["default"].result();
+    Object(_stream_js__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(_bounds_js__WEBPACK_IMPORTED_MODULE_3__["default"]));
+    return _bounds_js__WEBPACK_IMPORTED_MODULE_3__["default"].result();
   };
 
   path.centroid = function(object) {
-    Object(_stream__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(_centroid__WEBPACK_IMPORTED_MODULE_4__["default"]));
-    return _centroid__WEBPACK_IMPORTED_MODULE_4__["default"].result();
+    Object(_stream_js__WEBPACK_IMPORTED_MODULE_1__["default"])(object, projectionStream(_centroid_js__WEBPACK_IMPORTED_MODULE_4__["default"]));
+    return _centroid_js__WEBPACK_IMPORTED_MODULE_4__["default"].result();
   };
 
   path.projection = function(_) {
-    return arguments.length ? (projectionStream = _ == null ? (projection = null, _identity__WEBPACK_IMPORTED_MODULE_0__["default"]) : (projection = _).stream, path) : projection;
+    return arguments.length ? (projectionStream = _ == null ? (projection = null, _identity_js__WEBPACK_IMPORTED_MODULE_0__["default"]) : (projection = _).stream, path) : projection;
   };
 
   path.context = function(_) {
     if (!arguments.length) return context;
-    contextStream = _ == null ? (context = null, new _string__WEBPACK_IMPORTED_MODULE_7__["default"]) : new _context__WEBPACK_IMPORTED_MODULE_5__["default"](context = _);
+    contextStream = _ == null ? (context = null, new _string_js__WEBPACK_IMPORTED_MODULE_7__["default"]) : new _context_js__WEBPACK_IMPORTED_MODULE_5__["default"](context = _);
     if (typeof pointRadius !== "function") contextStream.pointRadius(pointRadius);
     return path;
   };
@@ -17143,14 +17170,14 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _adder__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../adder */ "./node_modules/d3-geo/src/adder.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-geo/src/noop.js");
+/* harmony import */ var _adder_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../adder.js */ "./node_modules/d3-geo/src/adder.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-geo/src/noop.js");
 
 
 
 
-var lengthSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])(),
+var lengthSum = Object(_adder_js__WEBPACK_IMPORTED_MODULE_0__["default"])(),
     lengthRing,
     x00,
     y00,
@@ -17158,13 +17185,13 @@ var lengthSum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])(),
     y0;
 
 var lengthStream = {
-  point: _noop__WEBPACK_IMPORTED_MODULE_2__["default"],
+  point: _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"],
   lineStart: function() {
     lengthStream.point = lengthPointFirst;
   },
   lineEnd: function() {
     if (lengthRing) lengthPoint(x00, y00);
-    lengthStream.point = _noop__WEBPACK_IMPORTED_MODULE_2__["default"];
+    lengthStream.point = _noop_js__WEBPACK_IMPORTED_MODULE_2__["default"];
   },
   polygonStart: function() {
     lengthRing = true;
@@ -17186,7 +17213,7 @@ function lengthPointFirst(x, y) {
 
 function lengthPoint(x, y) {
   x0 -= x, y0 -= y;
-  lengthSum.add(Object(_math__WEBPACK_IMPORTED_MODULE_1__["sqrt"])(x0 * x0 + y0 * y0));
+  lengthSum.add(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sqrt"])(x0 * x0 + y0 * y0));
   x0 = x, y0 = y;
 }
 
@@ -17277,11 +17304,11 @@ function circle(radius) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(a, b) {
-  return Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(a[0] - b[0]) < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"] && Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(a[1] - b[1]) < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"];
+  return Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(a[0] - b[0]) < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"] && Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(a[1] - b[1]) < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"];
 });
 
 
@@ -17296,34 +17323,34 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _adder__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./adder */ "./node_modules/d3-geo/src/adder.js");
-/* harmony import */ var _cartesian__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./cartesian */ "./node_modules/d3-geo/src/cartesian.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _adder_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./adder.js */ "./node_modules/d3-geo/src/adder.js");
+/* harmony import */ var _cartesian_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./cartesian.js */ "./node_modules/d3-geo/src/cartesian.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 
 
-var sum = Object(_adder__WEBPACK_IMPORTED_MODULE_0__["default"])();
+var sum = Object(_adder_js__WEBPACK_IMPORTED_MODULE_0__["default"])();
 
 function longitude(point) {
-  if (Object(_math__WEBPACK_IMPORTED_MODULE_2__["abs"])(point[0]) <= _math__WEBPACK_IMPORTED_MODULE_2__["pi"])
+  if (Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["abs"])(point[0]) <= _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"])
     return point[0];
   else
-    return Object(_math__WEBPACK_IMPORTED_MODULE_2__["sign"])(point[0]) * ((Object(_math__WEBPACK_IMPORTED_MODULE_2__["abs"])(point[0]) + _math__WEBPACK_IMPORTED_MODULE_2__["pi"]) % _math__WEBPACK_IMPORTED_MODULE_2__["tau"] - _math__WEBPACK_IMPORTED_MODULE_2__["pi"]);
+    return Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sign"])(point[0]) * ((Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["abs"])(point[0]) + _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"]) % _math_js__WEBPACK_IMPORTED_MODULE_2__["tau"] - _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"]);
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function(polygon, point) {
   var lambda = longitude(point),
       phi = point[1],
-      sinPhi = Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(phi),
-      normal = [Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(lambda), -Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(lambda), 0],
+      sinPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(phi),
+      normal = [Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(lambda), -Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(lambda), 0],
       angle = 0,
       winding = 0;
 
   sum.reset();
 
-  if (sinPhi === 1) phi = _math__WEBPACK_IMPORTED_MODULE_2__["halfPi"] + _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
-  else if (sinPhi === -1) phi = -_math__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
+  if (sinPhi === 1) phi = _math_js__WEBPACK_IMPORTED_MODULE_2__["halfPi"] + _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
+  else if (sinPhi === -1) phi = -_math_js__WEBPACK_IMPORTED_MODULE_2__["halfPi"] - _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"];
 
   for (var i = 0, n = polygon.length; i < n; ++i) {
     if (!(m = (ring = polygon[i]).length)) continue;
@@ -17331,33 +17358,33 @@ function longitude(point) {
         m,
         point0 = ring[m - 1],
         lambda0 = longitude(point0),
-        phi0 = point0[1] / 2 + _math__WEBPACK_IMPORTED_MODULE_2__["quarterPi"],
-        sinPhi0 = Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(phi0),
-        cosPhi0 = Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(phi0);
+        phi0 = point0[1] / 2 + _math_js__WEBPACK_IMPORTED_MODULE_2__["quarterPi"],
+        sinPhi0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(phi0),
+        cosPhi0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(phi0);
 
     for (var j = 0; j < m; ++j, lambda0 = lambda1, sinPhi0 = sinPhi1, cosPhi0 = cosPhi1, point0 = point1) {
       var point1 = ring[j],
           lambda1 = longitude(point1),
-          phi1 = point1[1] / 2 + _math__WEBPACK_IMPORTED_MODULE_2__["quarterPi"],
-          sinPhi1 = Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(phi1),
-          cosPhi1 = Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(phi1),
+          phi1 = point1[1] / 2 + _math_js__WEBPACK_IMPORTED_MODULE_2__["quarterPi"],
+          sinPhi1 = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(phi1),
+          cosPhi1 = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(phi1),
           delta = lambda1 - lambda0,
           sign = delta >= 0 ? 1 : -1,
           absDelta = sign * delta,
-          antimeridian = absDelta > _math__WEBPACK_IMPORTED_MODULE_2__["pi"],
+          antimeridian = absDelta > _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"],
           k = sinPhi0 * sinPhi1;
 
-      sum.add(Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(k * sign * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(absDelta), cosPhi0 * cosPhi1 + k * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(absDelta)));
-      angle += antimeridian ? delta + sign * _math__WEBPACK_IMPORTED_MODULE_2__["tau"] : delta;
+      sum.add(Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(k * sign * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(absDelta), cosPhi0 * cosPhi1 + k * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(absDelta)));
+      angle += antimeridian ? delta + sign * _math_js__WEBPACK_IMPORTED_MODULE_2__["tau"] : delta;
 
       // Are the longitudes either side of the point’s meridian (lambda),
       // and are the latitudes smaller than the parallel (phi)?
       if (antimeridian ^ lambda0 >= lambda ^ lambda1 >= lambda) {
-        var arc = Object(_cartesian__WEBPACK_IMPORTED_MODULE_1__["cartesianCross"])(Object(_cartesian__WEBPACK_IMPORTED_MODULE_1__["cartesian"])(point0), Object(_cartesian__WEBPACK_IMPORTED_MODULE_1__["cartesian"])(point1));
-        Object(_cartesian__WEBPACK_IMPORTED_MODULE_1__["cartesianNormalizeInPlace"])(arc);
-        var intersection = Object(_cartesian__WEBPACK_IMPORTED_MODULE_1__["cartesianCross"])(normal, arc);
-        Object(_cartesian__WEBPACK_IMPORTED_MODULE_1__["cartesianNormalizeInPlace"])(intersection);
-        var phiArc = (antimeridian ^ delta >= 0 ? -1 : 1) * Object(_math__WEBPACK_IMPORTED_MODULE_2__["asin"])(intersection[2]);
+        var arc = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_1__["cartesianCross"])(Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_1__["cartesian"])(point0), Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_1__["cartesian"])(point1));
+        Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_1__["cartesianNormalizeInPlace"])(arc);
+        var intersection = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_1__["cartesianCross"])(normal, arc);
+        Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_1__["cartesianNormalizeInPlace"])(intersection);
+        var phiArc = (antimeridian ^ delta >= 0 ? -1 : 1) * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["asin"])(intersection[2]);
         if (phi > phiArc || phi === phiArc && (arc[0] || arc[1])) {
           winding += antimeridian ^ delta >= 0 ? 1 : -1;
         }
@@ -17376,7 +17403,7 @@ function longitude(point) {
   // from the point to the South pole.  If it is zero, then the point is the
   // same side as the South pole.
 
-  return (angle < -_math__WEBPACK_IMPORTED_MODULE_2__["epsilon"] || angle < _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"] && sum < -_math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) ^ (winding & 1);
+  return (angle < -_math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"] || angle < _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"] && sum < -_math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) ^ (winding & 1);
 });
 
 
@@ -17391,11 +17418,11 @@ function longitude(point) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _conicEqualArea__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./conicEqualArea */ "./node_modules/d3-geo/src/projection/conicEqualArea.js");
+/* harmony import */ var _conicEqualArea_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./conicEqualArea.js */ "./node_modules/d3-geo/src/projection/conicEqualArea.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_conicEqualArea__WEBPACK_IMPORTED_MODULE_0__["default"])()
+  return Object(_conicEqualArea_js__WEBPACK_IMPORTED_MODULE_0__["default"])()
       .parallels([29.5, 45.5])
       .scale(1070)
       .translate([480, 250])
@@ -17415,10 +17442,10 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _albers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./albers */ "./node_modules/d3-geo/src/projection/albers.js");
-/* harmony import */ var _conicEqualArea__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./conicEqualArea */ "./node_modules/d3-geo/src/projection/conicEqualArea.js");
-/* harmony import */ var _fit__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./fit */ "./node_modules/d3-geo/src/projection/fit.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _albers_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./albers.js */ "./node_modules/d3-geo/src/projection/albers.js");
+/* harmony import */ var _conicEqualArea_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./conicEqualArea.js */ "./node_modules/d3-geo/src/projection/conicEqualArea.js");
+/* harmony import */ var _fit_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./fit.js */ "./node_modules/d3-geo/src/projection/fit.js");
 
 
 
@@ -17446,9 +17473,9 @@ function multiplex(streams) {
 /* harmony default export */ __webpack_exports__["default"] = (function() {
   var cache,
       cacheStream,
-      lower48 = Object(_albers__WEBPACK_IMPORTED_MODULE_1__["default"])(), lower48Point,
-      alaska = Object(_conicEqualArea__WEBPACK_IMPORTED_MODULE_2__["default"])().rotate([154, 0]).center([-2, 58.5]).parallels([55, 65]), alaskaPoint, // EPSG:3338
-      hawaii = Object(_conicEqualArea__WEBPACK_IMPORTED_MODULE_2__["default"])().rotate([157, 0]).center([-3, 19.9]).parallels([8, 18]), hawaiiPoint, // ESRI:102007
+      lower48 = Object(_albers_js__WEBPACK_IMPORTED_MODULE_1__["default"])(), lower48Point,
+      alaska = Object(_conicEqualArea_js__WEBPACK_IMPORTED_MODULE_2__["default"])().rotate([154, 0]).center([-2, 58.5]).parallels([55, 65]), alaskaPoint, // EPSG:3338
+      hawaii = Object(_conicEqualArea_js__WEBPACK_IMPORTED_MODULE_2__["default"])().rotate([157, 0]).center([-3, 19.9]).parallels([8, 18]), hawaiiPoint, // ESRI:102007
       point, pointStream = {point: function(x, y) { point = [x, y]; }};
 
   function albersUsa(coordinates) {
@@ -17496,31 +17523,31 @@ function multiplex(streams) {
 
     alaskaPoint = alaska
         .translate([x - 0.307 * k, y + 0.201 * k])
-        .clipExtent([[x - 0.425 * k + _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"], y + 0.120 * k + _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]], [x - 0.214 * k - _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"], y + 0.234 * k - _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]]])
+        .clipExtent([[x - 0.425 * k + _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"], y + 0.120 * k + _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]], [x - 0.214 * k - _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"], y + 0.234 * k - _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]]])
         .stream(pointStream);
 
     hawaiiPoint = hawaii
         .translate([x - 0.205 * k, y + 0.212 * k])
-        .clipExtent([[x - 0.214 * k + _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"], y + 0.166 * k + _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]], [x - 0.115 * k - _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"], y + 0.234 * k - _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]]])
+        .clipExtent([[x - 0.214 * k + _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"], y + 0.166 * k + _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]], [x - 0.115 * k - _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"], y + 0.234 * k - _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]]])
         .stream(pointStream);
 
     return reset();
   };
 
   albersUsa.fitExtent = function(extent, object) {
-    return Object(_fit__WEBPACK_IMPORTED_MODULE_3__["fitExtent"])(albersUsa, extent, object);
+    return Object(_fit_js__WEBPACK_IMPORTED_MODULE_3__["fitExtent"])(albersUsa, extent, object);
   };
 
   albersUsa.fitSize = function(size, object) {
-    return Object(_fit__WEBPACK_IMPORTED_MODULE_3__["fitSize"])(albersUsa, size, object);
+    return Object(_fit_js__WEBPACK_IMPORTED_MODULE_3__["fitSize"])(albersUsa, size, object);
   };
 
   albersUsa.fitWidth = function(width, object) {
-    return Object(_fit__WEBPACK_IMPORTED_MODULE_3__["fitWidth"])(albersUsa, width, object);
+    return Object(_fit_js__WEBPACK_IMPORTED_MODULE_3__["fitWidth"])(albersUsa, width, object);
   };
 
   albersUsa.fitHeight = function(height, object) {
-    return Object(_fit__WEBPACK_IMPORTED_MODULE_3__["fitHeight"])(albersUsa, height, object);
+    return Object(_fit_js__WEBPACK_IMPORTED_MODULE_3__["fitHeight"])(albersUsa, height, object);
   };
 
   function reset() {
@@ -17545,30 +17572,30 @@ function multiplex(streams) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "azimuthalRaw", function() { return azimuthalRaw; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "azimuthalInvert", function() { return azimuthalInvert; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 function azimuthalRaw(scale) {
   return function(x, y) {
-    var cx = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(x),
-        cy = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y),
+    var cx = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(x),
+        cy = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y),
         k = scale(cx * cy);
     return [
-      k * cy * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(x),
-      k * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y)
+      k * cy * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(x),
+      k * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y)
     ];
   }
 }
 
 function azimuthalInvert(angle) {
   return function(x, y) {
-    var z = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(x * x + y * y),
+    var z = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(x * x + y * y),
         c = angle(z),
-        sc = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(c),
-        cc = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(c);
+        sc = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(c),
+        cc = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(c);
     return [
-      Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(x * sc, z * cc),
-      Object(_math__WEBPACK_IMPORTED_MODULE_0__["asin"])(z && y * sc / z)
+      Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(x * sc, z * cc),
+      Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"])(z && y * sc / z)
     ];
   }
 }
@@ -17586,23 +17613,23 @@ function azimuthalInvert(angle) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "azimuthalEqualAreaRaw", function() { return azimuthalEqualAreaRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _azimuthal__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal */ "./node_modules/d3-geo/src/projection/azimuthal.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _azimuthal_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal.js */ "./node_modules/d3-geo/src/projection/azimuthal.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
 
 
 
 
-var azimuthalEqualAreaRaw = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuthalRaw"])(function(cxcy) {
-  return Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(2 / (1 + cxcy));
+var azimuthalEqualAreaRaw = Object(_azimuthal_js__WEBPACK_IMPORTED_MODULE_1__["azimuthalRaw"])(function(cxcy) {
+  return Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(2 / (1 + cxcy));
 });
 
-azimuthalEqualAreaRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(function(z) {
-  return 2 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["asin"])(z / 2);
+azimuthalEqualAreaRaw.invert = Object(_azimuthal_js__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(function(z) {
+  return 2 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"])(z / 2);
 });
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_index__WEBPACK_IMPORTED_MODULE_2__["default"])(azimuthalEqualAreaRaw)
+  return Object(_index_js__WEBPACK_IMPORTED_MODULE_2__["default"])(azimuthalEqualAreaRaw)
       .scale(124.75)
       .clipAngle(180 - 1e-3);
 });
@@ -17620,23 +17647,23 @@ azimuthalEqualAreaRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["a
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "azimuthalEquidistantRaw", function() { return azimuthalEquidistantRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _azimuthal__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal */ "./node_modules/d3-geo/src/projection/azimuthal.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _azimuthal_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal.js */ "./node_modules/d3-geo/src/projection/azimuthal.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
 
 
 
 
-var azimuthalEquidistantRaw = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuthalRaw"])(function(c) {
-  return (c = Object(_math__WEBPACK_IMPORTED_MODULE_0__["acos"])(c)) && c / Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(c);
+var azimuthalEquidistantRaw = Object(_azimuthal_js__WEBPACK_IMPORTED_MODULE_1__["azimuthalRaw"])(function(c) {
+  return (c = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["acos"])(c)) && c / Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(c);
 });
 
-azimuthalEquidistantRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(function(z) {
+azimuthalEquidistantRaw.invert = Object(_azimuthal_js__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(function(z) {
   return z;
 });
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_index__WEBPACK_IMPORTED_MODULE_2__["default"])(azimuthalEquidistantRaw)
+  return Object(_index_js__WEBPACK_IMPORTED_MODULE_2__["default"])(azimuthalEquidistantRaw)
       .scale(79.4188)
       .clipAngle(180 - 1e-3);
 });
@@ -17654,19 +17681,19 @@ azimuthalEquidistantRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__[
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "conicProjection", function() { return conicProjection; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
 
 
 
 function conicProjection(projectAt) {
   var phi0 = 0,
-      phi1 = _math__WEBPACK_IMPORTED_MODULE_0__["pi"] / 3,
-      m = Object(_index__WEBPACK_IMPORTED_MODULE_1__["projectionMutator"])(projectAt),
+      phi1 = _math_js__WEBPACK_IMPORTED_MODULE_0__["pi"] / 3,
+      m = Object(_index_js__WEBPACK_IMPORTED_MODULE_1__["projectionMutator"])(projectAt),
       p = m(phi0, phi1);
 
   p.parallels = function(_) {
-    return arguments.length ? m(phi0 = _[0] * _math__WEBPACK_IMPORTED_MODULE_0__["radians"], phi1 = _[1] * _math__WEBPACK_IMPORTED_MODULE_0__["radians"]) : [phi0 * _math__WEBPACK_IMPORTED_MODULE_0__["degrees"], phi1 * _math__WEBPACK_IMPORTED_MODULE_0__["degrees"]];
+    return arguments.length ? m(phi0 = _[0] * _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"], phi1 = _[1] * _math_js__WEBPACK_IMPORTED_MODULE_0__["radians"]) : [phi0 * _math_js__WEBPACK_IMPORTED_MODULE_0__["degrees"], phi1 * _math_js__WEBPACK_IMPORTED_MODULE_0__["degrees"]];
   };
 
   return p;
@@ -17685,41 +17712,41 @@ function conicProjection(projectAt) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "conicConformalRaw", function() { return conicConformalRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _conic__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conic */ "./node_modules/d3-geo/src/projection/conic.js");
-/* harmony import */ var _mercator__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./mercator */ "./node_modules/d3-geo/src/projection/mercator.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _conic_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conic.js */ "./node_modules/d3-geo/src/projection/conic.js");
+/* harmony import */ var _mercator_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./mercator.js */ "./node_modules/d3-geo/src/projection/mercator.js");
 
 
 
 
 function tany(y) {
-  return Object(_math__WEBPACK_IMPORTED_MODULE_0__["tan"])((_math__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + y) / 2);
+  return Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["tan"])((_math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + y) / 2);
 }
 
 function conicConformalRaw(y0, y1) {
-  var cy0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y0),
-      n = y0 === y1 ? Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y0) : Object(_math__WEBPACK_IMPORTED_MODULE_0__["log"])(cy0 / Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y1)) / Object(_math__WEBPACK_IMPORTED_MODULE_0__["log"])(tany(y1) / tany(y0)),
-      f = cy0 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["pow"])(tany(y0), n) / n;
+  var cy0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y0),
+      n = y0 === y1 ? Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y0) : Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["log"])(cy0 / Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y1)) / Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["log"])(tany(y1) / tany(y0)),
+      f = cy0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["pow"])(tany(y0), n) / n;
 
-  if (!n) return _mercator__WEBPACK_IMPORTED_MODULE_2__["mercatorRaw"];
+  if (!n) return _mercator_js__WEBPACK_IMPORTED_MODULE_2__["mercatorRaw"];
 
   function project(x, y) {
-    if (f > 0) { if (y < -_math__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) y = -_math__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]; }
-    else { if (y > _math__WEBPACK_IMPORTED_MODULE_0__["halfPi"] - _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) y = _math__WEBPACK_IMPORTED_MODULE_0__["halfPi"] - _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]; }
-    var r = f / Object(_math__WEBPACK_IMPORTED_MODULE_0__["pow"])(tany(y), n);
-    return [r * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(n * x), f - r * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(n * x)];
+    if (f > 0) { if (y < -_math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) y = -_math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]; }
+    else { if (y > _math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"] - _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) y = _math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"] - _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]; }
+    var r = f / Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["pow"])(tany(y), n);
+    return [r * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(n * x), f - r * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(n * x)];
   }
 
   project.invert = function(x, y) {
-    var fy = f - y, r = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sign"])(n) * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(x * x + fy * fy);
-    return [Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(x, Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(fy)) / n * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sign"])(fy), 2 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan"])(Object(_math__WEBPACK_IMPORTED_MODULE_0__["pow"])(f / r, 1 / n)) - _math__WEBPACK_IMPORTED_MODULE_0__["halfPi"]];
+    var fy = f - y, r = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sign"])(n) * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(x * x + fy * fy);
+    return [Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(x, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(fy)) / n * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sign"])(fy), 2 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["pow"])(f / r, 1 / n)) - _math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"]];
   };
 
   return project;
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_conic__WEBPACK_IMPORTED_MODULE_1__["conicProjection"])(conicConformalRaw)
+  return Object(_conic_js__WEBPACK_IMPORTED_MODULE_1__["conicProjection"])(conicConformalRaw)
       .scale(109.5)
       .parallels([30, 30]);
 });
@@ -17737,36 +17764,36 @@ function conicConformalRaw(y0, y1) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "conicEqualAreaRaw", function() { return conicEqualAreaRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _conic__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conic */ "./node_modules/d3-geo/src/projection/conic.js");
-/* harmony import */ var _cylindricalEqualArea__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./cylindricalEqualArea */ "./node_modules/d3-geo/src/projection/cylindricalEqualArea.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _conic_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conic.js */ "./node_modules/d3-geo/src/projection/conic.js");
+/* harmony import */ var _cylindricalEqualArea_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./cylindricalEqualArea.js */ "./node_modules/d3-geo/src/projection/cylindricalEqualArea.js");
 
 
 
 
 function conicEqualAreaRaw(y0, y1) {
-  var sy0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y0), n = (sy0 + Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y1)) / 2;
+  var sy0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y0), n = (sy0 + Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y1)) / 2;
 
   // Are the parallels symmetrical around the Equator?
-  if (Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(n) < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) return Object(_cylindricalEqualArea__WEBPACK_IMPORTED_MODULE_2__["cylindricalEqualAreaRaw"])(y0);
+  if (Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(n) < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) return Object(_cylindricalEqualArea_js__WEBPACK_IMPORTED_MODULE_2__["cylindricalEqualAreaRaw"])(y0);
 
-  var c = 1 + sy0 * (2 * n - sy0), r0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(c) / n;
+  var c = 1 + sy0 * (2 * n - sy0), r0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(c) / n;
 
   function project(x, y) {
-    var r = Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(c - 2 * n * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y)) / n;
-    return [r * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(x *= n), r0 - r * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(x)];
+    var r = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(c - 2 * n * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y)) / n;
+    return [r * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(x *= n), r0 - r * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(x)];
   }
 
   project.invert = function(x, y) {
     var r0y = r0 - y;
-    return [Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(x, Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(r0y)) / n * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sign"])(r0y), Object(_math__WEBPACK_IMPORTED_MODULE_0__["asin"])((c - (x * x + r0y * r0y) * n * n) / (2 * n))];
+    return [Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(x, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(r0y)) / n * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sign"])(r0y), Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"])((c - (x * x + r0y * r0y) * n * n) / (2 * n))];
   };
 
   return project;
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_conic__WEBPACK_IMPORTED_MODULE_1__["conicProjection"])(conicEqualAreaRaw)
+  return Object(_conic_js__WEBPACK_IMPORTED_MODULE_1__["conicProjection"])(conicEqualAreaRaw)
       .scale(155.424)
       .center([0, 33.6442]);
 });
@@ -17784,35 +17811,35 @@ function conicEqualAreaRaw(y0, y1) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "conicEquidistantRaw", function() { return conicEquidistantRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _conic__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conic */ "./node_modules/d3-geo/src/projection/conic.js");
-/* harmony import */ var _equirectangular__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./equirectangular */ "./node_modules/d3-geo/src/projection/equirectangular.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _conic_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./conic.js */ "./node_modules/d3-geo/src/projection/conic.js");
+/* harmony import */ var _equirectangular_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./equirectangular.js */ "./node_modules/d3-geo/src/projection/equirectangular.js");
 
 
 
 
 function conicEquidistantRaw(y0, y1) {
-  var cy0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y0),
-      n = y0 === y1 ? Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y0) : (cy0 - Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y1)) / (y1 - y0),
+  var cy0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y0),
+      n = y0 === y1 ? Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y0) : (cy0 - Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y1)) / (y1 - y0),
       g = cy0 / n + y0;
 
-  if (Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(n) < _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) return _equirectangular__WEBPACK_IMPORTED_MODULE_2__["equirectangularRaw"];
+  if (Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(n) < _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) return _equirectangular_js__WEBPACK_IMPORTED_MODULE_2__["equirectangularRaw"];
 
   function project(x, y) {
     var gy = g - y, nx = n * x;
-    return [gy * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(nx), g - gy * Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(nx)];
+    return [gy * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(nx), g - gy * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(nx)];
   }
 
   project.invert = function(x, y) {
     var gy = g - y;
-    return [Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan2"])(x, Object(_math__WEBPACK_IMPORTED_MODULE_0__["abs"])(gy)) / n * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sign"])(gy), g - Object(_math__WEBPACK_IMPORTED_MODULE_0__["sign"])(n) * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(x * x + gy * gy)];
+    return [Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan2"])(x, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["abs"])(gy)) / n * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sign"])(gy), g - Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sign"])(n) * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sqrt"])(x * x + gy * gy)];
   };
 
   return project;
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_conic__WEBPACK_IMPORTED_MODULE_1__["conicProjection"])(conicEquidistantRaw)
+  return Object(_conic_js__WEBPACK_IMPORTED_MODULE_1__["conicProjection"])(conicEquidistantRaw)
       .scale(131.154)
       .center([0, 13.9389]);
 });
@@ -17830,18 +17857,18 @@ function conicEquidistantRaw(y0, y1) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "cylindricalEqualAreaRaw", function() { return cylindricalEqualAreaRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 function cylindricalEqualAreaRaw(phi0) {
-  var cosPhi0 = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi0);
+  var cosPhi0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(phi0);
 
   function forward(lambda, phi) {
-    return [lambda * cosPhi0, Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi) / cosPhi0];
+    return [lambda * cosPhi0, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(phi) / cosPhi0];
   }
 
   forward.invert = function(x, y) {
-    return [x / cosPhi0, Object(_math__WEBPACK_IMPORTED_MODULE_0__["asin"])(y * cosPhi0)];
+    return [x / cosPhi0, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"])(y * cosPhi0)];
   };
 
   return forward;
@@ -17912,7 +17939,7 @@ equalEarthRaw.invert = function(x, y) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "equirectangularRaw", function() { return equirectangularRaw; });
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
 
 
 function equirectangularRaw(lambda, phi) {
@@ -17922,7 +17949,7 @@ function equirectangularRaw(lambda, phi) {
 equirectangularRaw.invert = equirectangularRaw;
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_index__WEBPACK_IMPORTED_MODULE_0__["default"])(equirectangularRaw)
+  return Object(_index_js__WEBPACK_IMPORTED_MODULE_0__["default"])(equirectangularRaw)
       .scale(152.63);
 });
 
@@ -17942,8 +17969,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fitSize", function() { return fitSize; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fitWidth", function() { return fitWidth; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fitHeight", function() { return fitHeight; });
-/* harmony import */ var _stream__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../stream */ "./node_modules/d3-geo/src/stream.js");
-/* harmony import */ var _path_bounds__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../path/bounds */ "./node_modules/d3-geo/src/path/bounds.js");
+/* harmony import */ var _stream_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../stream.js */ "./node_modules/d3-geo/src/stream.js");
+/* harmony import */ var _path_bounds_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../path/bounds.js */ "./node_modules/d3-geo/src/path/bounds.js");
 
 
 
@@ -17951,8 +17978,8 @@ function fit(projection, fitBounds, object) {
   var clip = projection.clipExtent && projection.clipExtent();
   projection.scale(150).translate([0, 0]);
   if (clip != null) projection.clipExtent(null);
-  Object(_stream__WEBPACK_IMPORTED_MODULE_0__["default"])(object, projection.stream(_path_bounds__WEBPACK_IMPORTED_MODULE_1__["default"]));
-  fitBounds(_path_bounds__WEBPACK_IMPORTED_MODULE_1__["default"].result());
+  Object(_stream_js__WEBPACK_IMPORTED_MODULE_0__["default"])(object, projection.stream(_path_bounds_js__WEBPACK_IMPORTED_MODULE_1__["default"]));
+  fitBounds(_path_bounds_js__WEBPACK_IMPORTED_MODULE_1__["default"].result());
   if (clip != null) projection.clipExtent(clip);
   return projection;
 }
@@ -18005,22 +18032,22 @@ function fitHeight(projection, height, object) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "gnomonicRaw", function() { return gnomonicRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _azimuthal__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal */ "./node_modules/d3-geo/src/projection/azimuthal.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _azimuthal_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal.js */ "./node_modules/d3-geo/src/projection/azimuthal.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
 
 
 
 
 function gnomonicRaw(x, y) {
-  var cy = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y), k = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(x) * cy;
-  return [cy * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(x) / k, Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y) / k];
+  var cy = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y), k = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(x) * cy;
+  return [cy * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(x) / k, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y) / k];
 }
 
-gnomonicRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(_math__WEBPACK_IMPORTED_MODULE_0__["atan"]);
+gnomonicRaw.invert = Object(_azimuthal_js__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan"]);
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_index__WEBPACK_IMPORTED_MODULE_2__["default"])(gnomonicRaw)
+  return Object(_index_js__WEBPACK_IMPORTED_MODULE_2__["default"])(gnomonicRaw)
       .scale(144.049)
       .clipAngle(60);
 });
@@ -18037,17 +18064,17 @@ gnomonicRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuthalIn
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _clip_rectangle__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../clip/rectangle */ "./node_modules/d3-geo/src/clip/rectangle.js");
-/* harmony import */ var _identity__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../identity */ "./node_modules/d3-geo/src/identity.js");
-/* harmony import */ var _transform__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../transform */ "./node_modules/d3-geo/src/transform.js");
-/* harmony import */ var _fit__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./fit */ "./node_modules/d3-geo/src/projection/fit.js");
+/* harmony import */ var _clip_rectangle_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../clip/rectangle.js */ "./node_modules/d3-geo/src/clip/rectangle.js");
+/* harmony import */ var _identity_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../identity.js */ "./node_modules/d3-geo/src/identity.js");
+/* harmony import */ var _transform_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../transform.js */ "./node_modules/d3-geo/src/transform.js");
+/* harmony import */ var _fit_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./fit.js */ "./node_modules/d3-geo/src/projection/fit.js");
 
 
 
 
 
 function scaleTranslate(kx, ky, tx, ty) {
-  return kx === 1 && ky === 1 && tx === 0 && ty === 0 ? _identity__WEBPACK_IMPORTED_MODULE_1__["default"] : Object(_transform__WEBPACK_IMPORTED_MODULE_2__["transformer"])({
+  return kx === 1 && ky === 1 && tx === 0 && ty === 0 ? _identity_js__WEBPACK_IMPORTED_MODULE_1__["default"] : Object(_transform_js__WEBPACK_IMPORTED_MODULE_2__["transformer"])({
     point: function(x, y) {
       this.stream.point(x * kx + tx, y * ky + ty);
     }
@@ -18055,9 +18082,9 @@ function scaleTranslate(kx, ky, tx, ty) {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var k = 1, tx = 0, ty = 0, sx = 1, sy = 1, transform = _identity__WEBPACK_IMPORTED_MODULE_1__["default"], // scale, translate and reflect
+  var k = 1, tx = 0, ty = 0, sx = 1, sy = 1, transform = _identity_js__WEBPACK_IMPORTED_MODULE_1__["default"], // scale, translate and reflect
       x0 = null, y0, x1, y1, // clip extent
-      postclip = _identity__WEBPACK_IMPORTED_MODULE_1__["default"],
+      postclip = _identity_js__WEBPACK_IMPORTED_MODULE_1__["default"],
       cache,
       cacheStream,
       projection;
@@ -18075,7 +18102,7 @@ function scaleTranslate(kx, ky, tx, ty) {
       return arguments.length ? (postclip = _, x0 = y0 = x1 = y1 = null, reset()) : postclip;
     },
     clipExtent: function(_) {
-      return arguments.length ? (postclip = _ == null ? (x0 = y0 = x1 = y1 = null, _identity__WEBPACK_IMPORTED_MODULE_1__["default"]) : Object(_clip_rectangle__WEBPACK_IMPORTED_MODULE_0__["default"])(x0 = +_[0][0], y0 = +_[0][1], x1 = +_[1][0], y1 = +_[1][1]), reset()) : x0 == null ? null : [[x0, y0], [x1, y1]];
+      return arguments.length ? (postclip = _ == null ? (x0 = y0 = x1 = y1 = null, _identity_js__WEBPACK_IMPORTED_MODULE_1__["default"]) : Object(_clip_rectangle_js__WEBPACK_IMPORTED_MODULE_0__["default"])(x0 = +_[0][0], y0 = +_[0][1], x1 = +_[1][0], y1 = +_[1][1]), reset()) : x0 == null ? null : [[x0, y0], [x1, y1]];
     },
     scale: function(_) {
       return arguments.length ? (transform = scaleTranslate((k = +_) * sx, k * sy, tx, ty), reset()) : k;
@@ -18090,16 +18117,16 @@ function scaleTranslate(kx, ky, tx, ty) {
       return arguments.length ? (transform = scaleTranslate(k * sx, k * (sy = _ ? -1 : 1), tx, ty), reset()) : sy < 0;
     },
     fitExtent: function(extent, object) {
-      return Object(_fit__WEBPACK_IMPORTED_MODULE_3__["fitExtent"])(projection, extent, object);
+      return Object(_fit_js__WEBPACK_IMPORTED_MODULE_3__["fitExtent"])(projection, extent, object);
     },
     fitSize: function(size, object) {
-      return Object(_fit__WEBPACK_IMPORTED_MODULE_3__["fitSize"])(projection, size, object);
+      return Object(_fit_js__WEBPACK_IMPORTED_MODULE_3__["fitSize"])(projection, size, object);
     },
     fitWidth: function(width, object) {
-      return Object(_fit__WEBPACK_IMPORTED_MODULE_3__["fitWidth"])(projection, width, object);
+      return Object(_fit_js__WEBPACK_IMPORTED_MODULE_3__["fitWidth"])(projection, width, object);
     },
     fitHeight: function(height, object) {
-      return Object(_fit__WEBPACK_IMPORTED_MODULE_3__["fitHeight"])(projection, height, object);
+      return Object(_fit_js__WEBPACK_IMPORTED_MODULE_3__["fitHeight"])(projection, height, object);
     }
   };
 });
@@ -18118,16 +18145,16 @@ function scaleTranslate(kx, ky, tx, ty) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return projection; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "projectionMutator", function() { return projectionMutator; });
-/* harmony import */ var _clip_antimeridian__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../clip/antimeridian */ "./node_modules/d3-geo/src/clip/antimeridian.js");
-/* harmony import */ var _clip_circle__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../clip/circle */ "./node_modules/d3-geo/src/clip/circle.js");
-/* harmony import */ var _clip_rectangle__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../clip/rectangle */ "./node_modules/d3-geo/src/clip/rectangle.js");
-/* harmony import */ var _compose__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../compose */ "./node_modules/d3-geo/src/compose.js");
-/* harmony import */ var _identity__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../identity */ "./node_modules/d3-geo/src/identity.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _rotation__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../rotation */ "./node_modules/d3-geo/src/rotation.js");
-/* harmony import */ var _transform__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../transform */ "./node_modules/d3-geo/src/transform.js");
-/* harmony import */ var _fit__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./fit */ "./node_modules/d3-geo/src/projection/fit.js");
-/* harmony import */ var _resample__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./resample */ "./node_modules/d3-geo/src/projection/resample.js");
+/* harmony import */ var _clip_antimeridian_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../clip/antimeridian.js */ "./node_modules/d3-geo/src/clip/antimeridian.js");
+/* harmony import */ var _clip_circle_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../clip/circle.js */ "./node_modules/d3-geo/src/clip/circle.js");
+/* harmony import */ var _clip_rectangle_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../clip/rectangle.js */ "./node_modules/d3-geo/src/clip/rectangle.js");
+/* harmony import */ var _compose_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../compose.js */ "./node_modules/d3-geo/src/compose.js");
+/* harmony import */ var _identity_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../identity.js */ "./node_modules/d3-geo/src/identity.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _rotation_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../rotation.js */ "./node_modules/d3-geo/src/rotation.js");
+/* harmony import */ var _transform_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../transform.js */ "./node_modules/d3-geo/src/transform.js");
+/* harmony import */ var _fit_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./fit.js */ "./node_modules/d3-geo/src/projection/fit.js");
+/* harmony import */ var _resample_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./resample.js */ "./node_modules/d3-geo/src/projection/resample.js");
 
 
 
@@ -18139,14 +18166,14 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var transformRadians = Object(_transform__WEBPACK_IMPORTED_MODULE_7__["transformer"])({
+var transformRadians = Object(_transform_js__WEBPACK_IMPORTED_MODULE_7__["transformer"])({
   point: function(x, y) {
-    this.stream.point(x * _math__WEBPACK_IMPORTED_MODULE_5__["radians"], y * _math__WEBPACK_IMPORTED_MODULE_5__["radians"]);
+    this.stream.point(x * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"], y * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"]);
   }
 });
 
 function transformRotate(rotate) {
-  return Object(_transform__WEBPACK_IMPORTED_MODULE_7__["transformer"])({
+  return Object(_transform_js__WEBPACK_IMPORTED_MODULE_7__["transformer"])({
     point: function(x, y) {
       var r = rotate(x, y);
       return this.stream.point(r[0], r[1]);
@@ -18165,8 +18192,8 @@ function scaleTranslate(k, dx, dy) {
 }
 
 function scaleTranslateRotate(k, dx, dy, alpha) {
-  var cosAlpha = Object(_math__WEBPACK_IMPORTED_MODULE_5__["cos"])(alpha),
-      sinAlpha = Object(_math__WEBPACK_IMPORTED_MODULE_5__["sin"])(alpha),
+  var cosAlpha = Object(_math_js__WEBPACK_IMPORTED_MODULE_5__["cos"])(alpha),
+      sinAlpha = Object(_math_js__WEBPACK_IMPORTED_MODULE_5__["sin"])(alpha),
       a = cosAlpha * k,
       b = sinAlpha * k,
       ai = cosAlpha / k,
@@ -18193,8 +18220,8 @@ function projectionMutator(projectAt) {
       lambda = 0, phi = 0, // center
       deltaLambda = 0, deltaPhi = 0, deltaGamma = 0, rotate, // pre-rotate
       alpha = 0, // post-rotate
-      theta = null, preclip = _clip_antimeridian__WEBPACK_IMPORTED_MODULE_0__["default"], // pre-clip angle
-      x0 = null, y0, x1, y1, postclip = _identity__WEBPACK_IMPORTED_MODULE_4__["default"], // post-clip extent
+      theta = null, preclip = _clip_antimeridian_js__WEBPACK_IMPORTED_MODULE_0__["default"], // pre-clip angle
+      x0 = null, y0, x1, y1, postclip = _identity_js__WEBPACK_IMPORTED_MODULE_4__["default"], // post-clip extent
       delta2 = 0.5, // precision
       projectResample,
       projectTransform,
@@ -18203,12 +18230,12 @@ function projectionMutator(projectAt) {
       cacheStream;
 
   function projection(point) {
-    return projectRotateTransform(point[0] * _math__WEBPACK_IMPORTED_MODULE_5__["radians"], point[1] * _math__WEBPACK_IMPORTED_MODULE_5__["radians"]);
+    return projectRotateTransform(point[0] * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"], point[1] * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"]);
   }
 
   function invert(point) {
     point = projectRotateTransform.invert(point[0], point[1]);
-    return point && [point[0] * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"], point[1] * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"]];
+    return point && [point[0] * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"], point[1] * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"]];
   }
 
   projection.stream = function(stream) {
@@ -18224,11 +18251,11 @@ function projectionMutator(projectAt) {
   };
 
   projection.clipAngle = function(_) {
-    return arguments.length ? (preclip = +_ ? Object(_clip_circle__WEBPACK_IMPORTED_MODULE_1__["default"])(theta = _ * _math__WEBPACK_IMPORTED_MODULE_5__["radians"]) : (theta = null, _clip_antimeridian__WEBPACK_IMPORTED_MODULE_0__["default"]), reset()) : theta * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"];
+    return arguments.length ? (preclip = +_ ? Object(_clip_circle_js__WEBPACK_IMPORTED_MODULE_1__["default"])(theta = _ * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"]) : (theta = null, _clip_antimeridian_js__WEBPACK_IMPORTED_MODULE_0__["default"]), reset()) : theta * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"];
   };
 
   projection.clipExtent = function(_) {
-    return arguments.length ? (postclip = _ == null ? (x0 = y0 = x1 = y1 = null, _identity__WEBPACK_IMPORTED_MODULE_4__["default"]) : Object(_clip_rectangle__WEBPACK_IMPORTED_MODULE_2__["default"])(x0 = +_[0][0], y0 = +_[0][1], x1 = +_[1][0], y1 = +_[1][1]), reset()) : x0 == null ? null : [[x0, y0], [x1, y1]];
+    return arguments.length ? (postclip = _ == null ? (x0 = y0 = x1 = y1 = null, _identity_js__WEBPACK_IMPORTED_MODULE_4__["default"]) : Object(_clip_rectangle_js__WEBPACK_IMPORTED_MODULE_2__["default"])(x0 = +_[0][0], y0 = +_[0][1], x1 = +_[1][0], y1 = +_[1][1]), reset()) : x0 == null ? null : [[x0, y0], [x1, y1]];
   };
 
   projection.scale = function(_) {
@@ -18240,44 +18267,44 @@ function projectionMutator(projectAt) {
   };
 
   projection.center = function(_) {
-    return arguments.length ? (lambda = _[0] % 360 * _math__WEBPACK_IMPORTED_MODULE_5__["radians"], phi = _[1] % 360 * _math__WEBPACK_IMPORTED_MODULE_5__["radians"], recenter()) : [lambda * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"], phi * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"]];
+    return arguments.length ? (lambda = _[0] % 360 * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"], phi = _[1] % 360 * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"], recenter()) : [lambda * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"], phi * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"]];
   };
 
   projection.rotate = function(_) {
-    return arguments.length ? (deltaLambda = _[0] % 360 * _math__WEBPACK_IMPORTED_MODULE_5__["radians"], deltaPhi = _[1] % 360 * _math__WEBPACK_IMPORTED_MODULE_5__["radians"], deltaGamma = _.length > 2 ? _[2] % 360 * _math__WEBPACK_IMPORTED_MODULE_5__["radians"] : 0, recenter()) : [deltaLambda * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"], deltaPhi * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"], deltaGamma * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"]];
+    return arguments.length ? (deltaLambda = _[0] % 360 * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"], deltaPhi = _[1] % 360 * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"], deltaGamma = _.length > 2 ? _[2] % 360 * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"] : 0, recenter()) : [deltaLambda * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"], deltaPhi * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"], deltaGamma * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"]];
   };
 
   projection.angle = function(_) {
-    return arguments.length ? (alpha = _ % 360 * _math__WEBPACK_IMPORTED_MODULE_5__["radians"], recenter()) : alpha * _math__WEBPACK_IMPORTED_MODULE_5__["degrees"];
+    return arguments.length ? (alpha = _ % 360 * _math_js__WEBPACK_IMPORTED_MODULE_5__["radians"], recenter()) : alpha * _math_js__WEBPACK_IMPORTED_MODULE_5__["degrees"];
   };
 
   projection.precision = function(_) {
-    return arguments.length ? (projectResample = Object(_resample__WEBPACK_IMPORTED_MODULE_9__["default"])(projectTransform, delta2 = _ * _), reset()) : Object(_math__WEBPACK_IMPORTED_MODULE_5__["sqrt"])(delta2);
+    return arguments.length ? (projectResample = Object(_resample_js__WEBPACK_IMPORTED_MODULE_9__["default"])(projectTransform, delta2 = _ * _), reset()) : Object(_math_js__WEBPACK_IMPORTED_MODULE_5__["sqrt"])(delta2);
   };
 
   projection.fitExtent = function(extent, object) {
-    return Object(_fit__WEBPACK_IMPORTED_MODULE_8__["fitExtent"])(projection, extent, object);
+    return Object(_fit_js__WEBPACK_IMPORTED_MODULE_8__["fitExtent"])(projection, extent, object);
   };
 
   projection.fitSize = function(size, object) {
-    return Object(_fit__WEBPACK_IMPORTED_MODULE_8__["fitSize"])(projection, size, object);
+    return Object(_fit_js__WEBPACK_IMPORTED_MODULE_8__["fitSize"])(projection, size, object);
   };
 
   projection.fitWidth = function(width, object) {
-    return Object(_fit__WEBPACK_IMPORTED_MODULE_8__["fitWidth"])(projection, width, object);
+    return Object(_fit_js__WEBPACK_IMPORTED_MODULE_8__["fitWidth"])(projection, width, object);
   };
 
   projection.fitHeight = function(height, object) {
-    return Object(_fit__WEBPACK_IMPORTED_MODULE_8__["fitHeight"])(projection, height, object);
+    return Object(_fit_js__WEBPACK_IMPORTED_MODULE_8__["fitHeight"])(projection, height, object);
   };
 
   function recenter() {
     var center = scaleTranslateRotate(k, 0, 0, alpha).apply(null, project(lambda, phi)),
         transform = (alpha ? scaleTranslateRotate : scaleTranslate)(k, x - center[0], y - center[1], alpha);
-    rotate = Object(_rotation__WEBPACK_IMPORTED_MODULE_6__["rotateRadians"])(deltaLambda, deltaPhi, deltaGamma);
-    projectTransform = Object(_compose__WEBPACK_IMPORTED_MODULE_3__["default"])(project, transform);
-    projectRotateTransform = Object(_compose__WEBPACK_IMPORTED_MODULE_3__["default"])(rotate, projectTransform);
-    projectResample = Object(_resample__WEBPACK_IMPORTED_MODULE_9__["default"])(projectTransform, delta2);
+    rotate = Object(_rotation_js__WEBPACK_IMPORTED_MODULE_6__["rotateRadians"])(deltaLambda, deltaPhi, deltaGamma);
+    projectTransform = Object(_compose_js__WEBPACK_IMPORTED_MODULE_3__["default"])(project, transform);
+    projectRotateTransform = Object(_compose_js__WEBPACK_IMPORTED_MODULE_3__["default"])(rotate, projectTransform);
+    projectResample = Object(_resample_js__WEBPACK_IMPORTED_MODULE_9__["default"])(projectTransform, delta2);
     return reset();
   }
 
@@ -18307,28 +18334,28 @@ function projectionMutator(projectAt) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mercatorRaw", function() { return mercatorRaw; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mercatorProjection", function() { return mercatorProjection; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _rotation__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../rotation */ "./node_modules/d3-geo/src/rotation.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _rotation_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../rotation.js */ "./node_modules/d3-geo/src/rotation.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
 
 
 
 
 function mercatorRaw(lambda, phi) {
-  return [lambda, Object(_math__WEBPACK_IMPORTED_MODULE_0__["log"])(Object(_math__WEBPACK_IMPORTED_MODULE_0__["tan"])((_math__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + phi) / 2))];
+  return [lambda, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["log"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["tan"])((_math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + phi) / 2))];
 }
 
 mercatorRaw.invert = function(x, y) {
-  return [x, 2 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan"])(Object(_math__WEBPACK_IMPORTED_MODULE_0__["exp"])(y)) - _math__WEBPACK_IMPORTED_MODULE_0__["halfPi"]];
+  return [x, 2 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["exp"])(y)) - _math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"]];
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
   return mercatorProjection(mercatorRaw)
-      .scale(961 / _math__WEBPACK_IMPORTED_MODULE_0__["tau"]);
+      .scale(961 / _math_js__WEBPACK_IMPORTED_MODULE_0__["tau"]);
 });
 
 function mercatorProjection(project) {
-  var m = Object(_index__WEBPACK_IMPORTED_MODULE_2__["default"])(project),
+  var m = Object(_index_js__WEBPACK_IMPORTED_MODULE_2__["default"])(project),
       center = m.center,
       scale = m.scale,
       translate = m.translate,
@@ -18352,8 +18379,8 @@ function mercatorProjection(project) {
   };
 
   function reclip() {
-    var k = _math__WEBPACK_IMPORTED_MODULE_0__["pi"] * scale(),
-        t = m(Object(_rotation__WEBPACK_IMPORTED_MODULE_1__["default"])(m.rotate()).invert([0, 0]));
+    var k = _math_js__WEBPACK_IMPORTED_MODULE_0__["pi"] * scale(),
+        t = m(Object(_rotation_js__WEBPACK_IMPORTED_MODULE_1__["default"])(m.rotate()).invert([0, 0]));
     return clipExtent(x0 == null
         ? [[t[0] - k, t[1] - k], [t[0] + k, t[1] + k]] : project === mercatorRaw
         ? [[Math.max(t[0] - k, x0), y0], [Math.min(t[0] + k, x1), y1]]
@@ -18376,8 +18403,8 @@ function mercatorProjection(project) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "naturalEarth1Raw", function() { return naturalEarth1Raw; });
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 
@@ -18395,7 +18422,7 @@ naturalEarth1Raw.invert = function(x, y) {
     var phi2 = phi * phi, phi4 = phi2 * phi2;
     phi -= delta = (phi * (1.007226 + phi2 * (0.015085 + phi4 * (-0.044475 + 0.028874 * phi2 - 0.005916 * phi4))) - y) /
         (1.007226 + phi2 * (0.015085 * 3 + phi4 * (-0.044475 * 7 + 0.028874 * 9 * phi2 - 0.005916 * 11 * phi4)));
-  } while (Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(delta) > _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"] && --i > 0);
+  } while (Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(delta) > _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"] && --i > 0);
   return [
     x / (0.8707 + (phi2 = phi * phi) * (-0.131979 + phi2 * (-0.013791 + phi2 * phi2 * phi2 * (0.003971 - 0.001529 * phi2)))),
     phi
@@ -18403,7 +18430,7 @@ naturalEarth1Raw.invert = function(x, y) {
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_index__WEBPACK_IMPORTED_MODULE_0__["default"])(naturalEarth1Raw)
+  return Object(_index_js__WEBPACK_IMPORTED_MODULE_0__["default"])(naturalEarth1Raw)
       .scale(175.295);
 });
 
@@ -18420,23 +18447,23 @@ naturalEarth1Raw.invert = function(x, y) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "orthographicRaw", function() { return orthographicRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _azimuthal__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal */ "./node_modules/d3-geo/src/projection/azimuthal.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _azimuthal_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal.js */ "./node_modules/d3-geo/src/projection/azimuthal.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
 
 
 
 
 function orthographicRaw(x, y) {
-  return [Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y) * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(x), Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y)];
+  return [Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y) * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(x), Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y)];
 }
 
-orthographicRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(_math__WEBPACK_IMPORTED_MODULE_0__["asin"]);
+orthographicRaw.invert = Object(_azimuthal_js__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(_math_js__WEBPACK_IMPORTED_MODULE_0__["asin"]);
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_index__WEBPACK_IMPORTED_MODULE_2__["default"])(orthographicRaw)
+  return Object(_index_js__WEBPACK_IMPORTED_MODULE_2__["default"])(orthographicRaw)
       .scale(249.5)
-      .clipAngle(90 + _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]);
+      .clipAngle(90 + _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]);
 });
 
 
@@ -18451,22 +18478,22 @@ orthographicRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuth
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _cartesian__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../cartesian */ "./node_modules/d3-geo/src/cartesian.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _transform__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../transform */ "./node_modules/d3-geo/src/transform.js");
+/* harmony import */ var _cartesian_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../cartesian.js */ "./node_modules/d3-geo/src/cartesian.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _transform_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../transform.js */ "./node_modules/d3-geo/src/transform.js");
 
 
 
 
 var maxDepth = 16, // maximum depth of subdivision
-    cosMinDistance = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(30 * _math__WEBPACK_IMPORTED_MODULE_1__["radians"]); // cos(minimum angular distance)
+    cosMinDistance = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(30 * _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"]); // cos(minimum angular distance)
 
 /* harmony default export */ __webpack_exports__["default"] = (function(project, delta2) {
   return +delta2 ? resample(project, delta2) : resampleNone(project);
 });
 
 function resampleNone(project) {
-  return Object(_transform__WEBPACK_IMPORTED_MODULE_2__["transformer"])({
+  return Object(_transform_js__WEBPACK_IMPORTED_MODULE_2__["transformer"])({
     point: function(x, y) {
       x = project(x, y);
       this.stream.point(x[0], x[1]);
@@ -18484,9 +18511,9 @@ function resample(project, delta2) {
       var a = a0 + a1,
           b = b0 + b1,
           c = c0 + c1,
-          m = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sqrt"])(a * a + b * b + c * c),
-          phi2 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["asin"])(c /= m),
-          lambda2 = Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(c) - 1) < _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"] || Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda0 - lambda1) < _math__WEBPACK_IMPORTED_MODULE_1__["epsilon"] ? (lambda0 + lambda1) / 2 : Object(_math__WEBPACK_IMPORTED_MODULE_1__["atan2"])(b, a),
+          m = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sqrt"])(a * a + b * b + c * c),
+          phi2 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["asin"])(c /= m),
+          lambda2 = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(c) - 1) < _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"] || Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda0 - lambda1) < _math_js__WEBPACK_IMPORTED_MODULE_1__["epsilon"] ? (lambda0 + lambda1) / 2 : Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["atan2"])(b, a),
           p = project(lambda2, phi2),
           x2 = p[0],
           y2 = p[1],
@@ -18494,7 +18521,7 @@ function resample(project, delta2) {
           dy2 = y2 - y0,
           dz = dy * dx2 - dx * dy2;
       if (dz * dz / d2 > delta2 // perpendicular projected distance
-          || Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])((dx * dx2 + dy * dy2) / d2 - 0.5) > 0.3 // midpoint close to an end
+          || Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])((dx * dx2 + dy * dy2) / d2 - 0.5) > 0.3 // midpoint close to an end
           || a0 * a1 + b0 * b1 + c0 * c1 < cosMinDistance) { // angular distance
         resampleLineTo(x0, y0, lambda0, a0, b0, c0, x2, y2, lambda2, a /= m, b /= m, c, depth, stream);
         stream.point(x2, y2);
@@ -18526,7 +18553,7 @@ function resample(project, delta2) {
     }
 
     function linePoint(lambda, phi) {
-      var c = Object(_cartesian__WEBPACK_IMPORTED_MODULE_0__["cartesian"])([lambda, phi]), p = project(lambda, phi);
+      var c = Object(_cartesian_js__WEBPACK_IMPORTED_MODULE_0__["cartesian"])([lambda, phi]), p = project(lambda, phi);
       resampleLineTo(x0, y0, lambda0, a0, b0, c0, x0 = p[0], y0 = p[1], lambda0 = lambda, a0 = c[0], b0 = c[1], c0 = c[2], maxDepth, stream);
       stream.point(x0, y0);
     }
@@ -18570,24 +18597,24 @@ function resample(project, delta2) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "stereographicRaw", function() { return stereographicRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _azimuthal__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal */ "./node_modules/d3-geo/src/projection/azimuthal.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index */ "./node_modules/d3-geo/src/projection/index.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _azimuthal_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./azimuthal.js */ "./node_modules/d3-geo/src/projection/azimuthal.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-geo/src/projection/index.js");
 
 
 
 
 function stereographicRaw(x, y) {
-  var cy = Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(y), k = 1 + Object(_math__WEBPACK_IMPORTED_MODULE_0__["cos"])(x) * cy;
-  return [cy * Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(x) / k, Object(_math__WEBPACK_IMPORTED_MODULE_0__["sin"])(y) / k];
+  var cy = Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(y), k = 1 + Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["cos"])(x) * cy;
+  return [cy * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(x) / k, Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["sin"])(y) / k];
 }
 
-stereographicRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(function(z) {
-  return 2 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan"])(z);
+stereographicRaw.invert = Object(_azimuthal_js__WEBPACK_IMPORTED_MODULE_1__["azimuthalInvert"])(function(z) {
+  return 2 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan"])(z);
 });
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return Object(_index__WEBPACK_IMPORTED_MODULE_2__["default"])(stereographicRaw)
+  return Object(_index_js__WEBPACK_IMPORTED_MODULE_2__["default"])(stereographicRaw)
       .scale(250)
       .clipAngle(142);
 });
@@ -18605,21 +18632,21 @@ stereographicRaw.invert = Object(_azimuthal__WEBPACK_IMPORTED_MODULE_1__["azimut
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "transverseMercatorRaw", function() { return transverseMercatorRaw; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-geo/src/math.js");
-/* harmony import */ var _mercator__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./mercator */ "./node_modules/d3-geo/src/projection/mercator.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _mercator_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./mercator.js */ "./node_modules/d3-geo/src/projection/mercator.js");
 
 
 
 function transverseMercatorRaw(lambda, phi) {
-  return [Object(_math__WEBPACK_IMPORTED_MODULE_0__["log"])(Object(_math__WEBPACK_IMPORTED_MODULE_0__["tan"])((_math__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + phi) / 2)), -lambda];
+  return [Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["log"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["tan"])((_math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"] + phi) / 2)), -lambda];
 }
 
 transverseMercatorRaw.invert = function(x, y) {
-  return [-y, 2 * Object(_math__WEBPACK_IMPORTED_MODULE_0__["atan"])(Object(_math__WEBPACK_IMPORTED_MODULE_0__["exp"])(x)) - _math__WEBPACK_IMPORTED_MODULE_0__["halfPi"]];
+  return [-y, 2 * Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["atan"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_0__["exp"])(x)) - _math_js__WEBPACK_IMPORTED_MODULE_0__["halfPi"]];
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var m = Object(_mercator__WEBPACK_IMPORTED_MODULE_1__["mercatorProjection"])(transverseMercatorRaw),
+  var m = Object(_mercator_js__WEBPACK_IMPORTED_MODULE_1__["mercatorProjection"])(transverseMercatorRaw),
       center = m.center,
       rotate = m.rotate;
 
@@ -18648,19 +18675,19 @@ transverseMercatorRaw.invert = function(x, y) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "rotateRadians", function() { return rotateRadians; });
-/* harmony import */ var _compose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./compose */ "./node_modules/d3-geo/src/compose.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./math */ "./node_modules/d3-geo/src/math.js");
+/* harmony import */ var _compose_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./compose.js */ "./node_modules/d3-geo/src/compose.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-geo/src/math.js");
 
 
 
 function rotationIdentity(lambda, phi) {
-  return [Object(_math__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda) > _math__WEBPACK_IMPORTED_MODULE_1__["pi"] ? lambda + Math.round(-lambda / _math__WEBPACK_IMPORTED_MODULE_1__["tau"]) * _math__WEBPACK_IMPORTED_MODULE_1__["tau"] : lambda, phi];
+  return [Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["abs"])(lambda) > _math_js__WEBPACK_IMPORTED_MODULE_1__["pi"] ? lambda + Math.round(-lambda / _math_js__WEBPACK_IMPORTED_MODULE_1__["tau"]) * _math_js__WEBPACK_IMPORTED_MODULE_1__["tau"] : lambda, phi];
 }
 
 rotationIdentity.invert = rotationIdentity;
 
 function rotateRadians(deltaLambda, deltaPhi, deltaGamma) {
-  return (deltaLambda %= _math__WEBPACK_IMPORTED_MODULE_1__["tau"]) ? (deltaPhi || deltaGamma ? Object(_compose__WEBPACK_IMPORTED_MODULE_0__["default"])(rotationLambda(deltaLambda), rotationPhiGamma(deltaPhi, deltaGamma))
+  return (deltaLambda %= _math_js__WEBPACK_IMPORTED_MODULE_1__["tau"]) ? (deltaPhi || deltaGamma ? Object(_compose_js__WEBPACK_IMPORTED_MODULE_0__["default"])(rotationLambda(deltaLambda), rotationPhiGamma(deltaPhi, deltaGamma))
     : rotationLambda(deltaLambda))
     : (deltaPhi || deltaGamma ? rotationPhiGamma(deltaPhi, deltaGamma)
     : rotationIdentity);
@@ -18668,7 +18695,7 @@ function rotateRadians(deltaLambda, deltaPhi, deltaGamma) {
 
 function forwardRotationLambda(deltaLambda) {
   return function(lambda, phi) {
-    return lambda += deltaLambda, [lambda > _math__WEBPACK_IMPORTED_MODULE_1__["pi"] ? lambda - _math__WEBPACK_IMPORTED_MODULE_1__["tau"] : lambda < -_math__WEBPACK_IMPORTED_MODULE_1__["pi"] ? lambda + _math__WEBPACK_IMPORTED_MODULE_1__["tau"] : lambda, phi];
+    return lambda += deltaLambda, [lambda > _math_js__WEBPACK_IMPORTED_MODULE_1__["pi"] ? lambda - _math_js__WEBPACK_IMPORTED_MODULE_1__["tau"] : lambda < -_math_js__WEBPACK_IMPORTED_MODULE_1__["pi"] ? lambda + _math_js__WEBPACK_IMPORTED_MODULE_1__["tau"] : lambda, phi];
   };
 }
 
@@ -18679,32 +18706,32 @@ function rotationLambda(deltaLambda) {
 }
 
 function rotationPhiGamma(deltaPhi, deltaGamma) {
-  var cosDeltaPhi = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(deltaPhi),
-      sinDeltaPhi = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(deltaPhi),
-      cosDeltaGamma = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(deltaGamma),
-      sinDeltaGamma = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(deltaGamma);
+  var cosDeltaPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(deltaPhi),
+      sinDeltaPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(deltaPhi),
+      cosDeltaGamma = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(deltaGamma),
+      sinDeltaGamma = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(deltaGamma);
 
   function rotation(lambda, phi) {
-    var cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi),
-        x = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(lambda) * cosPhi,
-        y = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda) * cosPhi,
-        z = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi),
+    var cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi),
+        x = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(lambda) * cosPhi,
+        y = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda) * cosPhi,
+        z = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi),
         k = z * cosDeltaPhi + x * sinDeltaPhi;
     return [
-      Object(_math__WEBPACK_IMPORTED_MODULE_1__["atan2"])(y * cosDeltaGamma - k * sinDeltaGamma, x * cosDeltaPhi - z * sinDeltaPhi),
-      Object(_math__WEBPACK_IMPORTED_MODULE_1__["asin"])(k * cosDeltaGamma + y * sinDeltaGamma)
+      Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["atan2"])(y * cosDeltaGamma - k * sinDeltaGamma, x * cosDeltaPhi - z * sinDeltaPhi),
+      Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["asin"])(k * cosDeltaGamma + y * sinDeltaGamma)
     ];
   }
 
   rotation.invert = function(lambda, phi) {
-    var cosPhi = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi),
-        x = Object(_math__WEBPACK_IMPORTED_MODULE_1__["cos"])(lambda) * cosPhi,
-        y = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda) * cosPhi,
-        z = Object(_math__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi),
+    var cosPhi = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(phi),
+        x = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["cos"])(lambda) * cosPhi,
+        y = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(lambda) * cosPhi,
+        z = Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["sin"])(phi),
         k = z * cosDeltaGamma - y * sinDeltaGamma;
     return [
-      Object(_math__WEBPACK_IMPORTED_MODULE_1__["atan2"])(y * cosDeltaGamma + z * sinDeltaGamma, x * cosDeltaPhi + k * sinDeltaPhi),
-      Object(_math__WEBPACK_IMPORTED_MODULE_1__["asin"])(k * cosDeltaPhi - x * sinDeltaPhi)
+      Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["atan2"])(y * cosDeltaGamma + z * sinDeltaGamma, x * cosDeltaPhi + k * sinDeltaPhi),
+      Object(_math_js__WEBPACK_IMPORTED_MODULE_1__["asin"])(k * cosDeltaPhi - x * sinDeltaPhi)
     ];
   };
 
@@ -18712,16 +18739,16 @@ function rotationPhiGamma(deltaPhi, deltaGamma) {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function(rotate) {
-  rotate = rotateRadians(rotate[0] * _math__WEBPACK_IMPORTED_MODULE_1__["radians"], rotate[1] * _math__WEBPACK_IMPORTED_MODULE_1__["radians"], rotate.length > 2 ? rotate[2] * _math__WEBPACK_IMPORTED_MODULE_1__["radians"] : 0);
+  rotate = rotateRadians(rotate[0] * _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"], rotate[1] * _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"], rotate.length > 2 ? rotate[2] * _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"] : 0);
 
   function forward(coordinates) {
-    coordinates = rotate(coordinates[0] * _math__WEBPACK_IMPORTED_MODULE_1__["radians"], coordinates[1] * _math__WEBPACK_IMPORTED_MODULE_1__["radians"]);
-    return coordinates[0] *= _math__WEBPACK_IMPORTED_MODULE_1__["degrees"], coordinates[1] *= _math__WEBPACK_IMPORTED_MODULE_1__["degrees"], coordinates;
+    coordinates = rotate(coordinates[0] * _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"], coordinates[1] * _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"]);
+    return coordinates[0] *= _math_js__WEBPACK_IMPORTED_MODULE_1__["degrees"], coordinates[1] *= _math_js__WEBPACK_IMPORTED_MODULE_1__["degrees"], coordinates;
   }
 
   forward.invert = function(coordinates) {
-    coordinates = rotate.invert(coordinates[0] * _math__WEBPACK_IMPORTED_MODULE_1__["radians"], coordinates[1] * _math__WEBPACK_IMPORTED_MODULE_1__["radians"]);
-    return coordinates[0] *= _math__WEBPACK_IMPORTED_MODULE_1__["degrees"], coordinates[1] *= _math__WEBPACK_IMPORTED_MODULE_1__["degrees"], coordinates;
+    coordinates = rotate.invert(coordinates[0] * _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"], coordinates[1] * _math_js__WEBPACK_IMPORTED_MODULE_1__["radians"]);
+    return coordinates[0] *= _math_js__WEBPACK_IMPORTED_MODULE_1__["degrees"], coordinates[1] *= _math_js__WEBPACK_IMPORTED_MODULE_1__["degrees"], coordinates;
   };
 
   return forward;
@@ -19178,17 +19205,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return hierarchy; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "computeHeight", function() { return computeHeight; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Node", function() { return Node; });
-/* harmony import */ var _count__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./count */ "./node_modules/d3-hierarchy/src/hierarchy/count.js");
-/* harmony import */ var _each__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./each */ "./node_modules/d3-hierarchy/src/hierarchy/each.js");
-/* harmony import */ var _eachBefore__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./eachBefore */ "./node_modules/d3-hierarchy/src/hierarchy/eachBefore.js");
-/* harmony import */ var _eachAfter__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./eachAfter */ "./node_modules/d3-hierarchy/src/hierarchy/eachAfter.js");
-/* harmony import */ var _sum__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./sum */ "./node_modules/d3-hierarchy/src/hierarchy/sum.js");
-/* harmony import */ var _sort__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./sort */ "./node_modules/d3-hierarchy/src/hierarchy/sort.js");
-/* harmony import */ var _path__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./path */ "./node_modules/d3-hierarchy/src/hierarchy/path.js");
-/* harmony import */ var _ancestors__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ancestors */ "./node_modules/d3-hierarchy/src/hierarchy/ancestors.js");
-/* harmony import */ var _descendants__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./descendants */ "./node_modules/d3-hierarchy/src/hierarchy/descendants.js");
-/* harmony import */ var _leaves__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./leaves */ "./node_modules/d3-hierarchy/src/hierarchy/leaves.js");
-/* harmony import */ var _links__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./links */ "./node_modules/d3-hierarchy/src/hierarchy/links.js");
+/* harmony import */ var _count_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./count.js */ "./node_modules/d3-hierarchy/src/hierarchy/count.js");
+/* harmony import */ var _each_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./each.js */ "./node_modules/d3-hierarchy/src/hierarchy/each.js");
+/* harmony import */ var _eachBefore_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./eachBefore.js */ "./node_modules/d3-hierarchy/src/hierarchy/eachBefore.js");
+/* harmony import */ var _eachAfter_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./eachAfter.js */ "./node_modules/d3-hierarchy/src/hierarchy/eachAfter.js");
+/* harmony import */ var _sum_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./sum.js */ "./node_modules/d3-hierarchy/src/hierarchy/sum.js");
+/* harmony import */ var _sort_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./sort.js */ "./node_modules/d3-hierarchy/src/hierarchy/sort.js");
+/* harmony import */ var _path_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./path.js */ "./node_modules/d3-hierarchy/src/hierarchy/path.js");
+/* harmony import */ var _ancestors_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ancestors.js */ "./node_modules/d3-hierarchy/src/hierarchy/ancestors.js");
+/* harmony import */ var _descendants_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./descendants.js */ "./node_modules/d3-hierarchy/src/hierarchy/descendants.js");
+/* harmony import */ var _leaves_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./leaves.js */ "./node_modules/d3-hierarchy/src/hierarchy/leaves.js");
+/* harmony import */ var _links_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./links.js */ "./node_modules/d3-hierarchy/src/hierarchy/links.js");
 
 
 
@@ -19255,17 +19282,17 @@ function Node(data) {
 
 Node.prototype = hierarchy.prototype = {
   constructor: Node,
-  count: _count__WEBPACK_IMPORTED_MODULE_0__["default"],
-  each: _each__WEBPACK_IMPORTED_MODULE_1__["default"],
-  eachAfter: _eachAfter__WEBPACK_IMPORTED_MODULE_3__["default"],
-  eachBefore: _eachBefore__WEBPACK_IMPORTED_MODULE_2__["default"],
-  sum: _sum__WEBPACK_IMPORTED_MODULE_4__["default"],
-  sort: _sort__WEBPACK_IMPORTED_MODULE_5__["default"],
-  path: _path__WEBPACK_IMPORTED_MODULE_6__["default"],
-  ancestors: _ancestors__WEBPACK_IMPORTED_MODULE_7__["default"],
-  descendants: _descendants__WEBPACK_IMPORTED_MODULE_8__["default"],
-  leaves: _leaves__WEBPACK_IMPORTED_MODULE_9__["default"],
-  links: _links__WEBPACK_IMPORTED_MODULE_10__["default"],
+  count: _count_js__WEBPACK_IMPORTED_MODULE_0__["default"],
+  each: _each_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  eachAfter: _eachAfter_js__WEBPACK_IMPORTED_MODULE_3__["default"],
+  eachBefore: _eachBefore_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  sum: _sum_js__WEBPACK_IMPORTED_MODULE_4__["default"],
+  sort: _sort_js__WEBPACK_IMPORTED_MODULE_5__["default"],
+  path: _path_js__WEBPACK_IMPORTED_MODULE_6__["default"],
+  ancestors: _ancestors_js__WEBPACK_IMPORTED_MODULE_7__["default"],
+  descendants: _descendants_js__WEBPACK_IMPORTED_MODULE_8__["default"],
+  leaves: _leaves_js__WEBPACK_IMPORTED_MODULE_9__["default"],
+  links: _links_js__WEBPACK_IMPORTED_MODULE_10__["default"],
   copy: node_copy
 };
 
@@ -19410,50 +19437,50 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _cluster__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cluster */ "./node_modules/d3-hierarchy/src/cluster.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "cluster", function() { return _cluster__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _cluster_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cluster.js */ "./node_modules/d3-hierarchy/src/cluster.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "cluster", function() { return _cluster_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
-/* harmony import */ var _hierarchy_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./hierarchy/index */ "./node_modules/d3-hierarchy/src/hierarchy/index.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "hierarchy", function() { return _hierarchy_index__WEBPACK_IMPORTED_MODULE_1__["default"]; });
+/* harmony import */ var _hierarchy_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./hierarchy/index.js */ "./node_modules/d3-hierarchy/src/hierarchy/index.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "hierarchy", function() { return _hierarchy_index_js__WEBPACK_IMPORTED_MODULE_1__["default"]; });
 
-/* harmony import */ var _pack_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./pack/index */ "./node_modules/d3-hierarchy/src/pack/index.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "pack", function() { return _pack_index__WEBPACK_IMPORTED_MODULE_2__["default"]; });
+/* harmony import */ var _pack_index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./pack/index.js */ "./node_modules/d3-hierarchy/src/pack/index.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "pack", function() { return _pack_index_js__WEBPACK_IMPORTED_MODULE_2__["default"]; });
 
-/* harmony import */ var _pack_siblings__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./pack/siblings */ "./node_modules/d3-hierarchy/src/pack/siblings.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "packSiblings", function() { return _pack_siblings__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+/* harmony import */ var _pack_siblings_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./pack/siblings.js */ "./node_modules/d3-hierarchy/src/pack/siblings.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "packSiblings", function() { return _pack_siblings_js__WEBPACK_IMPORTED_MODULE_3__["default"]; });
 
-/* harmony import */ var _pack_enclose__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./pack/enclose */ "./node_modules/d3-hierarchy/src/pack/enclose.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "packEnclose", function() { return _pack_enclose__WEBPACK_IMPORTED_MODULE_4__["default"]; });
+/* harmony import */ var _pack_enclose_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./pack/enclose.js */ "./node_modules/d3-hierarchy/src/pack/enclose.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "packEnclose", function() { return _pack_enclose_js__WEBPACK_IMPORTED_MODULE_4__["default"]; });
 
-/* harmony import */ var _partition__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./partition */ "./node_modules/d3-hierarchy/src/partition.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "partition", function() { return _partition__WEBPACK_IMPORTED_MODULE_5__["default"]; });
+/* harmony import */ var _partition_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./partition.js */ "./node_modules/d3-hierarchy/src/partition.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "partition", function() { return _partition_js__WEBPACK_IMPORTED_MODULE_5__["default"]; });
 
-/* harmony import */ var _stratify__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./stratify */ "./node_modules/d3-hierarchy/src/stratify.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stratify", function() { return _stratify__WEBPACK_IMPORTED_MODULE_6__["default"]; });
+/* harmony import */ var _stratify_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./stratify.js */ "./node_modules/d3-hierarchy/src/stratify.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stratify", function() { return _stratify_js__WEBPACK_IMPORTED_MODULE_6__["default"]; });
 
-/* harmony import */ var _tree__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./tree */ "./node_modules/d3-hierarchy/src/tree.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tree", function() { return _tree__WEBPACK_IMPORTED_MODULE_7__["default"]; });
+/* harmony import */ var _tree_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./tree.js */ "./node_modules/d3-hierarchy/src/tree.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tree", function() { return _tree_js__WEBPACK_IMPORTED_MODULE_7__["default"]; });
 
-/* harmony import */ var _treemap_index__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./treemap/index */ "./node_modules/d3-hierarchy/src/treemap/index.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemap", function() { return _treemap_index__WEBPACK_IMPORTED_MODULE_8__["default"]; });
+/* harmony import */ var _treemap_index_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./treemap/index.js */ "./node_modules/d3-hierarchy/src/treemap/index.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemap", function() { return _treemap_index_js__WEBPACK_IMPORTED_MODULE_8__["default"]; });
 
-/* harmony import */ var _treemap_binary__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./treemap/binary */ "./node_modules/d3-hierarchy/src/treemap/binary.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapBinary", function() { return _treemap_binary__WEBPACK_IMPORTED_MODULE_9__["default"]; });
+/* harmony import */ var _treemap_binary_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./treemap/binary.js */ "./node_modules/d3-hierarchy/src/treemap/binary.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapBinary", function() { return _treemap_binary_js__WEBPACK_IMPORTED_MODULE_9__["default"]; });
 
-/* harmony import */ var _treemap_dice__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./treemap/dice */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapDice", function() { return _treemap_dice__WEBPACK_IMPORTED_MODULE_10__["default"]; });
+/* harmony import */ var _treemap_dice_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./treemap/dice.js */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapDice", function() { return _treemap_dice_js__WEBPACK_IMPORTED_MODULE_10__["default"]; });
 
-/* harmony import */ var _treemap_slice__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./treemap/slice */ "./node_modules/d3-hierarchy/src/treemap/slice.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapSlice", function() { return _treemap_slice__WEBPACK_IMPORTED_MODULE_11__["default"]; });
+/* harmony import */ var _treemap_slice_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./treemap/slice.js */ "./node_modules/d3-hierarchy/src/treemap/slice.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapSlice", function() { return _treemap_slice_js__WEBPACK_IMPORTED_MODULE_11__["default"]; });
 
-/* harmony import */ var _treemap_sliceDice__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./treemap/sliceDice */ "./node_modules/d3-hierarchy/src/treemap/sliceDice.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapSliceDice", function() { return _treemap_sliceDice__WEBPACK_IMPORTED_MODULE_12__["default"]; });
+/* harmony import */ var _treemap_sliceDice_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./treemap/sliceDice.js */ "./node_modules/d3-hierarchy/src/treemap/sliceDice.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapSliceDice", function() { return _treemap_sliceDice_js__WEBPACK_IMPORTED_MODULE_12__["default"]; });
 
-/* harmony import */ var _treemap_squarify__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./treemap/squarify */ "./node_modules/d3-hierarchy/src/treemap/squarify.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapSquarify", function() { return _treemap_squarify__WEBPACK_IMPORTED_MODULE_13__["default"]; });
+/* harmony import */ var _treemap_squarify_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./treemap/squarify.js */ "./node_modules/d3-hierarchy/src/treemap/squarify.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapSquarify", function() { return _treemap_squarify_js__WEBPACK_IMPORTED_MODULE_13__["default"]; });
 
-/* harmony import */ var _treemap_resquarify__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./treemap/resquarify */ "./node_modules/d3-hierarchy/src/treemap/resquarify.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapResquarify", function() { return _treemap_resquarify__WEBPACK_IMPORTED_MODULE_14__["default"]; });
+/* harmony import */ var _treemap_resquarify_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./treemap/resquarify.js */ "./node_modules/d3-hierarchy/src/treemap/resquarify.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "treemapResquarify", function() { return _treemap_resquarify_js__WEBPACK_IMPORTED_MODULE_14__["default"]; });
 
 
 
@@ -19483,11 +19510,11 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _array__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../array */ "./node_modules/d3-hierarchy/src/array.js");
+/* harmony import */ var _array_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../array.js */ "./node_modules/d3-hierarchy/src/array.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(circles) {
-  var i = 0, n = (circles = Object(_array__WEBPACK_IMPORTED_MODULE_0__["shuffle"])(_array__WEBPACK_IMPORTED_MODULE_0__["slice"].call(circles))).length, B = [], p, e;
+  var i = 0, n = (circles = Object(_array_js__WEBPACK_IMPORTED_MODULE_0__["shuffle"])(_array_js__WEBPACK_IMPORTED_MODULE_0__["slice"].call(circles))).length, B = [], p, e;
 
   while (i < n) {
     p = circles[i];
@@ -19615,9 +19642,9 @@ function encloseBasis3(a, b, c) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _siblings__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./siblings */ "./node_modules/d3-hierarchy/src/pack/siblings.js");
-/* harmony import */ var _accessors__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../accessors */ "./node_modules/d3-hierarchy/src/accessors.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constant */ "./node_modules/d3-hierarchy/src/constant.js");
+/* harmony import */ var _siblings_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./siblings.js */ "./node_modules/d3-hierarchy/src/pack/siblings.js");
+/* harmony import */ var _accessors_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../accessors.js */ "./node_modules/d3-hierarchy/src/accessors.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constant.js */ "./node_modules/d3-hierarchy/src/constant.js");
 
 
 
@@ -19630,7 +19657,7 @@ function defaultRadius(d) {
   var radius = null,
       dx = 1,
       dy = 1,
-      padding = _constant__WEBPACK_IMPORTED_MODULE_2__["constantZero"];
+      padding = _constant_js__WEBPACK_IMPORTED_MODULE_2__["constantZero"];
 
   function pack(root) {
     root.x = dx / 2, root.y = dy / 2;
@@ -19640,7 +19667,7 @@ function defaultRadius(d) {
           .eachBefore(translateChild(1));
     } else {
       root.eachBefore(radiusLeaf(defaultRadius))
-          .eachAfter(packChildren(_constant__WEBPACK_IMPORTED_MODULE_2__["constantZero"], 1))
+          .eachAfter(packChildren(_constant_js__WEBPACK_IMPORTED_MODULE_2__["constantZero"], 1))
           .eachAfter(packChildren(padding, root.r / Math.min(dx, dy)))
           .eachBefore(translateChild(Math.min(dx, dy) / (2 * root.r)));
     }
@@ -19648,7 +19675,7 @@ function defaultRadius(d) {
   }
 
   pack.radius = function(x) {
-    return arguments.length ? (radius = Object(_accessors__WEBPACK_IMPORTED_MODULE_1__["optional"])(x), pack) : radius;
+    return arguments.length ? (radius = Object(_accessors_js__WEBPACK_IMPORTED_MODULE_1__["optional"])(x), pack) : radius;
   };
 
   pack.size = function(x) {
@@ -19656,7 +19683,7 @@ function defaultRadius(d) {
   };
 
   pack.padding = function(x) {
-    return arguments.length ? (padding = typeof x === "function" ? x : Object(_constant__WEBPACK_IMPORTED_MODULE_2__["default"])(+x), pack) : padding;
+    return arguments.length ? (padding = typeof x === "function" ? x : Object(_constant_js__WEBPACK_IMPORTED_MODULE_2__["default"])(+x), pack) : padding;
   };
 
   return pack;
@@ -19680,7 +19707,7 @@ function packChildren(padding, k) {
           e;
 
       if (r) for (i = 0; i < n; ++i) children[i].r += r;
-      e = Object(_siblings__WEBPACK_IMPORTED_MODULE_0__["packEnclose"])(children);
+      e = Object(_siblings_js__WEBPACK_IMPORTED_MODULE_0__["packEnclose"])(children);
       if (r) for (i = 0; i < n; ++i) children[i].r -= r;
       node.r = e + r;
     }
@@ -19711,7 +19738,7 @@ function translateChild(k) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "packEnclose", function() { return packEnclose; });
-/* harmony import */ var _enclose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./enclose */ "./node_modules/d3-hierarchy/src/pack/enclose.js");
+/* harmony import */ var _enclose_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./enclose.js */ "./node_modules/d3-hierarchy/src/pack/enclose.js");
 
 
 function place(b, a, c) {
@@ -19818,7 +19845,7 @@ function packEnclose(circles) {
   }
 
   // Compute the enclosing circle of the front chain.
-  a = [b._], c = b; while ((c = c.next) !== b) a.push(c._); c = Object(_enclose__WEBPACK_IMPORTED_MODULE_0__["default"])(a);
+  a = [b._], c = b; while ((c = c.next) !== b) a.push(c._); c = Object(_enclose_js__WEBPACK_IMPORTED_MODULE_0__["default"])(a);
 
   // Translate the circles to put the enclosing circle around the origin.
   for (i = 0; i < n; ++i) a = circles[i], a.x -= c.x, a.y -= c.y;
@@ -19843,8 +19870,8 @@ function packEnclose(circles) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _treemap_round__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./treemap/round */ "./node_modules/d3-hierarchy/src/treemap/round.js");
-/* harmony import */ var _treemap_dice__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./treemap/dice */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
+/* harmony import */ var _treemap_round_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./treemap/round.js */ "./node_modules/d3-hierarchy/src/treemap/round.js");
+/* harmony import */ var _treemap_dice_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./treemap/dice.js */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
 
 
 
@@ -19861,14 +19888,14 @@ __webpack_require__.r(__webpack_exports__);
     root.x1 = dx;
     root.y1 = dy / n;
     root.eachBefore(positionNode(dy, n));
-    if (round) root.eachBefore(_treemap_round__WEBPACK_IMPORTED_MODULE_0__["default"]);
+    if (round) root.eachBefore(_treemap_round_js__WEBPACK_IMPORTED_MODULE_0__["default"]);
     return root;
   }
 
   function positionNode(dy, n) {
     return function(node) {
       if (node.children) {
-        Object(_treemap_dice__WEBPACK_IMPORTED_MODULE_1__["default"])(node, node.x0, dy * (node.depth + 1) / n, node.x1, dy * (node.depth + 2) / n);
+        Object(_treemap_dice_js__WEBPACK_IMPORTED_MODULE_1__["default"])(node, node.x0, dy * (node.depth + 1) / n, node.x1, dy * (node.depth + 2) / n);
       }
       var x0 = node.x0,
           y0 = node.y0,
@@ -19910,8 +19937,8 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _accessors__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./accessors */ "./node_modules/d3-hierarchy/src/accessors.js");
-/* harmony import */ var _hierarchy_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./hierarchy/index */ "./node_modules/d3-hierarchy/src/hierarchy/index.js");
+/* harmony import */ var _accessors_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./accessors.js */ "./node_modules/d3-hierarchy/src/accessors.js");
+/* harmony import */ var _hierarchy_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./hierarchy/index.js */ "./node_modules/d3-hierarchy/src/hierarchy/index.js");
 
 
 
@@ -19944,7 +19971,7 @@ function defaultParentId(d) {
         nodeByKey = {};
 
     for (i = 0; i < n; ++i) {
-      d = data[i], node = nodes[i] = new _hierarchy_index__WEBPACK_IMPORTED_MODULE_1__["Node"](d);
+      d = data[i], node = nodes[i] = new _hierarchy_index_js__WEBPACK_IMPORTED_MODULE_1__["Node"](d);
       if ((nodeId = id(d, i, data)) != null && (nodeId += "")) {
         nodeKey = keyPrefix + (node.id = nodeId);
         nodeByKey[nodeKey] = nodeKey in nodeByKey ? ambiguous : node;
@@ -19968,7 +19995,7 @@ function defaultParentId(d) {
 
     if (!root) throw new Error("no root");
     root.parent = preroot;
-    root.eachBefore(function(node) { node.depth = node.parent.depth + 1; --n; }).eachBefore(_hierarchy_index__WEBPACK_IMPORTED_MODULE_1__["computeHeight"]);
+    root.eachBefore(function(node) { node.depth = node.parent.depth + 1; --n; }).eachBefore(_hierarchy_index_js__WEBPACK_IMPORTED_MODULE_1__["computeHeight"]);
     root.parent = null;
     if (n > 0) throw new Error("cycle");
 
@@ -19976,11 +20003,11 @@ function defaultParentId(d) {
   }
 
   stratify.id = function(x) {
-    return arguments.length ? (id = Object(_accessors__WEBPACK_IMPORTED_MODULE_0__["required"])(x), stratify) : id;
+    return arguments.length ? (id = Object(_accessors_js__WEBPACK_IMPORTED_MODULE_0__["required"])(x), stratify) : id;
   };
 
   stratify.parentId = function(x) {
-    return arguments.length ? (parentId = Object(_accessors__WEBPACK_IMPORTED_MODULE_0__["required"])(x), stratify) : parentId;
+    return arguments.length ? (parentId = Object(_accessors_js__WEBPACK_IMPORTED_MODULE_0__["required"])(x), stratify) : parentId;
   };
 
   return stratify;
@@ -19998,7 +20025,7 @@ function defaultParentId(d) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _hierarchy_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./hierarchy/index */ "./node_modules/d3-hierarchy/src/hierarchy/index.js");
+/* harmony import */ var _hierarchy_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./hierarchy/index.js */ "./node_modules/d3-hierarchy/src/hierarchy/index.js");
 
 
 function defaultSeparation(a, b) {
@@ -20072,7 +20099,7 @@ function TreeNode(node, i) {
   this.i = i; // number
 }
 
-TreeNode.prototype = Object.create(_hierarchy_index__WEBPACK_IMPORTED_MODULE_0__["Node"].prototype);
+TreeNode.prototype = Object.create(_hierarchy_index_js__WEBPACK_IMPORTED_MODULE_0__["Node"].prototype);
 
 function treeRoot(root) {
   var tree = new TreeNode(root, 0),
@@ -20333,26 +20360,26 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _round__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./round */ "./node_modules/d3-hierarchy/src/treemap/round.js");
-/* harmony import */ var _squarify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./squarify */ "./node_modules/d3-hierarchy/src/treemap/squarify.js");
-/* harmony import */ var _accessors__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../accessors */ "./node_modules/d3-hierarchy/src/accessors.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../constant */ "./node_modules/d3-hierarchy/src/constant.js");
+/* harmony import */ var _round_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./round.js */ "./node_modules/d3-hierarchy/src/treemap/round.js");
+/* harmony import */ var _squarify_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./squarify.js */ "./node_modules/d3-hierarchy/src/treemap/squarify.js");
+/* harmony import */ var _accessors_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../accessors.js */ "./node_modules/d3-hierarchy/src/accessors.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../constant.js */ "./node_modules/d3-hierarchy/src/constant.js");
 
 
 
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var tile = _squarify__WEBPACK_IMPORTED_MODULE_1__["default"],
+  var tile = _squarify_js__WEBPACK_IMPORTED_MODULE_1__["default"],
       round = false,
       dx = 1,
       dy = 1,
       paddingStack = [0],
-      paddingInner = _constant__WEBPACK_IMPORTED_MODULE_3__["constantZero"],
-      paddingTop = _constant__WEBPACK_IMPORTED_MODULE_3__["constantZero"],
-      paddingRight = _constant__WEBPACK_IMPORTED_MODULE_3__["constantZero"],
-      paddingBottom = _constant__WEBPACK_IMPORTED_MODULE_3__["constantZero"],
-      paddingLeft = _constant__WEBPACK_IMPORTED_MODULE_3__["constantZero"];
+      paddingInner = _constant_js__WEBPACK_IMPORTED_MODULE_3__["constantZero"],
+      paddingTop = _constant_js__WEBPACK_IMPORTED_MODULE_3__["constantZero"],
+      paddingRight = _constant_js__WEBPACK_IMPORTED_MODULE_3__["constantZero"],
+      paddingBottom = _constant_js__WEBPACK_IMPORTED_MODULE_3__["constantZero"],
+      paddingLeft = _constant_js__WEBPACK_IMPORTED_MODULE_3__["constantZero"];
 
   function treemap(root) {
     root.x0 =
@@ -20361,7 +20388,7 @@ __webpack_require__.r(__webpack_exports__);
     root.y1 = dy;
     root.eachBefore(positionNode);
     paddingStack = [0];
-    if (round) root.eachBefore(_round__WEBPACK_IMPORTED_MODULE_0__["default"]);
+    if (round) root.eachBefore(_round_js__WEBPACK_IMPORTED_MODULE_0__["default"]);
     return root;
   }
 
@@ -20398,7 +20425,7 @@ __webpack_require__.r(__webpack_exports__);
   };
 
   treemap.tile = function(x) {
-    return arguments.length ? (tile = Object(_accessors__WEBPACK_IMPORTED_MODULE_2__["required"])(x), treemap) : tile;
+    return arguments.length ? (tile = Object(_accessors_js__WEBPACK_IMPORTED_MODULE_2__["required"])(x), treemap) : tile;
   };
 
   treemap.padding = function(x) {
@@ -20406,7 +20433,7 @@ __webpack_require__.r(__webpack_exports__);
   };
 
   treemap.paddingInner = function(x) {
-    return arguments.length ? (paddingInner = typeof x === "function" ? x : Object(_constant__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingInner;
+    return arguments.length ? (paddingInner = typeof x === "function" ? x : Object(_constant_js__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingInner;
   };
 
   treemap.paddingOuter = function(x) {
@@ -20414,19 +20441,19 @@ __webpack_require__.r(__webpack_exports__);
   };
 
   treemap.paddingTop = function(x) {
-    return arguments.length ? (paddingTop = typeof x === "function" ? x : Object(_constant__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingTop;
+    return arguments.length ? (paddingTop = typeof x === "function" ? x : Object(_constant_js__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingTop;
   };
 
   treemap.paddingRight = function(x) {
-    return arguments.length ? (paddingRight = typeof x === "function" ? x : Object(_constant__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingRight;
+    return arguments.length ? (paddingRight = typeof x === "function" ? x : Object(_constant_js__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingRight;
   };
 
   treemap.paddingBottom = function(x) {
-    return arguments.length ? (paddingBottom = typeof x === "function" ? x : Object(_constant__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingBottom;
+    return arguments.length ? (paddingBottom = typeof x === "function" ? x : Object(_constant_js__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingBottom;
   };
 
   treemap.paddingLeft = function(x) {
-    return arguments.length ? (paddingLeft = typeof x === "function" ? x : Object(_constant__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingLeft;
+    return arguments.length ? (paddingLeft = typeof x === "function" ? x : Object(_constant_js__WEBPACK_IMPORTED_MODULE_3__["default"])(+x), treemap) : paddingLeft;
   };
 
   return treemap;
@@ -20444,9 +20471,9 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _dice__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dice */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
-/* harmony import */ var _slice__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./slice */ "./node_modules/d3-hierarchy/src/treemap/slice.js");
-/* harmony import */ var _squarify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./squarify */ "./node_modules/d3-hierarchy/src/treemap/squarify.js");
+/* harmony import */ var _dice_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dice.js */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
+/* harmony import */ var _slice_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./slice.js */ "./node_modules/d3-hierarchy/src/treemap/slice.js");
+/* harmony import */ var _squarify_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./squarify.js */ "./node_modules/d3-hierarchy/src/treemap/squarify.js");
 
 
 
@@ -20467,12 +20494,12 @@ __webpack_require__.r(__webpack_exports__);
       while (++j < m) {
         row = rows[j], nodes = row.children;
         for (i = row.value = 0, n = nodes.length; i < n; ++i) row.value += nodes[i].value;
-        if (row.dice) Object(_dice__WEBPACK_IMPORTED_MODULE_0__["default"])(row, x0, y0, x1, y0 += (y1 - y0) * row.value / value);
-        else Object(_slice__WEBPACK_IMPORTED_MODULE_1__["default"])(row, x0, y0, x0 += (x1 - x0) * row.value / value, y1);
+        if (row.dice) Object(_dice_js__WEBPACK_IMPORTED_MODULE_0__["default"])(row, x0, y0, x1, y0 += (y1 - y0) * row.value / value);
+        else Object(_slice_js__WEBPACK_IMPORTED_MODULE_1__["default"])(row, x0, y0, x0 += (x1 - x0) * row.value / value, y1);
         value -= row.value;
       }
     } else {
-      parent._squarify = rows = Object(_squarify__WEBPACK_IMPORTED_MODULE_2__["squarifyRatio"])(ratio, parent, x0, y0, x1, y1);
+      parent._squarify = rows = Object(_squarify_js__WEBPACK_IMPORTED_MODULE_2__["squarifyRatio"])(ratio, parent, x0, y0, x1, y1);
       rows.ratio = ratio;
     }
   }
@@ -20482,7 +20509,7 @@ __webpack_require__.r(__webpack_exports__);
   };
 
   return resquarify;
-})(_squarify__WEBPACK_IMPORTED_MODULE_2__["phi"]));
+})(_squarify_js__WEBPACK_IMPORTED_MODULE_2__["phi"]));
 
 
 /***/ }),
@@ -20540,13 +20567,13 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _dice__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dice */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
-/* harmony import */ var _slice__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./slice */ "./node_modules/d3-hierarchy/src/treemap/slice.js");
+/* harmony import */ var _dice_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dice.js */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
+/* harmony import */ var _slice_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./slice.js */ "./node_modules/d3-hierarchy/src/treemap/slice.js");
 
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(parent, x0, y0, x1, y1) {
-  (parent.depth & 1 ? _slice__WEBPACK_IMPORTED_MODULE_1__["default"] : _dice__WEBPACK_IMPORTED_MODULE_0__["default"])(parent, x0, y0, x1, y1);
+  (parent.depth & 1 ? _slice_js__WEBPACK_IMPORTED_MODULE_1__["default"] : _dice_js__WEBPACK_IMPORTED_MODULE_0__["default"])(parent, x0, y0, x1, y1);
 });
 
 
@@ -20563,8 +20590,8 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "phi", function() { return phi; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "squarifyRatio", function() { return squarifyRatio; });
-/* harmony import */ var _dice__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dice */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
-/* harmony import */ var _slice__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./slice */ "./node_modules/d3-hierarchy/src/treemap/slice.js");
+/* harmony import */ var _dice_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./dice.js */ "./node_modules/d3-hierarchy/src/treemap/dice.js");
+/* harmony import */ var _slice_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./slice.js */ "./node_modules/d3-hierarchy/src/treemap/slice.js");
 
 
 
@@ -20611,8 +20638,8 @@ function squarifyRatio(ratio, parent, x0, y0, x1, y1) {
 
     // Position and record the row orientation.
     rows.push(row = {value: sumValue, dice: dx < dy, children: nodes.slice(i0, i1)});
-    if (row.dice) Object(_dice__WEBPACK_IMPORTED_MODULE_0__["default"])(row, x0, y0, x1, value ? y0 += dy * sumValue / value : y1);
-    else Object(_slice__WEBPACK_IMPORTED_MODULE_1__["default"])(row, x0, y0, value ? x0 += dx * sumValue / value : x1, y1);
+    if (row.dice) Object(_dice_js__WEBPACK_IMPORTED_MODULE_0__["default"])(row, x0, y0, x1, value ? y0 += dy * sumValue / value : y1);
+    else Object(_slice_js__WEBPACK_IMPORTED_MODULE_1__["default"])(row, x0, y0, value ? x0 += dx * sumValue / value : x1, y1);
     value -= sumValue, i0 = i1;
   }
 
@@ -21660,8 +21687,8 @@ function tanh(x) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _path__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./path */ "./node_modules/d3-path/src/path.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "path", function() { return _path__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _path_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./path.js */ "./node_modules/d3-path/src/path.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "path", function() { return _path_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
 
 
@@ -21930,7 +21957,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _cross__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cross */ "./node_modules/d3-polygon/src/cross.js");
+/* harmony import */ var _cross_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cross.js */ "./node_modules/d3-polygon/src/cross.js");
 
 
 function lexicographicOrder(a, b) {
@@ -21946,7 +21973,7 @@ function computeUpperHullIndexes(points) {
       size = 2;
 
   for (var i = 2; i < n; ++i) {
-    while (size > 1 && Object(_cross__WEBPACK_IMPORTED_MODULE_0__["default"])(points[indexes[size - 2]], points[indexes[size - 1]], points[i]) <= 0) --size;
+    while (size > 1 && Object(_cross_js__WEBPACK_IMPORTED_MODULE_0__["default"])(points[indexes[size - 2]], points[indexes[size - 1]], points[i]) <= 0) --size;
     indexes[size++] = i;
   }
 
@@ -21993,20 +22020,20 @@ function computeUpperHullIndexes(points) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _area__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./area */ "./node_modules/d3-polygon/src/area.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonArea", function() { return _area__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _area_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./area.js */ "./node_modules/d3-polygon/src/area.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonArea", function() { return _area_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
-/* harmony import */ var _centroid__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./centroid */ "./node_modules/d3-polygon/src/centroid.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonCentroid", function() { return _centroid__WEBPACK_IMPORTED_MODULE_1__["default"]; });
+/* harmony import */ var _centroid_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./centroid.js */ "./node_modules/d3-polygon/src/centroid.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonCentroid", function() { return _centroid_js__WEBPACK_IMPORTED_MODULE_1__["default"]; });
 
-/* harmony import */ var _hull__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./hull */ "./node_modules/d3-polygon/src/hull.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonHull", function() { return _hull__WEBPACK_IMPORTED_MODULE_2__["default"]; });
+/* harmony import */ var _hull_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./hull.js */ "./node_modules/d3-polygon/src/hull.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonHull", function() { return _hull_js__WEBPACK_IMPORTED_MODULE_2__["default"]; });
 
-/* harmony import */ var _contains__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./contains */ "./node_modules/d3-polygon/src/contains.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonContains", function() { return _contains__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+/* harmony import */ var _contains_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./contains.js */ "./node_modules/d3-polygon/src/contains.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonContains", function() { return _contains_js__WEBPACK_IMPORTED_MODULE_3__["default"]; });
 
-/* harmony import */ var _length__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./length */ "./node_modules/d3-polygon/src/length.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonLength", function() { return _length__WEBPACK_IMPORTED_MODULE_4__["default"]; });
+/* harmony import */ var _length_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./length.js */ "./node_modules/d3-polygon/src/length.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "polygonLength", function() { return _length_js__WEBPACK_IMPORTED_MODULE_4__["default"]; });
 
 
 
@@ -22254,7 +22281,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _quad__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quad */ "./node_modules/d3-quadtree/src/quad.js");
+/* harmony import */ var _quad_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quad.js */ "./node_modules/d3-quadtree/src/quad.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(x, y, radius) {
@@ -22272,7 +22299,7 @@ __webpack_require__.r(__webpack_exports__);
       q,
       i;
 
-  if (node) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](node, x0, y0, x3, y3));
+  if (node) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](node, x0, y0, x3, y3));
   if (radius == null) radius = Infinity;
   else {
     x0 = x - radius, y0 = y - radius;
@@ -22295,10 +22322,10 @@ __webpack_require__.r(__webpack_exports__);
           ym = (y1 + y2) / 2;
 
       quads.push(
-        new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](node[3], xm, ym, x2, y2),
-        new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](node[2], x1, ym, xm, y2),
-        new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](node[1], xm, y1, x2, ym),
-        new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](node[0], x1, y1, xm, ym)
+        new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](node[3], xm, ym, x2, y2),
+        new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](node[2], x1, ym, xm, y2),
+        new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](node[1], xm, y1, x2, ym),
+        new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](node[0], x1, y1, xm, ym)
       );
 
       // Visit the closest quadrant first.
@@ -22338,8 +22365,8 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _quadtree__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quadtree */ "./node_modules/d3-quadtree/src/quadtree.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "quadtree", function() { return _quadtree__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _quadtree_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quadtree.js */ "./node_modules/d3-quadtree/src/quadtree.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "quadtree", function() { return _quadtree_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
 
 
@@ -22376,18 +22403,18 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return quadtree; });
-/* harmony import */ var _add__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./add */ "./node_modules/d3-quadtree/src/add.js");
-/* harmony import */ var _cover__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./cover */ "./node_modules/d3-quadtree/src/cover.js");
-/* harmony import */ var _data__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./data */ "./node_modules/d3-quadtree/src/data.js");
-/* harmony import */ var _extent__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./extent */ "./node_modules/d3-quadtree/src/extent.js");
-/* harmony import */ var _find__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./find */ "./node_modules/d3-quadtree/src/find.js");
-/* harmony import */ var _remove__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./remove */ "./node_modules/d3-quadtree/src/remove.js");
-/* harmony import */ var _root__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./root */ "./node_modules/d3-quadtree/src/root.js");
-/* harmony import */ var _size__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./size */ "./node_modules/d3-quadtree/src/size.js");
-/* harmony import */ var _visit__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./visit */ "./node_modules/d3-quadtree/src/visit.js");
-/* harmony import */ var _visitAfter__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./visitAfter */ "./node_modules/d3-quadtree/src/visitAfter.js");
-/* harmony import */ var _x__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./x */ "./node_modules/d3-quadtree/src/x.js");
-/* harmony import */ var _y__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./y */ "./node_modules/d3-quadtree/src/y.js");
+/* harmony import */ var _add_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./add.js */ "./node_modules/d3-quadtree/src/add.js");
+/* harmony import */ var _cover_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./cover.js */ "./node_modules/d3-quadtree/src/cover.js");
+/* harmony import */ var _data_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./data.js */ "./node_modules/d3-quadtree/src/data.js");
+/* harmony import */ var _extent_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./extent.js */ "./node_modules/d3-quadtree/src/extent.js");
+/* harmony import */ var _find_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./find.js */ "./node_modules/d3-quadtree/src/find.js");
+/* harmony import */ var _remove_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./remove.js */ "./node_modules/d3-quadtree/src/remove.js");
+/* harmony import */ var _root_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./root.js */ "./node_modules/d3-quadtree/src/root.js");
+/* harmony import */ var _size_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./size.js */ "./node_modules/d3-quadtree/src/size.js");
+/* harmony import */ var _visit_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./visit.js */ "./node_modules/d3-quadtree/src/visit.js");
+/* harmony import */ var _visitAfter_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./visitAfter.js */ "./node_modules/d3-quadtree/src/visitAfter.js");
+/* harmony import */ var _x_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./x.js */ "./node_modules/d3-quadtree/src/x.js");
+/* harmony import */ var _y_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./y.js */ "./node_modules/d3-quadtree/src/y.js");
 
 
 
@@ -22402,7 +22429,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function quadtree(nodes, x, y) {
-  var tree = new Quadtree(x == null ? _x__WEBPACK_IMPORTED_MODULE_10__["defaultX"] : x, y == null ? _y__WEBPACK_IMPORTED_MODULE_11__["defaultY"] : y, NaN, NaN, NaN, NaN);
+  var tree = new Quadtree(x == null ? _x_js__WEBPACK_IMPORTED_MODULE_10__["defaultX"] : x, y == null ? _y_js__WEBPACK_IMPORTED_MODULE_11__["defaultY"] : y, NaN, NaN, NaN, NaN);
   return nodes == null ? tree : tree.addAll(nodes);
 }
 
@@ -22447,20 +22474,20 @@ treeProto.copy = function() {
   return copy;
 };
 
-treeProto.add = _add__WEBPACK_IMPORTED_MODULE_0__["default"];
-treeProto.addAll = _add__WEBPACK_IMPORTED_MODULE_0__["addAll"];
-treeProto.cover = _cover__WEBPACK_IMPORTED_MODULE_1__["default"];
-treeProto.data = _data__WEBPACK_IMPORTED_MODULE_2__["default"];
-treeProto.extent = _extent__WEBPACK_IMPORTED_MODULE_3__["default"];
-treeProto.find = _find__WEBPACK_IMPORTED_MODULE_4__["default"];
-treeProto.remove = _remove__WEBPACK_IMPORTED_MODULE_5__["default"];
-treeProto.removeAll = _remove__WEBPACK_IMPORTED_MODULE_5__["removeAll"];
-treeProto.root = _root__WEBPACK_IMPORTED_MODULE_6__["default"];
-treeProto.size = _size__WEBPACK_IMPORTED_MODULE_7__["default"];
-treeProto.visit = _visit__WEBPACK_IMPORTED_MODULE_8__["default"];
-treeProto.visitAfter = _visitAfter__WEBPACK_IMPORTED_MODULE_9__["default"];
-treeProto.x = _x__WEBPACK_IMPORTED_MODULE_10__["default"];
-treeProto.y = _y__WEBPACK_IMPORTED_MODULE_11__["default"];
+treeProto.add = _add_js__WEBPACK_IMPORTED_MODULE_0__["default"];
+treeProto.addAll = _add_js__WEBPACK_IMPORTED_MODULE_0__["addAll"];
+treeProto.cover = _cover_js__WEBPACK_IMPORTED_MODULE_1__["default"];
+treeProto.data = _data_js__WEBPACK_IMPORTED_MODULE_2__["default"];
+treeProto.extent = _extent_js__WEBPACK_IMPORTED_MODULE_3__["default"];
+treeProto.find = _find_js__WEBPACK_IMPORTED_MODULE_4__["default"];
+treeProto.remove = _remove_js__WEBPACK_IMPORTED_MODULE_5__["default"];
+treeProto.removeAll = _remove_js__WEBPACK_IMPORTED_MODULE_5__["removeAll"];
+treeProto.root = _root_js__WEBPACK_IMPORTED_MODULE_6__["default"];
+treeProto.size = _size_js__WEBPACK_IMPORTED_MODULE_7__["default"];
+treeProto.visit = _visit_js__WEBPACK_IMPORTED_MODULE_8__["default"];
+treeProto.visitAfter = _visitAfter_js__WEBPACK_IMPORTED_MODULE_9__["default"];
+treeProto.x = _x_js__WEBPACK_IMPORTED_MODULE_10__["default"];
+treeProto.y = _y_js__WEBPACK_IMPORTED_MODULE_11__["default"];
 
 
 /***/ }),
@@ -22586,19 +22613,19 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _quad__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quad */ "./node_modules/d3-quadtree/src/quad.js");
+/* harmony import */ var _quad_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quad.js */ "./node_modules/d3-quadtree/src/quad.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(callback) {
   var quads = [], q, node = this._root, child, x0, y0, x1, y1;
-  if (node) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](node, this._x0, this._y0, this._x1, this._y1));
+  if (node) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](node, this._x0, this._y0, this._x1, this._y1));
   while (q = quads.pop()) {
     if (!callback(node = q.node, x0 = q.x0, y0 = q.y0, x1 = q.x1, y1 = q.y1) && node.length) {
       var xm = (x0 + x1) / 2, ym = (y0 + y1) / 2;
-      if (child = node[3]) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](child, xm, ym, x1, y1));
-      if (child = node[2]) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](child, x0, ym, xm, y1));
-      if (child = node[1]) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](child, xm, y0, x1, ym));
-      if (child = node[0]) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](child, x0, y0, xm, ym));
+      if (child = node[3]) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](child, xm, ym, x1, y1));
+      if (child = node[2]) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](child, x0, ym, xm, y1));
+      if (child = node[1]) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](child, xm, y0, x1, ym));
+      if (child = node[0]) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](child, x0, y0, xm, ym));
     }
   }
   return this;
@@ -22616,20 +22643,20 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _quad__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quad */ "./node_modules/d3-quadtree/src/quad.js");
+/* harmony import */ var _quad_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./quad.js */ "./node_modules/d3-quadtree/src/quad.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(callback) {
   var quads = [], next = [], q;
-  if (this._root) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](this._root, this._x0, this._y0, this._x1, this._y1));
+  if (this._root) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](this._root, this._x0, this._y0, this._x1, this._y1));
   while (q = quads.pop()) {
     var node = q.node;
     if (node.length) {
       var child, x0 = q.x0, y0 = q.y0, x1 = q.x1, y1 = q.y1, xm = (x0 + x1) / 2, ym = (y0 + y1) / 2;
-      if (child = node[0]) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](child, x0, y0, xm, ym));
-      if (child = node[1]) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](child, xm, y0, x1, ym));
-      if (child = node[2]) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](child, x0, ym, xm, y1));
-      if (child = node[3]) quads.push(new _quad__WEBPACK_IMPORTED_MODULE_0__["default"](child, xm, ym, x1, y1));
+      if (child = node[0]) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](child, x0, y0, xm, ym));
+      if (child = node[1]) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](child, xm, y0, x1, ym));
+      if (child = node[2]) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](child, x0, ym, xm, y1));
+      if (child = node[3]) quads.push(new _quad_js__WEBPACK_IMPORTED_MODULE_0__["default"](child, xm, ym, x1, y1));
     }
     next.push(q);
   }
@@ -27881,8 +27908,8 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_path__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-path */ "./node_modules/d3-path/src/index.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant */ "./node_modules/d3-shape/src/constant.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./math */ "./node_modules/d3-shape/src/math.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant.js */ "./node_modules/d3-shape/src/constant.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-shape/src/math.js");
 
 
 
@@ -27911,7 +27938,7 @@ function intersect(x0, y0, x1, y1, x2, y2, x3, y3) {
   var x10 = x1 - x0, y10 = y1 - y0,
       x32 = x3 - x2, y32 = y3 - y2,
       t = y32 * x10 - x32 * y10;
-  if (t * t < _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) return;
+  if (t * t < _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) return;
   t = (x32 * (y0 - y2) - y32 * (x0 - x2)) / t;
   return [x0 + t * x10, y0 + t * y10];
 }
@@ -27921,7 +27948,7 @@ function intersect(x0, y0, x1, y1, x2, y2, x3, y3) {
 function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
   var x01 = x0 - x1,
       y01 = y0 - y1,
-      lo = (cw ? rc : -rc) / Object(_math__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(x01 * x01 + y01 * y01),
+      lo = (cw ? rc : -rc) / Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(x01 * x01 + y01 * y01),
       ox = lo * y01,
       oy = -lo * x01,
       x11 = x0 + ox,
@@ -27935,7 +27962,7 @@ function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
       d2 = dx * dx + dy * dy,
       r = r1 - rc,
       D = x11 * y10 - x10 * y11,
-      d = (dy < 0 ? -1 : 1) * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(Object(_math__WEBPACK_IMPORTED_MODULE_2__["max"])(0, r * r * d2 - D * D)),
+      d = (dy < 0 ? -1 : 1) * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["max"])(0, r * r * d2 - D * D)),
       cx0 = (D * dy - dx * d) / d2,
       cy0 = (-D * dx - dy * d) / d2,
       cx1 = (D * dy + dx * d) / d2,
@@ -27962,7 +27989,7 @@ function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
 /* harmony default export */ __webpack_exports__["default"] = (function() {
   var innerRadius = arcInnerRadius,
       outerRadius = arcOuterRadius,
-      cornerRadius = Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(0),
+      cornerRadius = Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(0),
       padRadius = null,
       startAngle = arcStartAngle,
       endAngle = arcEndAngle,
@@ -27974,9 +28001,9 @@ function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
         r,
         r0 = +innerRadius.apply(this, arguments),
         r1 = +outerRadius.apply(this, arguments),
-        a0 = startAngle.apply(this, arguments) - _math__WEBPACK_IMPORTED_MODULE_2__["halfPi"],
-        a1 = endAngle.apply(this, arguments) - _math__WEBPACK_IMPORTED_MODULE_2__["halfPi"],
-        da = Object(_math__WEBPACK_IMPORTED_MODULE_2__["abs"])(a1 - a0),
+        a0 = startAngle.apply(this, arguments) - _math_js__WEBPACK_IMPORTED_MODULE_2__["halfPi"],
+        a1 = endAngle.apply(this, arguments) - _math_js__WEBPACK_IMPORTED_MODULE_2__["halfPi"],
+        da = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["abs"])(a1 - a0),
         cw = a1 > a0;
 
     if (!context) context = buffer = Object(d3_path__WEBPACK_IMPORTED_MODULE_0__["path"])();
@@ -27985,14 +28012,14 @@ function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
     if (r1 < r0) r = r1, r1 = r0, r0 = r;
 
     // Is it a point?
-    if (!(r1 > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"])) context.moveTo(0, 0);
+    if (!(r1 > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"])) context.moveTo(0, 0);
 
     // Or is it a circle or annulus?
-    else if (da > _math__WEBPACK_IMPORTED_MODULE_2__["tau"] - _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
-      context.moveTo(r1 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(a0), r1 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(a0));
+    else if (da > _math_js__WEBPACK_IMPORTED_MODULE_2__["tau"] - _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
+      context.moveTo(r1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(a0), r1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(a0));
       context.arc(0, 0, r1, a0, a1, !cw);
-      if (r0 > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
-        context.moveTo(r0 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(a1), r0 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(a1));
+      if (r0 > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
+        context.moveTo(r0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(a1), r0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(a1));
         context.arc(0, 0, r0, a1, a0, cw);
       }
     }
@@ -28006,67 +28033,67 @@ function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
           da0 = da,
           da1 = da,
           ap = padAngle.apply(this, arguments) / 2,
-          rp = (ap > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) && (padRadius ? +padRadius.apply(this, arguments) : Object(_math__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(r0 * r0 + r1 * r1)),
-          rc = Object(_math__WEBPACK_IMPORTED_MODULE_2__["min"])(Object(_math__WEBPACK_IMPORTED_MODULE_2__["abs"])(r1 - r0) / 2, +cornerRadius.apply(this, arguments)),
+          rp = (ap > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) && (padRadius ? +padRadius.apply(this, arguments) : Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(r0 * r0 + r1 * r1)),
+          rc = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["min"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["abs"])(r1 - r0) / 2, +cornerRadius.apply(this, arguments)),
           rc0 = rc,
           rc1 = rc,
           t0,
           t1;
 
       // Apply padding? Note that since r1 ≥ r0, da1 ≥ da0.
-      if (rp > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
-        var p0 = Object(_math__WEBPACK_IMPORTED_MODULE_2__["asin"])(rp / r0 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(ap)),
-            p1 = Object(_math__WEBPACK_IMPORTED_MODULE_2__["asin"])(rp / r1 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(ap));
-        if ((da0 -= p0 * 2) > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) p0 *= (cw ? 1 : -1), a00 += p0, a10 -= p0;
+      if (rp > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
+        var p0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["asin"])(rp / r0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(ap)),
+            p1 = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["asin"])(rp / r1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(ap));
+        if ((da0 -= p0 * 2) > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) p0 *= (cw ? 1 : -1), a00 += p0, a10 -= p0;
         else da0 = 0, a00 = a10 = (a0 + a1) / 2;
-        if ((da1 -= p1 * 2) > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) p1 *= (cw ? 1 : -1), a01 += p1, a11 -= p1;
+        if ((da1 -= p1 * 2) > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) p1 *= (cw ? 1 : -1), a01 += p1, a11 -= p1;
         else da1 = 0, a01 = a11 = (a0 + a1) / 2;
       }
 
-      var x01 = r1 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(a01),
-          y01 = r1 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(a01),
-          x10 = r0 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(a10),
-          y10 = r0 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(a10);
+      var x01 = r1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(a01),
+          y01 = r1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(a01),
+          x10 = r0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(a10),
+          y10 = r0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(a10);
 
       // Apply rounded corners?
-      if (rc > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
-        var x11 = r1 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(a11),
-            y11 = r1 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(a11),
-            x00 = r0 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(a00),
-            y00 = r0 * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(a00),
+      if (rc > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
+        var x11 = r1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(a11),
+            y11 = r1 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(a11),
+            x00 = r0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(a00),
+            y00 = r0 * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(a00),
             oc;
 
         // Restrict the corner radius according to the sector angle.
-        if (da < _math__WEBPACK_IMPORTED_MODULE_2__["pi"] && (oc = intersect(x01, y01, x00, y00, x11, y11, x10, y10))) {
+        if (da < _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"] && (oc = intersect(x01, y01, x00, y00, x11, y11, x10, y10))) {
           var ax = x01 - oc[0],
               ay = y01 - oc[1],
               bx = x11 - oc[0],
               by = y11 - oc[1],
-              kc = 1 / Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(Object(_math__WEBPACK_IMPORTED_MODULE_2__["acos"])((ax * bx + ay * by) / (Object(_math__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(ax * ax + ay * ay) * Object(_math__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(bx * bx + by * by))) / 2),
-              lc = Object(_math__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(oc[0] * oc[0] + oc[1] * oc[1]);
-          rc0 = Object(_math__WEBPACK_IMPORTED_MODULE_2__["min"])(rc, (r0 - lc) / (kc - 1));
-          rc1 = Object(_math__WEBPACK_IMPORTED_MODULE_2__["min"])(rc, (r1 - lc) / (kc + 1));
+              kc = 1 / Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["acos"])((ax * bx + ay * by) / (Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(ax * ax + ay * ay) * Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(bx * bx + by * by))) / 2),
+              lc = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sqrt"])(oc[0] * oc[0] + oc[1] * oc[1]);
+          rc0 = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["min"])(rc, (r0 - lc) / (kc - 1));
+          rc1 = Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["min"])(rc, (r1 - lc) / (kc + 1));
         }
       }
 
       // Is the sector collapsed to a line?
-      if (!(da1 > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"])) context.moveTo(x01, y01);
+      if (!(da1 > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"])) context.moveTo(x01, y01);
 
       // Does the sector’s outer ring have rounded corners?
-      else if (rc1 > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
+      else if (rc1 > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
         t0 = cornerTangents(x00, y00, x01, y01, r1, rc1, cw);
         t1 = cornerTangents(x11, y11, x10, y10, r1, rc1, cw);
 
         context.moveTo(t0.cx + t0.x01, t0.cy + t0.y01);
 
         // Have the corners merged?
-        if (rc1 < rc) context.arc(t0.cx, t0.cy, rc1, Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y01, t0.x01), Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y01, t1.x01), !cw);
+        if (rc1 < rc) context.arc(t0.cx, t0.cy, rc1, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y01, t0.x01), Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y01, t1.x01), !cw);
 
         // Otherwise, draw the two corners and the ring.
         else {
-          context.arc(t0.cx, t0.cy, rc1, Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y01, t0.x01), Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y11, t0.x11), !cw);
-          context.arc(0, 0, r1, Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.cy + t0.y11, t0.cx + t0.x11), Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.cy + t1.y11, t1.cx + t1.x11), !cw);
-          context.arc(t1.cx, t1.cy, rc1, Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y11, t1.x11), Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y01, t1.x01), !cw);
+          context.arc(t0.cx, t0.cy, rc1, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y01, t0.x01), Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y11, t0.x11), !cw);
+          context.arc(0, 0, r1, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.cy + t0.y11, t0.cx + t0.x11), Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.cy + t1.y11, t1.cx + t1.x11), !cw);
+          context.arc(t1.cx, t1.cy, rc1, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y11, t1.x11), Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y01, t1.x01), !cw);
         }
       }
 
@@ -28075,23 +28102,23 @@ function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
 
       // Is there no inner ring, and it’s a circular sector?
       // Or perhaps it’s an annular sector collapsed due to padding?
-      if (!(r0 > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) || !(da0 > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"])) context.lineTo(x10, y10);
+      if (!(r0 > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) || !(da0 > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"])) context.lineTo(x10, y10);
 
       // Does the sector’s inner ring (or point) have rounded corners?
-      else if (rc0 > _math__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
+      else if (rc0 > _math_js__WEBPACK_IMPORTED_MODULE_2__["epsilon"]) {
         t0 = cornerTangents(x10, y10, x11, y11, r0, -rc0, cw);
         t1 = cornerTangents(x01, y01, x00, y00, r0, -rc0, cw);
 
         context.lineTo(t0.cx + t0.x01, t0.cy + t0.y01);
 
         // Have the corners merged?
-        if (rc0 < rc) context.arc(t0.cx, t0.cy, rc0, Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y01, t0.x01), Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y01, t1.x01), !cw);
+        if (rc0 < rc) context.arc(t0.cx, t0.cy, rc0, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y01, t0.x01), Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y01, t1.x01), !cw);
 
         // Otherwise, draw the two corners and the ring.
         else {
-          context.arc(t0.cx, t0.cy, rc0, Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y01, t0.x01), Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y11, t0.x11), !cw);
-          context.arc(0, 0, r0, Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.cy + t0.y11, t0.cx + t0.x11), Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.cy + t1.y11, t1.cx + t1.x11), cw);
-          context.arc(t1.cx, t1.cy, rc0, Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y11, t1.x11), Object(_math__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y01, t1.x01), !cw);
+          context.arc(t0.cx, t0.cy, rc0, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y01, t0.x01), Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.y11, t0.x11), !cw);
+          context.arc(0, 0, r0, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t0.cy + t0.y11, t0.cx + t0.x11), Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.cy + t1.y11, t1.cx + t1.x11), cw);
+          context.arc(t1.cx, t1.cy, rc0, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y11, t1.x11), Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["atan2"])(t1.y01, t1.x01), !cw);
         }
       }
 
@@ -28106,36 +28133,36 @@ function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
 
   arc.centroid = function() {
     var r = (+innerRadius.apply(this, arguments) + +outerRadius.apply(this, arguments)) / 2,
-        a = (+startAngle.apply(this, arguments) + +endAngle.apply(this, arguments)) / 2 - _math__WEBPACK_IMPORTED_MODULE_2__["pi"] / 2;
-    return [Object(_math__WEBPACK_IMPORTED_MODULE_2__["cos"])(a) * r, Object(_math__WEBPACK_IMPORTED_MODULE_2__["sin"])(a) * r];
+        a = (+startAngle.apply(this, arguments) + +endAngle.apply(this, arguments)) / 2 - _math_js__WEBPACK_IMPORTED_MODULE_2__["pi"] / 2;
+    return [Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["cos"])(a) * r, Object(_math_js__WEBPACK_IMPORTED_MODULE_2__["sin"])(a) * r];
   };
 
   arc.innerRadius = function(_) {
-    return arguments.length ? (innerRadius = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : innerRadius;
+    return arguments.length ? (innerRadius = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : innerRadius;
   };
 
   arc.outerRadius = function(_) {
-    return arguments.length ? (outerRadius = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : outerRadius;
+    return arguments.length ? (outerRadius = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : outerRadius;
   };
 
   arc.cornerRadius = function(_) {
-    return arguments.length ? (cornerRadius = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : cornerRadius;
+    return arguments.length ? (cornerRadius = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : cornerRadius;
   };
 
   arc.padRadius = function(_) {
-    return arguments.length ? (padRadius = _ == null ? null : typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : padRadius;
+    return arguments.length ? (padRadius = _ == null ? null : typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : padRadius;
   };
 
   arc.startAngle = function(_) {
-    return arguments.length ? (startAngle = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : startAngle;
+    return arguments.length ? (startAngle = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : startAngle;
   };
 
   arc.endAngle = function(_) {
-    return arguments.length ? (endAngle = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : endAngle;
+    return arguments.length ? (endAngle = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : endAngle;
   };
 
   arc.padAngle = function(_) {
-    return arguments.length ? (padAngle = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : padAngle;
+    return arguments.length ? (padAngle = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), arc) : padAngle;
   };
 
   arc.context = function(_) {
@@ -28158,10 +28185,10 @@ function cornerTangents(x0, y0, x1, y1, r1, rc, cw) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_path__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-path */ "./node_modules/d3-path/src/index.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant */ "./node_modules/d3-shape/src/constant.js");
-/* harmony import */ var _curve_linear__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./curve/linear */ "./node_modules/d3-shape/src/curve/linear.js");
-/* harmony import */ var _line__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./line */ "./node_modules/d3-shape/src/line.js");
-/* harmony import */ var _point__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./point */ "./node_modules/d3-shape/src/point.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant.js */ "./node_modules/d3-shape/src/constant.js");
+/* harmony import */ var _curve_linear_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./curve/linear.js */ "./node_modules/d3-shape/src/curve/linear.js");
+/* harmony import */ var _line_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./line.js */ "./node_modules/d3-shape/src/line.js");
+/* harmony import */ var _point_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./point.js */ "./node_modules/d3-shape/src/point.js");
 
 
 
@@ -28169,13 +28196,13 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var x0 = _point__WEBPACK_IMPORTED_MODULE_4__["x"],
+  var x0 = _point_js__WEBPACK_IMPORTED_MODULE_4__["x"],
       x1 = null,
-      y0 = Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(0),
-      y1 = _point__WEBPACK_IMPORTED_MODULE_4__["y"],
-      defined = Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(true),
+      y0 = Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(0),
+      y1 = _point_js__WEBPACK_IMPORTED_MODULE_4__["y"],
+      defined = Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(true),
       context = null,
-      curve = _curve_linear__WEBPACK_IMPORTED_MODULE_2__["default"],
+      curve = _curve_linear_js__WEBPACK_IMPORTED_MODULE_2__["default"],
       output = null;
 
   function area(data) {
@@ -28217,31 +28244,31 @@ __webpack_require__.r(__webpack_exports__);
   }
 
   function arealine() {
-    return Object(_line__WEBPACK_IMPORTED_MODULE_3__["default"])().defined(defined).curve(curve).context(context);
+    return Object(_line_js__WEBPACK_IMPORTED_MODULE_3__["default"])().defined(defined).curve(curve).context(context);
   }
 
   area.x = function(_) {
-    return arguments.length ? (x0 = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), x1 = null, area) : x0;
+    return arguments.length ? (x0 = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), x1 = null, area) : x0;
   };
 
   area.x0 = function(_) {
-    return arguments.length ? (x0 = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), area) : x0;
+    return arguments.length ? (x0 = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), area) : x0;
   };
 
   area.x1 = function(_) {
-    return arguments.length ? (x1 = _ == null ? null : typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), area) : x1;
+    return arguments.length ? (x1 = _ == null ? null : typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), area) : x1;
   };
 
   area.y = function(_) {
-    return arguments.length ? (y0 = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), y1 = null, area) : y0;
+    return arguments.length ? (y0 = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), y1 = null, area) : y0;
   };
 
   area.y0 = function(_) {
-    return arguments.length ? (y0 = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), area) : y0;
+    return arguments.length ? (y0 = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), area) : y0;
   };
 
   area.y1 = function(_) {
-    return arguments.length ? (y1 = _ == null ? null : typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), area) : y1;
+    return arguments.length ? (y1 = _ == null ? null : typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), area) : y1;
   };
 
   area.lineX0 =
@@ -28258,7 +28285,7 @@ __webpack_require__.r(__webpack_exports__);
   };
 
   area.defined = function(_) {
-    return arguments.length ? (defined = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(!!_), area) : defined;
+    return arguments.length ? (defined = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(!!_), area) : defined;
   };
 
   area.curve = function(_) {
@@ -28284,15 +28311,15 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _curve_radial__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./curve/radial */ "./node_modules/d3-shape/src/curve/radial.js");
-/* harmony import */ var _area__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./area */ "./node_modules/d3-shape/src/area.js");
-/* harmony import */ var _lineRadial__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./lineRadial */ "./node_modules/d3-shape/src/lineRadial.js");
+/* harmony import */ var _curve_radial_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./curve/radial.js */ "./node_modules/d3-shape/src/curve/radial.js");
+/* harmony import */ var _area_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./area.js */ "./node_modules/d3-shape/src/area.js");
+/* harmony import */ var _lineRadial_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./lineRadial.js */ "./node_modules/d3-shape/src/lineRadial.js");
 
 
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var a = Object(_area__WEBPACK_IMPORTED_MODULE_1__["default"])().curve(_curve_radial__WEBPACK_IMPORTED_MODULE_0__["curveRadialLinear"]),
+  var a = Object(_area_js__WEBPACK_IMPORTED_MODULE_1__["default"])().curve(_curve_radial_js__WEBPACK_IMPORTED_MODULE_0__["curveRadialLinear"]),
       c = a.curve,
       x0 = a.lineX0,
       x1 = a.lineX1,
@@ -28305,13 +28332,13 @@ __webpack_require__.r(__webpack_exports__);
   a.radius = a.y, delete a.y;
   a.innerRadius = a.y0, delete a.y0;
   a.outerRadius = a.y1, delete a.y1;
-  a.lineStartAngle = function() { return Object(_lineRadial__WEBPACK_IMPORTED_MODULE_2__["lineRadial"])(x0()); }, delete a.lineX0;
-  a.lineEndAngle = function() { return Object(_lineRadial__WEBPACK_IMPORTED_MODULE_2__["lineRadial"])(x1()); }, delete a.lineX1;
-  a.lineInnerRadius = function() { return Object(_lineRadial__WEBPACK_IMPORTED_MODULE_2__["lineRadial"])(y0()); }, delete a.lineY0;
-  a.lineOuterRadius = function() { return Object(_lineRadial__WEBPACK_IMPORTED_MODULE_2__["lineRadial"])(y1()); }, delete a.lineY1;
+  a.lineStartAngle = function() { return Object(_lineRadial_js__WEBPACK_IMPORTED_MODULE_2__["lineRadial"])(x0()); }, delete a.lineX0;
+  a.lineEndAngle = function() { return Object(_lineRadial_js__WEBPACK_IMPORTED_MODULE_2__["lineRadial"])(x1()); }, delete a.lineX1;
+  a.lineInnerRadius = function() { return Object(_lineRadial_js__WEBPACK_IMPORTED_MODULE_2__["lineRadial"])(y0()); }, delete a.lineY0;
+  a.lineOuterRadius = function() { return Object(_lineRadial_js__WEBPACK_IMPORTED_MODULE_2__["lineRadial"])(y1()); }, delete a.lineY1;
 
   a.curve = function(_) {
-    return arguments.length ? c(Object(_curve_radial__WEBPACK_IMPORTED_MODULE_0__["default"])(_)) : c()._curve;
+    return arguments.length ? c(Object(_curve_radial_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_)) : c()._curve;
   };
 
   return a;
@@ -28428,8 +28455,8 @@ Basis.prototype = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-shape/src/noop.js");
-/* harmony import */ var _basis__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./basis */ "./node_modules/d3-shape/src/curve/basis.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-shape/src/noop.js");
+/* harmony import */ var _basis_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./basis.js */ "./node_modules/d3-shape/src/curve/basis.js");
 
 
 
@@ -28438,8 +28465,8 @@ function BasisClosed(context) {
 }
 
 BasisClosed.prototype = {
-  areaStart: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
-  areaEnd: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
+  areaStart: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
+  areaEnd: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
   lineStart: function() {
     this._x0 = this._x1 = this._x2 = this._x3 = this._x4 =
     this._y0 = this._y1 = this._y2 = this._y3 = this._y4 = NaN;
@@ -28472,7 +28499,7 @@ BasisClosed.prototype = {
       case 0: this._point = 1; this._x2 = x, this._y2 = y; break;
       case 1: this._point = 2; this._x3 = x, this._y3 = y; break;
       case 2: this._point = 3; this._x4 = x, this._y4 = y; this._context.moveTo((this._x0 + 4 * this._x1 + x) / 6, (this._y0 + 4 * this._y1 + y) / 6); break;
-      default: Object(_basis__WEBPACK_IMPORTED_MODULE_1__["point"])(this, x, y); break;
+      default: Object(_basis_js__WEBPACK_IMPORTED_MODULE_1__["point"])(this, x, y); break;
     }
     this._x0 = this._x1, this._x1 = x;
     this._y0 = this._y1, this._y1 = y;
@@ -28495,7 +28522,7 @@ BasisClosed.prototype = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _basis__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./basis */ "./node_modules/d3-shape/src/curve/basis.js");
+/* harmony import */ var _basis_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./basis.js */ "./node_modules/d3-shape/src/curve/basis.js");
 
 
 function BasisOpen(context) {
@@ -28525,7 +28552,7 @@ BasisOpen.prototype = {
       case 1: this._point = 2; break;
       case 2: this._point = 3; var x0 = (this._x0 + 4 * this._x1 + x) / 6, y0 = (this._y0 + 4 * this._y1 + y) / 6; this._line ? this._context.lineTo(x0, y0) : this._context.moveTo(x0, y0); break;
       case 3: this._point = 4; // proceed
-      default: Object(_basis__WEBPACK_IMPORTED_MODULE_0__["point"])(this, x, y); break;
+      default: Object(_basis_js__WEBPACK_IMPORTED_MODULE_0__["point"])(this, x, y); break;
     }
     this._x0 = this._x1, this._x1 = x;
     this._y0 = this._y1, this._y1 = y;
@@ -28548,11 +28575,11 @@ BasisOpen.prototype = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _basis__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./basis */ "./node_modules/d3-shape/src/curve/basis.js");
+/* harmony import */ var _basis_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./basis.js */ "./node_modules/d3-shape/src/curve/basis.js");
 
 
 function Bundle(context, beta) {
-  this._basis = new _basis__WEBPACK_IMPORTED_MODULE_0__["Basis"](context);
+  this._basis = new _basis_js__WEBPACK_IMPORTED_MODULE_0__["Basis"](context);
   this._beta = beta;
 }
 
@@ -28596,7 +28623,7 @@ Bundle.prototype = {
 /* harmony default export */ __webpack_exports__["default"] = ((function custom(beta) {
 
   function bundle(context) {
-    return beta === 1 ? new _basis__WEBPACK_IMPORTED_MODULE_0__["Basis"](context) : new Bundle(context, beta);
+    return beta === 1 ? new _basis_js__WEBPACK_IMPORTED_MODULE_0__["Basis"](context) : new Bundle(context, beta);
   }
 
   bundle.beta = function(beta) {
@@ -28695,8 +28722,8 @@ Cardinal.prototype = {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CardinalClosed", function() { return CardinalClosed; });
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-shape/src/noop.js");
-/* harmony import */ var _cardinal__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./cardinal */ "./node_modules/d3-shape/src/curve/cardinal.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-shape/src/noop.js");
+/* harmony import */ var _cardinal_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./cardinal.js */ "./node_modules/d3-shape/src/curve/cardinal.js");
 
 
 
@@ -28706,8 +28733,8 @@ function CardinalClosed(context, tension) {
 }
 
 CardinalClosed.prototype = {
-  areaStart: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
-  areaEnd: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
+  areaStart: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
+  areaEnd: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
   lineStart: function() {
     this._x0 = this._x1 = this._x2 = this._x3 = this._x4 = this._x5 =
     this._y0 = this._y1 = this._y2 = this._y3 = this._y4 = this._y5 = NaN;
@@ -28739,7 +28766,7 @@ CardinalClosed.prototype = {
       case 0: this._point = 1; this._x3 = x, this._y3 = y; break;
       case 1: this._point = 2; this._context.moveTo(this._x4 = x, this._y4 = y); break;
       case 2: this._point = 3; this._x5 = x, this._y5 = y; break;
-      default: Object(_cardinal__WEBPACK_IMPORTED_MODULE_1__["point"])(this, x, y); break;
+      default: Object(_cardinal_js__WEBPACK_IMPORTED_MODULE_1__["point"])(this, x, y); break;
     }
     this._x0 = this._x1, this._x1 = this._x2, this._x2 = x;
     this._y0 = this._y1, this._y1 = this._y2, this._y2 = y;
@@ -28772,7 +28799,7 @@ CardinalClosed.prototype = {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CardinalOpen", function() { return CardinalOpen; });
-/* harmony import */ var _cardinal__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cardinal */ "./node_modules/d3-shape/src/curve/cardinal.js");
+/* harmony import */ var _cardinal_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cardinal.js */ "./node_modules/d3-shape/src/curve/cardinal.js");
 
 
 function CardinalOpen(context, tension) {
@@ -28803,7 +28830,7 @@ CardinalOpen.prototype = {
       case 1: this._point = 2; break;
       case 2: this._point = 3; this._line ? this._context.lineTo(this._x2, this._y2) : this._context.moveTo(this._x2, this._y2); break;
       case 3: this._point = 4; // proceed
-      default: Object(_cardinal__WEBPACK_IMPORTED_MODULE_0__["point"])(this, x, y); break;
+      default: Object(_cardinal_js__WEBPACK_IMPORTED_MODULE_0__["point"])(this, x, y); break;
     }
     this._x0 = this._x1, this._x1 = this._x2, this._x2 = x;
     this._y0 = this._y1, this._y1 = this._y2, this._y2 = y;
@@ -28836,8 +28863,8 @@ CardinalOpen.prototype = {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "point", function() { return point; });
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-shape/src/math.js");
-/* harmony import */ var _cardinal__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./cardinal */ "./node_modules/d3-shape/src/curve/cardinal.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-shape/src/math.js");
+/* harmony import */ var _cardinal_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./cardinal.js */ "./node_modules/d3-shape/src/curve/cardinal.js");
 
 
 
@@ -28847,14 +28874,14 @@ function point(that, x, y) {
       x2 = that._x2,
       y2 = that._y2;
 
-  if (that._l01_a > _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) {
+  if (that._l01_a > _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) {
     var a = 2 * that._l01_2a + 3 * that._l01_a * that._l12_a + that._l12_2a,
         n = 3 * that._l01_a * (that._l01_a + that._l12_a);
     x1 = (x1 * a - that._x0 * that._l12_2a + that._x2 * that._l01_2a) / n;
     y1 = (y1 * a - that._y0 * that._l12_2a + that._y2 * that._l01_2a) / n;
   }
 
-  if (that._l23_a > _math__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) {
+  if (that._l23_a > _math_js__WEBPACK_IMPORTED_MODULE_0__["epsilon"]) {
     var b = 2 * that._l23_2a + 3 * that._l23_a * that._l12_a + that._l12_2a,
         m = 3 * that._l23_a * (that._l23_a + that._l12_a);
     x2 = (x2 * b + that._x1 * that._l23_2a - x * that._l12_2a) / m;
@@ -28917,7 +28944,7 @@ CatmullRom.prototype = {
 /* harmony default export */ __webpack_exports__["default"] = ((function custom(alpha) {
 
   function catmullRom(context) {
-    return alpha ? new CatmullRom(context, alpha) : new _cardinal__WEBPACK_IMPORTED_MODULE_1__["Cardinal"](context, 0);
+    return alpha ? new CatmullRom(context, alpha) : new _cardinal_js__WEBPACK_IMPORTED_MODULE_1__["Cardinal"](context, 0);
   }
 
   catmullRom.alpha = function(alpha) {
@@ -28939,9 +28966,9 @@ CatmullRom.prototype = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _cardinalClosed__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cardinalClosed */ "./node_modules/d3-shape/src/curve/cardinalClosed.js");
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-shape/src/noop.js");
-/* harmony import */ var _catmullRom__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./catmullRom */ "./node_modules/d3-shape/src/curve/catmullRom.js");
+/* harmony import */ var _cardinalClosed_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cardinalClosed.js */ "./node_modules/d3-shape/src/curve/cardinalClosed.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-shape/src/noop.js");
+/* harmony import */ var _catmullRom_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./catmullRom.js */ "./node_modules/d3-shape/src/curve/catmullRom.js");
 
 
 
@@ -28952,8 +28979,8 @@ function CatmullRomClosed(context, alpha) {
 }
 
 CatmullRomClosed.prototype = {
-  areaStart: _noop__WEBPACK_IMPORTED_MODULE_1__["default"],
-  areaEnd: _noop__WEBPACK_IMPORTED_MODULE_1__["default"],
+  areaStart: _noop_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  areaEnd: _noop_js__WEBPACK_IMPORTED_MODULE_1__["default"],
   lineStart: function() {
     this._x0 = this._x1 = this._x2 = this._x3 = this._x4 = this._x5 =
     this._y0 = this._y1 = this._y2 = this._y3 = this._y4 = this._y5 = NaN;
@@ -28994,7 +29021,7 @@ CatmullRomClosed.prototype = {
       case 0: this._point = 1; this._x3 = x, this._y3 = y; break;
       case 1: this._point = 2; this._context.moveTo(this._x4 = x, this._y4 = y); break;
       case 2: this._point = 3; this._x5 = x, this._y5 = y; break;
-      default: Object(_catmullRom__WEBPACK_IMPORTED_MODULE_2__["point"])(this, x, y); break;
+      default: Object(_catmullRom_js__WEBPACK_IMPORTED_MODULE_2__["point"])(this, x, y); break;
     }
 
     this._l01_a = this._l12_a, this._l12_a = this._l23_a;
@@ -29007,7 +29034,7 @@ CatmullRomClosed.prototype = {
 /* harmony default export */ __webpack_exports__["default"] = ((function custom(alpha) {
 
   function catmullRom(context) {
-    return alpha ? new CatmullRomClosed(context, alpha) : new _cardinalClosed__WEBPACK_IMPORTED_MODULE_0__["CardinalClosed"](context, 0);
+    return alpha ? new CatmullRomClosed(context, alpha) : new _cardinalClosed_js__WEBPACK_IMPORTED_MODULE_0__["CardinalClosed"](context, 0);
   }
 
   catmullRom.alpha = function(alpha) {
@@ -29029,8 +29056,8 @@ CatmullRomClosed.prototype = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _cardinalOpen__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cardinalOpen */ "./node_modules/d3-shape/src/curve/cardinalOpen.js");
-/* harmony import */ var _catmullRom__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./catmullRom */ "./node_modules/d3-shape/src/curve/catmullRom.js");
+/* harmony import */ var _cardinalOpen_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cardinalOpen.js */ "./node_modules/d3-shape/src/curve/cardinalOpen.js");
+/* harmony import */ var _catmullRom_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./catmullRom.js */ "./node_modules/d3-shape/src/curve/catmullRom.js");
 
 
 
@@ -29071,7 +29098,7 @@ CatmullRomOpen.prototype = {
       case 1: this._point = 2; break;
       case 2: this._point = 3; this._line ? this._context.lineTo(this._x2, this._y2) : this._context.moveTo(this._x2, this._y2); break;
       case 3: this._point = 4; // proceed
-      default: Object(_catmullRom__WEBPACK_IMPORTED_MODULE_1__["point"])(this, x, y); break;
+      default: Object(_catmullRom_js__WEBPACK_IMPORTED_MODULE_1__["point"])(this, x, y); break;
     }
 
     this._l01_a = this._l12_a, this._l12_a = this._l23_a;
@@ -29084,7 +29111,7 @@ CatmullRomOpen.prototype = {
 /* harmony default export */ __webpack_exports__["default"] = ((function custom(alpha) {
 
   function catmullRom(context) {
-    return alpha ? new CatmullRomOpen(context, alpha) : new _cardinalOpen__WEBPACK_IMPORTED_MODULE_0__["CardinalOpen"](context, 0);
+    return alpha ? new CatmullRomOpen(context, alpha) : new _cardinalOpen_js__WEBPACK_IMPORTED_MODULE_0__["CardinalOpen"](context, 0);
   }
 
   catmullRom.alpha = function(alpha) {
@@ -29150,7 +29177,7 @@ Linear.prototype = {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _noop__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop */ "./node_modules/d3-shape/src/noop.js");
+/* harmony import */ var _noop_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../noop.js */ "./node_modules/d3-shape/src/noop.js");
 
 
 function LinearClosed(context) {
@@ -29158,8 +29185,8 @@ function LinearClosed(context) {
 }
 
 LinearClosed.prototype = {
-  areaStart: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
-  areaEnd: _noop__WEBPACK_IMPORTED_MODULE_0__["default"],
+  areaStart: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
+  areaEnd: _noop_js__WEBPACK_IMPORTED_MODULE_0__["default"],
   lineStart: function() {
     this._point = 0;
   },
@@ -29388,10 +29415,10 @@ function controlPoints(x) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "curveRadialLinear", function() { return curveRadialLinear; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return curveRadial; });
-/* harmony import */ var _linear__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./linear */ "./node_modules/d3-shape/src/curve/linear.js");
+/* harmony import */ var _linear_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./linear.js */ "./node_modules/d3-shape/src/curve/linear.js");
 
 
-var curveRadialLinear = curveRadial(_linear__WEBPACK_IMPORTED_MODULE_0__["default"]);
+var curveRadialLinear = curveRadial(_linear_js__WEBPACK_IMPORTED_MODULE_0__["default"]);
 
 function Radial(curve) {
   this._curve = curve;
@@ -29538,150 +29565,150 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _arc__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./arc */ "./node_modules/d3-shape/src/arc.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "arc", function() { return _arc__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+/* harmony import */ var _arc_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./arc.js */ "./node_modules/d3-shape/src/arc.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "arc", function() { return _arc_js__WEBPACK_IMPORTED_MODULE_0__["default"]; });
 
-/* harmony import */ var _area__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./area */ "./node_modules/d3-shape/src/area.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "area", function() { return _area__WEBPACK_IMPORTED_MODULE_1__["default"]; });
+/* harmony import */ var _area_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./area.js */ "./node_modules/d3-shape/src/area.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "area", function() { return _area_js__WEBPACK_IMPORTED_MODULE_1__["default"]; });
 
-/* harmony import */ var _line__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./line */ "./node_modules/d3-shape/src/line.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "line", function() { return _line__WEBPACK_IMPORTED_MODULE_2__["default"]; });
+/* harmony import */ var _line_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./line.js */ "./node_modules/d3-shape/src/line.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "line", function() { return _line_js__WEBPACK_IMPORTED_MODULE_2__["default"]; });
 
-/* harmony import */ var _pie__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./pie */ "./node_modules/d3-shape/src/pie.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "pie", function() { return _pie__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+/* harmony import */ var _pie_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./pie.js */ "./node_modules/d3-shape/src/pie.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "pie", function() { return _pie_js__WEBPACK_IMPORTED_MODULE_3__["default"]; });
 
-/* harmony import */ var _areaRadial__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./areaRadial */ "./node_modules/d3-shape/src/areaRadial.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "areaRadial", function() { return _areaRadial__WEBPACK_IMPORTED_MODULE_4__["default"]; });
+/* harmony import */ var _areaRadial_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./areaRadial.js */ "./node_modules/d3-shape/src/areaRadial.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "areaRadial", function() { return _areaRadial_js__WEBPACK_IMPORTED_MODULE_4__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "radialArea", function() { return _areaRadial__WEBPACK_IMPORTED_MODULE_4__["default"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "radialArea", function() { return _areaRadial_js__WEBPACK_IMPORTED_MODULE_4__["default"]; });
 
-/* harmony import */ var _lineRadial__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./lineRadial */ "./node_modules/d3-shape/src/lineRadial.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "lineRadial", function() { return _lineRadial__WEBPACK_IMPORTED_MODULE_5__["default"]; });
+/* harmony import */ var _lineRadial_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./lineRadial.js */ "./node_modules/d3-shape/src/lineRadial.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "lineRadial", function() { return _lineRadial_js__WEBPACK_IMPORTED_MODULE_5__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "radialLine", function() { return _lineRadial__WEBPACK_IMPORTED_MODULE_5__["default"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "radialLine", function() { return _lineRadial_js__WEBPACK_IMPORTED_MODULE_5__["default"]; });
 
-/* harmony import */ var _pointRadial__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./pointRadial */ "./node_modules/d3-shape/src/pointRadial.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "pointRadial", function() { return _pointRadial__WEBPACK_IMPORTED_MODULE_6__["default"]; });
+/* harmony import */ var _pointRadial_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./pointRadial.js */ "./node_modules/d3-shape/src/pointRadial.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "pointRadial", function() { return _pointRadial_js__WEBPACK_IMPORTED_MODULE_6__["default"]; });
 
-/* harmony import */ var _link_index__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./link/index */ "./node_modules/d3-shape/src/link/index.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "linkHorizontal", function() { return _link_index__WEBPACK_IMPORTED_MODULE_7__["linkHorizontal"]; });
+/* harmony import */ var _link_index_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./link/index.js */ "./node_modules/d3-shape/src/link/index.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "linkHorizontal", function() { return _link_index_js__WEBPACK_IMPORTED_MODULE_7__["linkHorizontal"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "linkVertical", function() { return _link_index__WEBPACK_IMPORTED_MODULE_7__["linkVertical"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "linkVertical", function() { return _link_index_js__WEBPACK_IMPORTED_MODULE_7__["linkVertical"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "linkRadial", function() { return _link_index__WEBPACK_IMPORTED_MODULE_7__["linkRadial"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "linkRadial", function() { return _link_index_js__WEBPACK_IMPORTED_MODULE_7__["linkRadial"]; });
 
-/* harmony import */ var _symbol__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./symbol */ "./node_modules/d3-shape/src/symbol.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbol", function() { return _symbol__WEBPACK_IMPORTED_MODULE_8__["default"]; });
+/* harmony import */ var _symbol_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./symbol.js */ "./node_modules/d3-shape/src/symbol.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbol", function() { return _symbol_js__WEBPACK_IMPORTED_MODULE_8__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbols", function() { return _symbol__WEBPACK_IMPORTED_MODULE_8__["symbols"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbols", function() { return _symbol_js__WEBPACK_IMPORTED_MODULE_8__["symbols"]; });
 
-/* harmony import */ var _symbol_circle__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./symbol/circle */ "./node_modules/d3-shape/src/symbol/circle.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolCircle", function() { return _symbol_circle__WEBPACK_IMPORTED_MODULE_9__["default"]; });
+/* harmony import */ var _symbol_circle_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./symbol/circle.js */ "./node_modules/d3-shape/src/symbol/circle.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolCircle", function() { return _symbol_circle_js__WEBPACK_IMPORTED_MODULE_9__["default"]; });
 
-/* harmony import */ var _symbol_cross__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./symbol/cross */ "./node_modules/d3-shape/src/symbol/cross.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolCross", function() { return _symbol_cross__WEBPACK_IMPORTED_MODULE_10__["default"]; });
+/* harmony import */ var _symbol_cross_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./symbol/cross.js */ "./node_modules/d3-shape/src/symbol/cross.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolCross", function() { return _symbol_cross_js__WEBPACK_IMPORTED_MODULE_10__["default"]; });
 
-/* harmony import */ var _symbol_diamond__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./symbol/diamond */ "./node_modules/d3-shape/src/symbol/diamond.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolDiamond", function() { return _symbol_diamond__WEBPACK_IMPORTED_MODULE_11__["default"]; });
+/* harmony import */ var _symbol_diamond_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./symbol/diamond.js */ "./node_modules/d3-shape/src/symbol/diamond.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolDiamond", function() { return _symbol_diamond_js__WEBPACK_IMPORTED_MODULE_11__["default"]; });
 
-/* harmony import */ var _symbol_square__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./symbol/square */ "./node_modules/d3-shape/src/symbol/square.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolSquare", function() { return _symbol_square__WEBPACK_IMPORTED_MODULE_12__["default"]; });
+/* harmony import */ var _symbol_square_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./symbol/square.js */ "./node_modules/d3-shape/src/symbol/square.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolSquare", function() { return _symbol_square_js__WEBPACK_IMPORTED_MODULE_12__["default"]; });
 
-/* harmony import */ var _symbol_star__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./symbol/star */ "./node_modules/d3-shape/src/symbol/star.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolStar", function() { return _symbol_star__WEBPACK_IMPORTED_MODULE_13__["default"]; });
+/* harmony import */ var _symbol_star_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./symbol/star.js */ "./node_modules/d3-shape/src/symbol/star.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolStar", function() { return _symbol_star_js__WEBPACK_IMPORTED_MODULE_13__["default"]; });
 
-/* harmony import */ var _symbol_triangle__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./symbol/triangle */ "./node_modules/d3-shape/src/symbol/triangle.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolTriangle", function() { return _symbol_triangle__WEBPACK_IMPORTED_MODULE_14__["default"]; });
+/* harmony import */ var _symbol_triangle_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./symbol/triangle.js */ "./node_modules/d3-shape/src/symbol/triangle.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolTriangle", function() { return _symbol_triangle_js__WEBPACK_IMPORTED_MODULE_14__["default"]; });
 
-/* harmony import */ var _symbol_wye__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./symbol/wye */ "./node_modules/d3-shape/src/symbol/wye.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolWye", function() { return _symbol_wye__WEBPACK_IMPORTED_MODULE_15__["default"]; });
+/* harmony import */ var _symbol_wye_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./symbol/wye.js */ "./node_modules/d3-shape/src/symbol/wye.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "symbolWye", function() { return _symbol_wye_js__WEBPACK_IMPORTED_MODULE_15__["default"]; });
 
-/* harmony import */ var _curve_basisClosed__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./curve/basisClosed */ "./node_modules/d3-shape/src/curve/basisClosed.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveBasisClosed", function() { return _curve_basisClosed__WEBPACK_IMPORTED_MODULE_16__["default"]; });
+/* harmony import */ var _curve_basisClosed_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./curve/basisClosed.js */ "./node_modules/d3-shape/src/curve/basisClosed.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveBasisClosed", function() { return _curve_basisClosed_js__WEBPACK_IMPORTED_MODULE_16__["default"]; });
 
-/* harmony import */ var _curve_basisOpen__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./curve/basisOpen */ "./node_modules/d3-shape/src/curve/basisOpen.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveBasisOpen", function() { return _curve_basisOpen__WEBPACK_IMPORTED_MODULE_17__["default"]; });
+/* harmony import */ var _curve_basisOpen_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./curve/basisOpen.js */ "./node_modules/d3-shape/src/curve/basisOpen.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveBasisOpen", function() { return _curve_basisOpen_js__WEBPACK_IMPORTED_MODULE_17__["default"]; });
 
-/* harmony import */ var _curve_basis__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./curve/basis */ "./node_modules/d3-shape/src/curve/basis.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveBasis", function() { return _curve_basis__WEBPACK_IMPORTED_MODULE_18__["default"]; });
+/* harmony import */ var _curve_basis_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./curve/basis.js */ "./node_modules/d3-shape/src/curve/basis.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveBasis", function() { return _curve_basis_js__WEBPACK_IMPORTED_MODULE_18__["default"]; });
 
-/* harmony import */ var _curve_bundle__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./curve/bundle */ "./node_modules/d3-shape/src/curve/bundle.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveBundle", function() { return _curve_bundle__WEBPACK_IMPORTED_MODULE_19__["default"]; });
+/* harmony import */ var _curve_bundle_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./curve/bundle.js */ "./node_modules/d3-shape/src/curve/bundle.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveBundle", function() { return _curve_bundle_js__WEBPACK_IMPORTED_MODULE_19__["default"]; });
 
-/* harmony import */ var _curve_cardinalClosed__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./curve/cardinalClosed */ "./node_modules/d3-shape/src/curve/cardinalClosed.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCardinalClosed", function() { return _curve_cardinalClosed__WEBPACK_IMPORTED_MODULE_20__["default"]; });
+/* harmony import */ var _curve_cardinalClosed_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ./curve/cardinalClosed.js */ "./node_modules/d3-shape/src/curve/cardinalClosed.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCardinalClosed", function() { return _curve_cardinalClosed_js__WEBPACK_IMPORTED_MODULE_20__["default"]; });
 
-/* harmony import */ var _curve_cardinalOpen__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./curve/cardinalOpen */ "./node_modules/d3-shape/src/curve/cardinalOpen.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCardinalOpen", function() { return _curve_cardinalOpen__WEBPACK_IMPORTED_MODULE_21__["default"]; });
+/* harmony import */ var _curve_cardinalOpen_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ./curve/cardinalOpen.js */ "./node_modules/d3-shape/src/curve/cardinalOpen.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCardinalOpen", function() { return _curve_cardinalOpen_js__WEBPACK_IMPORTED_MODULE_21__["default"]; });
 
-/* harmony import */ var _curve_cardinal__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./curve/cardinal */ "./node_modules/d3-shape/src/curve/cardinal.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCardinal", function() { return _curve_cardinal__WEBPACK_IMPORTED_MODULE_22__["default"]; });
+/* harmony import */ var _curve_cardinal_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ./curve/cardinal.js */ "./node_modules/d3-shape/src/curve/cardinal.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCardinal", function() { return _curve_cardinal_js__WEBPACK_IMPORTED_MODULE_22__["default"]; });
 
-/* harmony import */ var _curve_catmullRomClosed__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./curve/catmullRomClosed */ "./node_modules/d3-shape/src/curve/catmullRomClosed.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCatmullRomClosed", function() { return _curve_catmullRomClosed__WEBPACK_IMPORTED_MODULE_23__["default"]; });
+/* harmony import */ var _curve_catmullRomClosed_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ./curve/catmullRomClosed.js */ "./node_modules/d3-shape/src/curve/catmullRomClosed.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCatmullRomClosed", function() { return _curve_catmullRomClosed_js__WEBPACK_IMPORTED_MODULE_23__["default"]; });
 
-/* harmony import */ var _curve_catmullRomOpen__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./curve/catmullRomOpen */ "./node_modules/d3-shape/src/curve/catmullRomOpen.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCatmullRomOpen", function() { return _curve_catmullRomOpen__WEBPACK_IMPORTED_MODULE_24__["default"]; });
+/* harmony import */ var _curve_catmullRomOpen_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ./curve/catmullRomOpen.js */ "./node_modules/d3-shape/src/curve/catmullRomOpen.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCatmullRomOpen", function() { return _curve_catmullRomOpen_js__WEBPACK_IMPORTED_MODULE_24__["default"]; });
 
-/* harmony import */ var _curve_catmullRom__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./curve/catmullRom */ "./node_modules/d3-shape/src/curve/catmullRom.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCatmullRom", function() { return _curve_catmullRom__WEBPACK_IMPORTED_MODULE_25__["default"]; });
+/* harmony import */ var _curve_catmullRom_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ./curve/catmullRom.js */ "./node_modules/d3-shape/src/curve/catmullRom.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveCatmullRom", function() { return _curve_catmullRom_js__WEBPACK_IMPORTED_MODULE_25__["default"]; });
 
-/* harmony import */ var _curve_linearClosed__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./curve/linearClosed */ "./node_modules/d3-shape/src/curve/linearClosed.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveLinearClosed", function() { return _curve_linearClosed__WEBPACK_IMPORTED_MODULE_26__["default"]; });
+/* harmony import */ var _curve_linearClosed_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ./curve/linearClosed.js */ "./node_modules/d3-shape/src/curve/linearClosed.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveLinearClosed", function() { return _curve_linearClosed_js__WEBPACK_IMPORTED_MODULE_26__["default"]; });
 
-/* harmony import */ var _curve_linear__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./curve/linear */ "./node_modules/d3-shape/src/curve/linear.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveLinear", function() { return _curve_linear__WEBPACK_IMPORTED_MODULE_27__["default"]; });
+/* harmony import */ var _curve_linear_js__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ./curve/linear.js */ "./node_modules/d3-shape/src/curve/linear.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveLinear", function() { return _curve_linear_js__WEBPACK_IMPORTED_MODULE_27__["default"]; });
 
-/* harmony import */ var _curve_monotone__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ./curve/monotone */ "./node_modules/d3-shape/src/curve/monotone.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveMonotoneX", function() { return _curve_monotone__WEBPACK_IMPORTED_MODULE_28__["monotoneX"]; });
+/* harmony import */ var _curve_monotone_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ./curve/monotone.js */ "./node_modules/d3-shape/src/curve/monotone.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveMonotoneX", function() { return _curve_monotone_js__WEBPACK_IMPORTED_MODULE_28__["monotoneX"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveMonotoneY", function() { return _curve_monotone__WEBPACK_IMPORTED_MODULE_28__["monotoneY"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveMonotoneY", function() { return _curve_monotone_js__WEBPACK_IMPORTED_MODULE_28__["monotoneY"]; });
 
-/* harmony import */ var _curve_natural__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ./curve/natural */ "./node_modules/d3-shape/src/curve/natural.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveNatural", function() { return _curve_natural__WEBPACK_IMPORTED_MODULE_29__["default"]; });
+/* harmony import */ var _curve_natural_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ./curve/natural.js */ "./node_modules/d3-shape/src/curve/natural.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveNatural", function() { return _curve_natural_js__WEBPACK_IMPORTED_MODULE_29__["default"]; });
 
-/* harmony import */ var _curve_step__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ./curve/step */ "./node_modules/d3-shape/src/curve/step.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveStep", function() { return _curve_step__WEBPACK_IMPORTED_MODULE_30__["default"]; });
+/* harmony import */ var _curve_step_js__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ./curve/step.js */ "./node_modules/d3-shape/src/curve/step.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveStep", function() { return _curve_step_js__WEBPACK_IMPORTED_MODULE_30__["default"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveStepAfter", function() { return _curve_step__WEBPACK_IMPORTED_MODULE_30__["stepAfter"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveStepAfter", function() { return _curve_step_js__WEBPACK_IMPORTED_MODULE_30__["stepAfter"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveStepBefore", function() { return _curve_step__WEBPACK_IMPORTED_MODULE_30__["stepBefore"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "curveStepBefore", function() { return _curve_step_js__WEBPACK_IMPORTED_MODULE_30__["stepBefore"]; });
 
-/* harmony import */ var _stack__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ./stack */ "./node_modules/d3-shape/src/stack.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stack", function() { return _stack__WEBPACK_IMPORTED_MODULE_31__["default"]; });
+/* harmony import */ var _stack_js__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ./stack.js */ "./node_modules/d3-shape/src/stack.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stack", function() { return _stack_js__WEBPACK_IMPORTED_MODULE_31__["default"]; });
 
-/* harmony import */ var _offset_expand__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ./offset/expand */ "./node_modules/d3-shape/src/offset/expand.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetExpand", function() { return _offset_expand__WEBPACK_IMPORTED_MODULE_32__["default"]; });
+/* harmony import */ var _offset_expand_js__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ./offset/expand.js */ "./node_modules/d3-shape/src/offset/expand.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetExpand", function() { return _offset_expand_js__WEBPACK_IMPORTED_MODULE_32__["default"]; });
 
-/* harmony import */ var _offset_diverging__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ./offset/diverging */ "./node_modules/d3-shape/src/offset/diverging.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetDiverging", function() { return _offset_diverging__WEBPACK_IMPORTED_MODULE_33__["default"]; });
+/* harmony import */ var _offset_diverging_js__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ./offset/diverging.js */ "./node_modules/d3-shape/src/offset/diverging.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetDiverging", function() { return _offset_diverging_js__WEBPACK_IMPORTED_MODULE_33__["default"]; });
 
-/* harmony import */ var _offset_none__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ./offset/none */ "./node_modules/d3-shape/src/offset/none.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetNone", function() { return _offset_none__WEBPACK_IMPORTED_MODULE_34__["default"]; });
+/* harmony import */ var _offset_none_js__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ./offset/none.js */ "./node_modules/d3-shape/src/offset/none.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetNone", function() { return _offset_none_js__WEBPACK_IMPORTED_MODULE_34__["default"]; });
 
-/* harmony import */ var _offset_silhouette__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ./offset/silhouette */ "./node_modules/d3-shape/src/offset/silhouette.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetSilhouette", function() { return _offset_silhouette__WEBPACK_IMPORTED_MODULE_35__["default"]; });
+/* harmony import */ var _offset_silhouette_js__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ./offset/silhouette.js */ "./node_modules/d3-shape/src/offset/silhouette.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetSilhouette", function() { return _offset_silhouette_js__WEBPACK_IMPORTED_MODULE_35__["default"]; });
 
-/* harmony import */ var _offset_wiggle__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ./offset/wiggle */ "./node_modules/d3-shape/src/offset/wiggle.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetWiggle", function() { return _offset_wiggle__WEBPACK_IMPORTED_MODULE_36__["default"]; });
+/* harmony import */ var _offset_wiggle_js__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ./offset/wiggle.js */ "./node_modules/d3-shape/src/offset/wiggle.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOffsetWiggle", function() { return _offset_wiggle_js__WEBPACK_IMPORTED_MODULE_36__["default"]; });
 
-/* harmony import */ var _order_appearance__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ./order/appearance */ "./node_modules/d3-shape/src/order/appearance.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderAppearance", function() { return _order_appearance__WEBPACK_IMPORTED_MODULE_37__["default"]; });
+/* harmony import */ var _order_appearance_js__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ./order/appearance.js */ "./node_modules/d3-shape/src/order/appearance.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderAppearance", function() { return _order_appearance_js__WEBPACK_IMPORTED_MODULE_37__["default"]; });
 
-/* harmony import */ var _order_ascending__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ./order/ascending */ "./node_modules/d3-shape/src/order/ascending.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderAscending", function() { return _order_ascending__WEBPACK_IMPORTED_MODULE_38__["default"]; });
+/* harmony import */ var _order_ascending_js__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ./order/ascending.js */ "./node_modules/d3-shape/src/order/ascending.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderAscending", function() { return _order_ascending_js__WEBPACK_IMPORTED_MODULE_38__["default"]; });
 
-/* harmony import */ var _order_descending__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ./order/descending */ "./node_modules/d3-shape/src/order/descending.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderDescending", function() { return _order_descending__WEBPACK_IMPORTED_MODULE_39__["default"]; });
+/* harmony import */ var _order_descending_js__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ./order/descending.js */ "./node_modules/d3-shape/src/order/descending.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderDescending", function() { return _order_descending_js__WEBPACK_IMPORTED_MODULE_39__["default"]; });
 
-/* harmony import */ var _order_insideOut__WEBPACK_IMPORTED_MODULE_40__ = __webpack_require__(/*! ./order/insideOut */ "./node_modules/d3-shape/src/order/insideOut.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderInsideOut", function() { return _order_insideOut__WEBPACK_IMPORTED_MODULE_40__["default"]; });
+/* harmony import */ var _order_insideOut_js__WEBPACK_IMPORTED_MODULE_40__ = __webpack_require__(/*! ./order/insideOut.js */ "./node_modules/d3-shape/src/order/insideOut.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderInsideOut", function() { return _order_insideOut_js__WEBPACK_IMPORTED_MODULE_40__["default"]; });
 
-/* harmony import */ var _order_none__WEBPACK_IMPORTED_MODULE_41__ = __webpack_require__(/*! ./order/none */ "./node_modules/d3-shape/src/order/none.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderNone", function() { return _order_none__WEBPACK_IMPORTED_MODULE_41__["default"]; });
+/* harmony import */ var _order_none_js__WEBPACK_IMPORTED_MODULE_41__ = __webpack_require__(/*! ./order/none.js */ "./node_modules/d3-shape/src/order/none.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderNone", function() { return _order_none_js__WEBPACK_IMPORTED_MODULE_41__["default"]; });
 
-/* harmony import */ var _order_reverse__WEBPACK_IMPORTED_MODULE_42__ = __webpack_require__(/*! ./order/reverse */ "./node_modules/d3-shape/src/order/reverse.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderReverse", function() { return _order_reverse__WEBPACK_IMPORTED_MODULE_42__["default"]; });
+/* harmony import */ var _order_reverse_js__WEBPACK_IMPORTED_MODULE_42__ = __webpack_require__(/*! ./order/reverse.js */ "./node_modules/d3-shape/src/order/reverse.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "stackOrderReverse", function() { return _order_reverse_js__WEBPACK_IMPORTED_MODULE_42__["default"]; });
 
 
 
@@ -29743,20 +29770,20 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_path__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-path */ "./node_modules/d3-path/src/index.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant */ "./node_modules/d3-shape/src/constant.js");
-/* harmony import */ var _curve_linear__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./curve/linear */ "./node_modules/d3-shape/src/curve/linear.js");
-/* harmony import */ var _point__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./point */ "./node_modules/d3-shape/src/point.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant.js */ "./node_modules/d3-shape/src/constant.js");
+/* harmony import */ var _curve_linear_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./curve/linear.js */ "./node_modules/d3-shape/src/curve/linear.js");
+/* harmony import */ var _point_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./point.js */ "./node_modules/d3-shape/src/point.js");
 
 
 
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var x = _point__WEBPACK_IMPORTED_MODULE_3__["x"],
-      y = _point__WEBPACK_IMPORTED_MODULE_3__["y"],
-      defined = Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(true),
+  var x = _point_js__WEBPACK_IMPORTED_MODULE_3__["x"],
+      y = _point_js__WEBPACK_IMPORTED_MODULE_3__["y"],
+      defined = Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(true),
       context = null,
-      curve = _curve_linear__WEBPACK_IMPORTED_MODULE_2__["default"],
+      curve = _curve_linear_js__WEBPACK_IMPORTED_MODULE_2__["default"],
       output = null;
 
   function line(data) {
@@ -29780,15 +29807,15 @@ __webpack_require__.r(__webpack_exports__);
   }
 
   line.x = function(_) {
-    return arguments.length ? (x = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), line) : x;
+    return arguments.length ? (x = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), line) : x;
   };
 
   line.y = function(_) {
-    return arguments.length ? (y = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), line) : y;
+    return arguments.length ? (y = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), line) : y;
   };
 
   line.defined = function(_) {
-    return arguments.length ? (defined = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(!!_), line) : defined;
+    return arguments.length ? (defined = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(!!_), line) : defined;
   };
 
   line.curve = function(_) {
@@ -29815,8 +29842,8 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "lineRadial", function() { return lineRadial; });
-/* harmony import */ var _curve_radial__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./curve/radial */ "./node_modules/d3-shape/src/curve/radial.js");
-/* harmony import */ var _line__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./line */ "./node_modules/d3-shape/src/line.js");
+/* harmony import */ var _curve_radial_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./curve/radial.js */ "./node_modules/d3-shape/src/curve/radial.js");
+/* harmony import */ var _line_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./line.js */ "./node_modules/d3-shape/src/line.js");
 
 
 
@@ -29827,14 +29854,14 @@ function lineRadial(l) {
   l.radius = l.y, delete l.y;
 
   l.curve = function(_) {
-    return arguments.length ? c(Object(_curve_radial__WEBPACK_IMPORTED_MODULE_0__["default"])(_)) : c()._curve;
+    return arguments.length ? c(Object(_curve_radial_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_)) : c()._curve;
   };
 
   return l;
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  return lineRadial(Object(_line__WEBPACK_IMPORTED_MODULE_1__["default"])().curve(_curve_radial__WEBPACK_IMPORTED_MODULE_0__["curveRadialLinear"]));
+  return lineRadial(Object(_line_js__WEBPACK_IMPORTED_MODULE_1__["default"])().curve(_curve_radial_js__WEBPACK_IMPORTED_MODULE_0__["curveRadialLinear"]));
 });
 
 
@@ -29853,10 +29880,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "linkVertical", function() { return linkVertical; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "linkRadial", function() { return linkRadial; });
 /* harmony import */ var d3_path__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-path */ "./node_modules/d3-path/src/index.js");
-/* harmony import */ var _array__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../array */ "./node_modules/d3-shape/src/array.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constant */ "./node_modules/d3-shape/src/constant.js");
-/* harmony import */ var _point__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../point */ "./node_modules/d3-shape/src/point.js");
-/* harmony import */ var _pointRadial__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../pointRadial */ "./node_modules/d3-shape/src/pointRadial.js");
+/* harmony import */ var _array_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../array.js */ "./node_modules/d3-shape/src/array.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../constant.js */ "./node_modules/d3-shape/src/constant.js");
+/* harmony import */ var _point_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../point.js */ "./node_modules/d3-shape/src/point.js");
+/* harmony import */ var _pointRadial_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../pointRadial.js */ "./node_modules/d3-shape/src/pointRadial.js");
 
 
 
@@ -29874,12 +29901,12 @@ function linkTarget(d) {
 function link(curve) {
   var source = linkSource,
       target = linkTarget,
-      x = _point__WEBPACK_IMPORTED_MODULE_3__["x"],
-      y = _point__WEBPACK_IMPORTED_MODULE_3__["y"],
+      x = _point_js__WEBPACK_IMPORTED_MODULE_3__["x"],
+      y = _point_js__WEBPACK_IMPORTED_MODULE_3__["y"],
       context = null;
 
   function link() {
-    var buffer, argv = _array__WEBPACK_IMPORTED_MODULE_1__["slice"].call(arguments), s = source.apply(this, argv), t = target.apply(this, argv);
+    var buffer, argv = _array_js__WEBPACK_IMPORTED_MODULE_1__["slice"].call(arguments), s = source.apply(this, argv), t = target.apply(this, argv);
     if (!context) context = buffer = Object(d3_path__WEBPACK_IMPORTED_MODULE_0__["path"])();
     curve(context, +x.apply(this, (argv[0] = s, argv)), +y.apply(this, argv), +x.apply(this, (argv[0] = t, argv)), +y.apply(this, argv));
     if (buffer) return context = null, buffer + "" || null;
@@ -29894,11 +29921,11 @@ function link(curve) {
   };
 
   link.x = function(_) {
-    return arguments.length ? (x = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_2__["default"])(+_), link) : x;
+    return arguments.length ? (x = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_2__["default"])(+_), link) : x;
   };
 
   link.y = function(_) {
-    return arguments.length ? (y = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_2__["default"])(+_), link) : y;
+    return arguments.length ? (y = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_2__["default"])(+_), link) : y;
   };
 
   link.context = function(_) {
@@ -29919,10 +29946,10 @@ function curveVertical(context, x0, y0, x1, y1) {
 }
 
 function curveRadial(context, x0, y0, x1, y1) {
-  var p0 = Object(_pointRadial__WEBPACK_IMPORTED_MODULE_4__["default"])(x0, y0),
-      p1 = Object(_pointRadial__WEBPACK_IMPORTED_MODULE_4__["default"])(x0, y0 = (y0 + y1) / 2),
-      p2 = Object(_pointRadial__WEBPACK_IMPORTED_MODULE_4__["default"])(x1, y0),
-      p3 = Object(_pointRadial__WEBPACK_IMPORTED_MODULE_4__["default"])(x1, y1);
+  var p0 = Object(_pointRadial_js__WEBPACK_IMPORTED_MODULE_4__["default"])(x0, y0),
+      p1 = Object(_pointRadial_js__WEBPACK_IMPORTED_MODULE_4__["default"])(x0, y0 = (y0 + y1) / 2),
+      p2 = Object(_pointRadial_js__WEBPACK_IMPORTED_MODULE_4__["default"])(x1, y0),
+      p3 = Object(_pointRadial_js__WEBPACK_IMPORTED_MODULE_4__["default"])(x1, y1);
   context.moveTo(p0[0], p0[1]);
   context.bezierCurveTo(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]);
 }
@@ -30018,12 +30045,12 @@ __webpack_require__.r(__webpack_exports__);
   if (!((n = series.length) > 0)) return;
   for (var i, j = 0, d, dy, yp, yn, n, m = series[order[0]].length; j < m; ++j) {
     for (yp = yn = 0, i = 0; i < n; ++i) {
-      if ((dy = (d = series[order[i]][j])[1] - d[0]) >= 0) {
+      if ((dy = (d = series[order[i]][j])[1] - d[0]) > 0) {
         d[0] = yp, d[1] = yp += dy;
       } else if (dy < 0) {
         d[1] = yn, d[0] = yn += dy;
       } else {
-        d[0] = yp;
+        d[0] = 0, d[1] = dy;
       }
     }
   }
@@ -30041,7 +30068,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _none__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none */ "./node_modules/d3-shape/src/offset/none.js");
+/* harmony import */ var _none_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none.js */ "./node_modules/d3-shape/src/offset/none.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(series, order) {
@@ -30050,7 +30077,7 @@ __webpack_require__.r(__webpack_exports__);
     for (y = i = 0; i < n; ++i) y += series[i][j][1] || 0;
     if (y) for (i = 0; i < n; ++i) series[i][j][1] /= y;
   }
-  Object(_none__WEBPACK_IMPORTED_MODULE_0__["default"])(series, order);
+  Object(_none_js__WEBPACK_IMPORTED_MODULE_0__["default"])(series, order);
 });
 
 
@@ -30087,7 +30114,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _none__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none */ "./node_modules/d3-shape/src/offset/none.js");
+/* harmony import */ var _none_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none.js */ "./node_modules/d3-shape/src/offset/none.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(series, order) {
@@ -30096,7 +30123,7 @@ __webpack_require__.r(__webpack_exports__);
     for (var i = 0, y = 0; i < n; ++i) y += series[i][j][1] || 0;
     s0[j][1] += s0[j][0] = -y / 2;
   }
-  Object(_none__WEBPACK_IMPORTED_MODULE_0__["default"])(series, order);
+  Object(_none_js__WEBPACK_IMPORTED_MODULE_0__["default"])(series, order);
 });
 
 
@@ -30111,7 +30138,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _none__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none */ "./node_modules/d3-shape/src/offset/none.js");
+/* harmony import */ var _none_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none.js */ "./node_modules/d3-shape/src/offset/none.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(series, order) {
@@ -30134,7 +30161,7 @@ __webpack_require__.r(__webpack_exports__);
     if (s1) y -= s2 / s1;
   }
   s0[j - 1][1] += s0[j - 1][0] = y;
-  Object(_none__WEBPACK_IMPORTED_MODULE_0__["default"])(series, order);
+  Object(_none_js__WEBPACK_IMPORTED_MODULE_0__["default"])(series, order);
 });
 
 
@@ -30149,12 +30176,12 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _none__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none */ "./node_modules/d3-shape/src/order/none.js");
+/* harmony import */ var _none_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none.js */ "./node_modules/d3-shape/src/order/none.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(series) {
   var peaks = series.map(peak);
-  return Object(_none__WEBPACK_IMPORTED_MODULE_0__["default"])(series).sort(function(a, b) { return peaks[a] - peaks[b]; });
+  return Object(_none_js__WEBPACK_IMPORTED_MODULE_0__["default"])(series).sort(function(a, b) { return peaks[a] - peaks[b]; });
 });
 
 function peak(series) {
@@ -30176,12 +30203,12 @@ function peak(series) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sum", function() { return sum; });
-/* harmony import */ var _none__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none */ "./node_modules/d3-shape/src/order/none.js");
+/* harmony import */ var _none_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none.js */ "./node_modules/d3-shape/src/order/none.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(series) {
   var sums = series.map(sum);
-  return Object(_none__WEBPACK_IMPORTED_MODULE_0__["default"])(series).sort(function(a, b) { return sums[a] - sums[b]; });
+  return Object(_none_js__WEBPACK_IMPORTED_MODULE_0__["default"])(series).sort(function(a, b) { return sums[a] - sums[b]; });
 });
 
 function sum(series) {
@@ -30202,11 +30229,11 @@ function sum(series) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _ascending__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ascending */ "./node_modules/d3-shape/src/order/ascending.js");
+/* harmony import */ var _ascending_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ascending.js */ "./node_modules/d3-shape/src/order/ascending.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(series) {
-  return Object(_ascending__WEBPACK_IMPORTED_MODULE_0__["default"])(series).reverse();
+  return Object(_ascending_js__WEBPACK_IMPORTED_MODULE_0__["default"])(series).reverse();
 });
 
 
@@ -30221,8 +30248,8 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _appearance__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./appearance */ "./node_modules/d3-shape/src/order/appearance.js");
-/* harmony import */ var _ascending__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ascending */ "./node_modules/d3-shape/src/order/ascending.js");
+/* harmony import */ var _appearance_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./appearance.js */ "./node_modules/d3-shape/src/order/appearance.js");
+/* harmony import */ var _ascending_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ascending.js */ "./node_modules/d3-shape/src/order/ascending.js");
 
 
 
@@ -30230,8 +30257,8 @@ __webpack_require__.r(__webpack_exports__);
   var n = series.length,
       i,
       j,
-      sums = series.map(_ascending__WEBPACK_IMPORTED_MODULE_1__["sum"]),
-      order = Object(_appearance__WEBPACK_IMPORTED_MODULE_0__["default"])(series),
+      sums = series.map(_ascending_js__WEBPACK_IMPORTED_MODULE_1__["sum"]),
+      order = Object(_appearance_js__WEBPACK_IMPORTED_MODULE_0__["default"])(series),
       top = 0,
       bottom = 0,
       tops = [],
@@ -30281,11 +30308,11 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _none__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none */ "./node_modules/d3-shape/src/order/none.js");
+/* harmony import */ var _none_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./none.js */ "./node_modules/d3-shape/src/order/none.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(series) {
-  return Object(_none__WEBPACK_IMPORTED_MODULE_0__["default"])(series).reverse();
+  return Object(_none_js__WEBPACK_IMPORTED_MODULE_0__["default"])(series).reverse();
 });
 
 
@@ -30300,22 +30327,22 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./constant */ "./node_modules/d3-shape/src/constant.js");
-/* harmony import */ var _descending__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./descending */ "./node_modules/d3-shape/src/descending.js");
-/* harmony import */ var _identity__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./identity */ "./node_modules/d3-shape/src/identity.js");
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./math */ "./node_modules/d3-shape/src/math.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./constant.js */ "./node_modules/d3-shape/src/constant.js");
+/* harmony import */ var _descending_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./descending.js */ "./node_modules/d3-shape/src/descending.js");
+/* harmony import */ var _identity_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./identity.js */ "./node_modules/d3-shape/src/identity.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./math.js */ "./node_modules/d3-shape/src/math.js");
 
 
 
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var value = _identity__WEBPACK_IMPORTED_MODULE_2__["default"],
-      sortValues = _descending__WEBPACK_IMPORTED_MODULE_1__["default"],
+  var value = _identity_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+      sortValues = _descending_js__WEBPACK_IMPORTED_MODULE_1__["default"],
       sort = null,
-      startAngle = Object(_constant__WEBPACK_IMPORTED_MODULE_0__["default"])(0),
-      endAngle = Object(_constant__WEBPACK_IMPORTED_MODULE_0__["default"])(_math__WEBPACK_IMPORTED_MODULE_3__["tau"]),
-      padAngle = Object(_constant__WEBPACK_IMPORTED_MODULE_0__["default"])(0);
+      startAngle = Object(_constant_js__WEBPACK_IMPORTED_MODULE_0__["default"])(0),
+      endAngle = Object(_constant_js__WEBPACK_IMPORTED_MODULE_0__["default"])(_math_js__WEBPACK_IMPORTED_MODULE_3__["tau"]),
+      padAngle = Object(_constant_js__WEBPACK_IMPORTED_MODULE_0__["default"])(0);
 
   function pie(data) {
     var i,
@@ -30326,7 +30353,7 @@ __webpack_require__.r(__webpack_exports__);
         index = new Array(n),
         arcs = new Array(n),
         a0 = +startAngle.apply(this, arguments),
-        da = Math.min(_math__WEBPACK_IMPORTED_MODULE_3__["tau"], Math.max(-_math__WEBPACK_IMPORTED_MODULE_3__["tau"], endAngle.apply(this, arguments) - a0)),
+        da = Math.min(_math_js__WEBPACK_IMPORTED_MODULE_3__["tau"], Math.max(-_math_js__WEBPACK_IMPORTED_MODULE_3__["tau"], endAngle.apply(this, arguments) - a0)),
         a1,
         p = Math.min(Math.abs(da) / n, padAngle.apply(this, arguments)),
         pa = p * (da < 0 ? -1 : 1),
@@ -30358,7 +30385,7 @@ __webpack_require__.r(__webpack_exports__);
   }
 
   pie.value = function(_) {
-    return arguments.length ? (value = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_0__["default"])(+_), pie) : value;
+    return arguments.length ? (value = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_0__["default"])(+_), pie) : value;
   };
 
   pie.sortValues = function(_) {
@@ -30370,15 +30397,15 @@ __webpack_require__.r(__webpack_exports__);
   };
 
   pie.startAngle = function(_) {
-    return arguments.length ? (startAngle = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_0__["default"])(+_), pie) : startAngle;
+    return arguments.length ? (startAngle = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_0__["default"])(+_), pie) : startAngle;
   };
 
   pie.endAngle = function(_) {
-    return arguments.length ? (endAngle = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_0__["default"])(+_), pie) : endAngle;
+    return arguments.length ? (endAngle = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_0__["default"])(+_), pie) : endAngle;
   };
 
   pie.padAngle = function(_) {
-    return arguments.length ? (padAngle = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_0__["default"])(+_), pie) : padAngle;
+    return arguments.length ? (padAngle = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_0__["default"])(+_), pie) : padAngle;
   };
 
   return pie;
@@ -30434,10 +30461,10 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _array__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./array */ "./node_modules/d3-shape/src/array.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant */ "./node_modules/d3-shape/src/constant.js");
-/* harmony import */ var _offset_none__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./offset/none */ "./node_modules/d3-shape/src/offset/none.js");
-/* harmony import */ var _order_none__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./order/none */ "./node_modules/d3-shape/src/order/none.js");
+/* harmony import */ var _array_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./array.js */ "./node_modules/d3-shape/src/array.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./constant.js */ "./node_modules/d3-shape/src/constant.js");
+/* harmony import */ var _offset_none_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./offset/none.js */ "./node_modules/d3-shape/src/offset/none.js");
+/* harmony import */ var _order_none_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./order/none.js */ "./node_modules/d3-shape/src/order/none.js");
 
 
 
@@ -30448,9 +30475,9 @@ function stackValue(d, key) {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var keys = Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])([]),
-      order = _order_none__WEBPACK_IMPORTED_MODULE_3__["default"],
-      offset = _offset_none__WEBPACK_IMPORTED_MODULE_2__["default"],
+  var keys = Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])([]),
+      order = _order_none_js__WEBPACK_IMPORTED_MODULE_3__["default"],
+      offset = _offset_none_js__WEBPACK_IMPORTED_MODULE_2__["default"],
       value = stackValue;
 
   function stack(data) {
@@ -30478,19 +30505,19 @@ function stackValue(d, key) {
   }
 
   stack.keys = function(_) {
-    return arguments.length ? (keys = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(_array__WEBPACK_IMPORTED_MODULE_0__["slice"].call(_)), stack) : keys;
+    return arguments.length ? (keys = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(_array_js__WEBPACK_IMPORTED_MODULE_0__["slice"].call(_)), stack) : keys;
   };
 
   stack.value = function(_) {
-    return arguments.length ? (value = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), stack) : value;
+    return arguments.length ? (value = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(+_), stack) : value;
   };
 
   stack.order = function(_) {
-    return arguments.length ? (order = _ == null ? _order_none__WEBPACK_IMPORTED_MODULE_3__["default"] : typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_1__["default"])(_array__WEBPACK_IMPORTED_MODULE_0__["slice"].call(_)), stack) : order;
+    return arguments.length ? (order = _ == null ? _order_none_js__WEBPACK_IMPORTED_MODULE_3__["default"] : typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_1__["default"])(_array_js__WEBPACK_IMPORTED_MODULE_0__["slice"].call(_)), stack) : order;
   };
 
   stack.offset = function(_) {
-    return arguments.length ? (offset = _ == null ? _offset_none__WEBPACK_IMPORTED_MODULE_2__["default"] : _, stack) : offset;
+    return arguments.length ? (offset = _ == null ? _offset_none_js__WEBPACK_IMPORTED_MODULE_2__["default"] : _, stack) : offset;
   };
 
   return stack;
@@ -30510,14 +30537,14 @@ function stackValue(d, key) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "symbols", function() { return symbols; });
 /* harmony import */ var d3_path__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-path */ "./node_modules/d3-path/src/index.js");
-/* harmony import */ var _symbol_circle__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./symbol/circle */ "./node_modules/d3-shape/src/symbol/circle.js");
-/* harmony import */ var _symbol_cross__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./symbol/cross */ "./node_modules/d3-shape/src/symbol/cross.js");
-/* harmony import */ var _symbol_diamond__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./symbol/diamond */ "./node_modules/d3-shape/src/symbol/diamond.js");
-/* harmony import */ var _symbol_star__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./symbol/star */ "./node_modules/d3-shape/src/symbol/star.js");
-/* harmony import */ var _symbol_square__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./symbol/square */ "./node_modules/d3-shape/src/symbol/square.js");
-/* harmony import */ var _symbol_triangle__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./symbol/triangle */ "./node_modules/d3-shape/src/symbol/triangle.js");
-/* harmony import */ var _symbol_wye__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./symbol/wye */ "./node_modules/d3-shape/src/symbol/wye.js");
-/* harmony import */ var _constant__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./constant */ "./node_modules/d3-shape/src/constant.js");
+/* harmony import */ var _symbol_circle_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./symbol/circle.js */ "./node_modules/d3-shape/src/symbol/circle.js");
+/* harmony import */ var _symbol_cross_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./symbol/cross.js */ "./node_modules/d3-shape/src/symbol/cross.js");
+/* harmony import */ var _symbol_diamond_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./symbol/diamond.js */ "./node_modules/d3-shape/src/symbol/diamond.js");
+/* harmony import */ var _symbol_star_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./symbol/star.js */ "./node_modules/d3-shape/src/symbol/star.js");
+/* harmony import */ var _symbol_square_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./symbol/square.js */ "./node_modules/d3-shape/src/symbol/square.js");
+/* harmony import */ var _symbol_triangle_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./symbol/triangle.js */ "./node_modules/d3-shape/src/symbol/triangle.js");
+/* harmony import */ var _symbol_wye_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./symbol/wye.js */ "./node_modules/d3-shape/src/symbol/wye.js");
+/* harmony import */ var _constant_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./constant.js */ "./node_modules/d3-shape/src/constant.js");
 
 
 
@@ -30529,18 +30556,18 @@ __webpack_require__.r(__webpack_exports__);
 
 
 var symbols = [
-  _symbol_circle__WEBPACK_IMPORTED_MODULE_1__["default"],
-  _symbol_cross__WEBPACK_IMPORTED_MODULE_2__["default"],
-  _symbol_diamond__WEBPACK_IMPORTED_MODULE_3__["default"],
-  _symbol_square__WEBPACK_IMPORTED_MODULE_5__["default"],
-  _symbol_star__WEBPACK_IMPORTED_MODULE_4__["default"],
-  _symbol_triangle__WEBPACK_IMPORTED_MODULE_6__["default"],
-  _symbol_wye__WEBPACK_IMPORTED_MODULE_7__["default"]
+  _symbol_circle_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _symbol_cross_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  _symbol_diamond_js__WEBPACK_IMPORTED_MODULE_3__["default"],
+  _symbol_square_js__WEBPACK_IMPORTED_MODULE_5__["default"],
+  _symbol_star_js__WEBPACK_IMPORTED_MODULE_4__["default"],
+  _symbol_triangle_js__WEBPACK_IMPORTED_MODULE_6__["default"],
+  _symbol_wye_js__WEBPACK_IMPORTED_MODULE_7__["default"]
 ];
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
-  var type = Object(_constant__WEBPACK_IMPORTED_MODULE_8__["default"])(_symbol_circle__WEBPACK_IMPORTED_MODULE_1__["default"]),
-      size = Object(_constant__WEBPACK_IMPORTED_MODULE_8__["default"])(64),
+  var type = Object(_constant_js__WEBPACK_IMPORTED_MODULE_8__["default"])(_symbol_circle_js__WEBPACK_IMPORTED_MODULE_1__["default"]),
+      size = Object(_constant_js__WEBPACK_IMPORTED_MODULE_8__["default"])(64),
       context = null;
 
   function symbol() {
@@ -30551,11 +30578,11 @@ var symbols = [
   }
 
   symbol.type = function(_) {
-    return arguments.length ? (type = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_8__["default"])(_), symbol) : type;
+    return arguments.length ? (type = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_8__["default"])(_), symbol) : type;
   };
 
   symbol.size = function(_) {
-    return arguments.length ? (size = typeof _ === "function" ? _ : Object(_constant__WEBPACK_IMPORTED_MODULE_8__["default"])(+_), symbol) : size;
+    return arguments.length ? (size = typeof _ === "function" ? _ : Object(_constant_js__WEBPACK_IMPORTED_MODULE_8__["default"])(+_), symbol) : size;
   };
 
   symbol.context = function(_) {
@@ -30577,14 +30604,14 @@ var symbols = [
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-shape/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-shape/src/math.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   draw: function(context, size) {
-    var r = Math.sqrt(size / _math__WEBPACK_IMPORTED_MODULE_0__["pi"]);
+    var r = Math.sqrt(size / _math_js__WEBPACK_IMPORTED_MODULE_0__["pi"]);
     context.moveTo(r, 0);
-    context.arc(0, 0, r, 0, _math__WEBPACK_IMPORTED_MODULE_0__["tau"]);
+    context.arc(0, 0, r, 0, _math_js__WEBPACK_IMPORTED_MODULE_0__["tau"]);
   }
 });
 
@@ -30678,13 +30705,13 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _math__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math */ "./node_modules/d3-shape/src/math.js");
+/* harmony import */ var _math_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../math.js */ "./node_modules/d3-shape/src/math.js");
 
 
 var ka = 0.89081309152928522810,
-    kr = Math.sin(_math__WEBPACK_IMPORTED_MODULE_0__["pi"] / 10) / Math.sin(7 * _math__WEBPACK_IMPORTED_MODULE_0__["pi"] / 10),
-    kx = Math.sin(_math__WEBPACK_IMPORTED_MODULE_0__["tau"] / 10) * kr,
-    ky = -Math.cos(_math__WEBPACK_IMPORTED_MODULE_0__["tau"] / 10) * kr;
+    kr = Math.sin(_math_js__WEBPACK_IMPORTED_MODULE_0__["pi"] / 10) / Math.sin(7 * _math_js__WEBPACK_IMPORTED_MODULE_0__["pi"] / 10),
+    kx = Math.sin(_math_js__WEBPACK_IMPORTED_MODULE_0__["tau"] / 10) * kr,
+    ky = -Math.cos(_math_js__WEBPACK_IMPORTED_MODULE_0__["tau"] / 10) * kr;
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   draw: function(context, size) {
@@ -30694,7 +30721,7 @@ var ka = 0.89081309152928522810,
     context.moveTo(0, -r);
     context.lineTo(x, y);
     for (var i = 1; i < 5; ++i) {
-      var a = _math__WEBPACK_IMPORTED_MODULE_0__["tau"] * i / 5,
+      var a = _math_js__WEBPACK_IMPORTED_MODULE_0__["tau"] * i / 5,
           c = Math.cos(a),
           s = Math.sin(a);
       context.lineTo(s * r, -c * r);
@@ -38450,8 +38477,8 @@ function sleep(time) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _transition_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./transition/index */ "./node_modules/d3-transition/src/transition/index.js");
-/* harmony import */ var _transition_schedule__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./transition/schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _transition_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./transition/index.js */ "./node_modules/d3-transition/src/transition/index.js");
+/* harmony import */ var _transition_schedule_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./transition/schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 
@@ -38465,8 +38492,8 @@ var root = [null];
   if (schedules) {
     name = name == null ? null : name + "";
     for (i in schedules) {
-      if ((schedule = schedules[i]).state > _transition_schedule__WEBPACK_IMPORTED_MODULE_1__["SCHEDULED"] && schedule.name === name) {
-        return new _transition_index__WEBPACK_IMPORTED_MODULE_0__["Transition"]([[node]], root, name, +i);
+      if ((schedule = schedules[i]).state > _transition_schedule_js__WEBPACK_IMPORTED_MODULE_1__["SCHEDULED"] && schedule.name === name) {
+        return new _transition_index_js__WEBPACK_IMPORTED_MODULE_0__["Transition"]([[node]], root, name, +i);
       }
     }
   }
@@ -38486,15 +38513,15 @@ var root = [null];
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _selection_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./selection/index */ "./node_modules/d3-transition/src/selection/index.js");
-/* harmony import */ var _transition_index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./transition/index */ "./node_modules/d3-transition/src/transition/index.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "transition", function() { return _transition_index__WEBPACK_IMPORTED_MODULE_1__["default"]; });
+/* harmony import */ var _selection_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./selection/index.js */ "./node_modules/d3-transition/src/selection/index.js");
+/* harmony import */ var _transition_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./transition/index.js */ "./node_modules/d3-transition/src/transition/index.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "transition", function() { return _transition_index_js__WEBPACK_IMPORTED_MODULE_1__["default"]; });
 
-/* harmony import */ var _active__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./active */ "./node_modules/d3-transition/src/active.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "active", function() { return _active__WEBPACK_IMPORTED_MODULE_2__["default"]; });
+/* harmony import */ var _active_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./active.js */ "./node_modules/d3-transition/src/active.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "active", function() { return _active_js__WEBPACK_IMPORTED_MODULE_2__["default"]; });
 
-/* harmony import */ var _interrupt__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./interrupt */ "./node_modules/d3-transition/src/interrupt.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "interrupt", function() { return _interrupt__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+/* harmony import */ var _interrupt_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./interrupt.js */ "./node_modules/d3-transition/src/interrupt.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "interrupt", function() { return _interrupt_js__WEBPACK_IMPORTED_MODULE_3__["default"]; });
 
 
 
@@ -38513,7 +38540,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _transition_schedule__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./transition/schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _transition_schedule_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./transition/schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(node, name) {
@@ -38529,8 +38556,8 @@ __webpack_require__.r(__webpack_exports__);
 
   for (i in schedules) {
     if ((schedule = schedules[i]).name !== name) { empty = false; continue; }
-    active = schedule.state > _transition_schedule__WEBPACK_IMPORTED_MODULE_0__["STARTING"] && schedule.state < _transition_schedule__WEBPACK_IMPORTED_MODULE_0__["ENDING"];
-    schedule.state = _transition_schedule__WEBPACK_IMPORTED_MODULE_0__["ENDED"];
+    active = schedule.state > _transition_schedule_js__WEBPACK_IMPORTED_MODULE_0__["STARTING"] && schedule.state < _transition_schedule_js__WEBPACK_IMPORTED_MODULE_0__["ENDING"];
+    schedule.state = _transition_schedule_js__WEBPACK_IMPORTED_MODULE_0__["ENDED"];
     schedule.timer.stop();
     schedule.on.call(active ? "interrupt" : "cancel", node, node.__data__, schedule.index, schedule.group);
     delete schedules[i];
@@ -38552,14 +38579,14 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_selection__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-selection */ "./node_modules/d3-selection/src/index.js");
-/* harmony import */ var _interrupt__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./interrupt */ "./node_modules/d3-transition/src/selection/interrupt.js");
-/* harmony import */ var _transition__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./transition */ "./node_modules/d3-transition/src/selection/transition.js");
+/* harmony import */ var _interrupt_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./interrupt.js */ "./node_modules/d3-transition/src/selection/interrupt.js");
+/* harmony import */ var _transition_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./transition.js */ "./node_modules/d3-transition/src/selection/transition.js");
 
 
 
 
-d3_selection__WEBPACK_IMPORTED_MODULE_0__["selection"].prototype.interrupt = _interrupt__WEBPACK_IMPORTED_MODULE_1__["default"];
-d3_selection__WEBPACK_IMPORTED_MODULE_0__["selection"].prototype.transition = _transition__WEBPACK_IMPORTED_MODULE_2__["default"];
+d3_selection__WEBPACK_IMPORTED_MODULE_0__["selection"].prototype.interrupt = _interrupt_js__WEBPACK_IMPORTED_MODULE_1__["default"];
+d3_selection__WEBPACK_IMPORTED_MODULE_0__["selection"].prototype.transition = _transition_js__WEBPACK_IMPORTED_MODULE_2__["default"];
 
 
 /***/ }),
@@ -38573,12 +38600,12 @@ d3_selection__WEBPACK_IMPORTED_MODULE_0__["selection"].prototype.transition = _t
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _interrupt__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../interrupt */ "./node_modules/d3-transition/src/interrupt.js");
+/* harmony import */ var _interrupt_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../interrupt.js */ "./node_modules/d3-transition/src/interrupt.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(name) {
   return this.each(function() {
-    Object(_interrupt__WEBPACK_IMPORTED_MODULE_0__["default"])(this, name);
+    Object(_interrupt_js__WEBPACK_IMPORTED_MODULE_0__["default"])(this, name);
   });
 });
 
@@ -38594,8 +38621,8 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _transition_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../transition/index */ "./node_modules/d3-transition/src/transition/index.js");
-/* harmony import */ var _transition_schedule__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../transition/schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _transition_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../transition/index.js */ "./node_modules/d3-transition/src/transition/index.js");
+/* harmony import */ var _transition_schedule_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../transition/schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 /* harmony import */ var d3_ease__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! d3-ease */ "./node_modules/d3-ease/src/index.js");
 /* harmony import */ var d3_timer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! d3-timer */ "./node_modules/d3-timer/src/index.js");
 
@@ -38624,21 +38651,21 @@ function inherit(node, id) {
   var id,
       timing;
 
-  if (name instanceof _transition_index__WEBPACK_IMPORTED_MODULE_0__["Transition"]) {
+  if (name instanceof _transition_index_js__WEBPACK_IMPORTED_MODULE_0__["Transition"]) {
     id = name._id, name = name._name;
   } else {
-    id = Object(_transition_index__WEBPACK_IMPORTED_MODULE_0__["newId"])(), (timing = defaultTiming).time = Object(d3_timer__WEBPACK_IMPORTED_MODULE_3__["now"])(), name = name == null ? null : name + "";
+    id = Object(_transition_index_js__WEBPACK_IMPORTED_MODULE_0__["newId"])(), (timing = defaultTiming).time = Object(d3_timer__WEBPACK_IMPORTED_MODULE_3__["now"])(), name = name == null ? null : name + "";
   }
 
   for (var groups = this._groups, m = groups.length, j = 0; j < m; ++j) {
     for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
       if (node = group[i]) {
-        Object(_transition_schedule__WEBPACK_IMPORTED_MODULE_1__["default"])(node, name, id, i, group, timing || inherit(node, id));
+        Object(_transition_schedule_js__WEBPACK_IMPORTED_MODULE_1__["default"])(node, name, id, i, group, timing || inherit(node, id));
       }
     }
   }
 
-  return new _transition_index__WEBPACK_IMPORTED_MODULE_0__["Transition"](groups, this._parents, name, id);
+  return new _transition_index_js__WEBPACK_IMPORTED_MODULE_0__["Transition"](groups, this._parents, name, id);
 });
 
 
@@ -38655,8 +38682,8 @@ function inherit(node, id) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_interpolate__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-interpolate */ "./node_modules/d3-interpolate/src/index.js");
 /* harmony import */ var d3_selection__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! d3-selection */ "./node_modules/d3-selection/src/index.js");
-/* harmony import */ var _tween__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./tween */ "./node_modules/d3-transition/src/transition/tween.js");
-/* harmony import */ var _interpolate__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./interpolate */ "./node_modules/d3-transition/src/transition/interpolate.js");
+/* harmony import */ var _tween_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./tween.js */ "./node_modules/d3-transition/src/transition/tween.js");
+/* harmony import */ var _interpolate_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./interpolate.js */ "./node_modules/d3-transition/src/transition/interpolate.js");
 
 
 
@@ -38729,9 +38756,9 @@ function attrFunctionNS(fullname, interpolate, value) {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function(name, value) {
-  var fullname = Object(d3_selection__WEBPACK_IMPORTED_MODULE_1__["namespace"])(name), i = fullname === "transform" ? d3_interpolate__WEBPACK_IMPORTED_MODULE_0__["interpolateTransformSvg"] : _interpolate__WEBPACK_IMPORTED_MODULE_3__["default"];
+  var fullname = Object(d3_selection__WEBPACK_IMPORTED_MODULE_1__["namespace"])(name), i = fullname === "transform" ? d3_interpolate__WEBPACK_IMPORTED_MODULE_0__["interpolateTransformSvg"] : _interpolate_js__WEBPACK_IMPORTED_MODULE_3__["default"];
   return this.attrTween(name, typeof value === "function"
-      ? (fullname.local ? attrFunctionNS : attrFunction)(fullname, i, Object(_tween__WEBPACK_IMPORTED_MODULE_2__["tweenValue"])(this, "attr." + name, value))
+      ? (fullname.local ? attrFunctionNS : attrFunction)(fullname, i, Object(_tween_js__WEBPACK_IMPORTED_MODULE_2__["tweenValue"])(this, "attr." + name, value))
       : value == null ? (fullname.local ? attrRemoveNS : attrRemove)(fullname)
       : (fullname.local ? attrConstantNS : attrConstant)(fullname, i, value));
 });
@@ -38753,13 +38780,13 @@ __webpack_require__.r(__webpack_exports__);
 
 function attrInterpolate(name, i) {
   return function(t) {
-    this.setAttribute(name, i(t));
+    this.setAttribute(name, i.call(this, t));
   };
 }
 
 function attrInterpolateNS(fullname, i) {
   return function(t) {
-    this.setAttributeNS(fullname.space, fullname.local, i(t));
+    this.setAttributeNS(fullname.space, fullname.local, i.call(this, t));
   };
 }
 
@@ -38806,18 +38833,18 @@ function attrTween(name, value) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 function delayFunction(id, value) {
   return function() {
-    Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["init"])(this, id).delay = +value.apply(this, arguments);
+    Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["init"])(this, id).delay = +value.apply(this, arguments);
   };
 }
 
 function delayConstant(id, value) {
   return value = +value, function() {
-    Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["init"])(this, id).delay = value;
+    Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["init"])(this, id).delay = value;
   };
 }
 
@@ -38828,7 +38855,7 @@ function delayConstant(id, value) {
       ? this.each((typeof value === "function"
           ? delayFunction
           : delayConstant)(id, value))
-      : Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).delay;
+      : Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).delay;
 });
 
 
@@ -38843,18 +38870,18 @@ function delayConstant(id, value) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 function durationFunction(id, value) {
   return function() {
-    Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id).duration = +value.apply(this, arguments);
+    Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id).duration = +value.apply(this, arguments);
   };
 }
 
 function durationConstant(id, value) {
   return value = +value, function() {
-    Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id).duration = value;
+    Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id).duration = value;
   };
 }
 
@@ -38865,7 +38892,7 @@ function durationConstant(id, value) {
       ? this.each((typeof value === "function"
           ? durationFunction
           : durationConstant)(id, value))
-      : Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).duration;
+      : Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).duration;
 });
 
 
@@ -38880,13 +38907,13 @@ function durationConstant(id, value) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 function easeConstant(id, value) {
   if (typeof value !== "function") throw new Error;
   return function() {
-    Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id).ease = value;
+    Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id).ease = value;
   };
 }
 
@@ -38895,7 +38922,7 @@ function easeConstant(id, value) {
 
   return arguments.length
       ? this.each(easeConstant(id, value))
-      : Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).ease;
+      : Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).ease;
 });
 
 
@@ -38910,7 +38937,7 @@ function easeConstant(id, value) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
@@ -38920,7 +38947,7 @@ __webpack_require__.r(__webpack_exports__);
         end = {value: function() { if (--size === 0) resolve(); }};
 
     that.each(function() {
-      var schedule = Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id),
+      var schedule = Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id),
           on = schedule.on;
 
       // If this node shared a dispatch with the previous node,
@@ -38951,7 +38978,7 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_selection__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-selection */ "./node_modules/d3-selection/src/index.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index */ "./node_modules/d3-transition/src/transition/index.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-transition/src/transition/index.js");
 
 
 
@@ -38966,7 +38993,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   }
 
-  return new _index__WEBPACK_IMPORTED_MODULE_1__["Transition"](subgroups, this._parents, this._name, this._id);
+  return new _index_js__WEBPACK_IMPORTED_MODULE_1__["Transition"](subgroups, this._parents, this._name, this._id);
 });
 
 
@@ -38985,24 +39012,26 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return transition; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "newId", function() { return newId; });
 /* harmony import */ var d3_selection__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-selection */ "./node_modules/d3-selection/src/index.js");
-/* harmony import */ var _attr__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./attr */ "./node_modules/d3-transition/src/transition/attr.js");
-/* harmony import */ var _attrTween__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./attrTween */ "./node_modules/d3-transition/src/transition/attrTween.js");
-/* harmony import */ var _delay__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./delay */ "./node_modules/d3-transition/src/transition/delay.js");
-/* harmony import */ var _duration__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./duration */ "./node_modules/d3-transition/src/transition/duration.js");
-/* harmony import */ var _ease__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ease */ "./node_modules/d3-transition/src/transition/ease.js");
-/* harmony import */ var _filter__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./filter */ "./node_modules/d3-transition/src/transition/filter.js");
-/* harmony import */ var _merge__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./merge */ "./node_modules/d3-transition/src/transition/merge.js");
-/* harmony import */ var _on__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./on */ "./node_modules/d3-transition/src/transition/on.js");
-/* harmony import */ var _remove__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./remove */ "./node_modules/d3-transition/src/transition/remove.js");
-/* harmony import */ var _select__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./select */ "./node_modules/d3-transition/src/transition/select.js");
-/* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./selectAll */ "./node_modules/d3-transition/src/transition/selectAll.js");
-/* harmony import */ var _selection__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./selection */ "./node_modules/d3-transition/src/transition/selection.js");
-/* harmony import */ var _style__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./style */ "./node_modules/d3-transition/src/transition/style.js");
-/* harmony import */ var _styleTween__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./styleTween */ "./node_modules/d3-transition/src/transition/styleTween.js");
-/* harmony import */ var _text__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./text */ "./node_modules/d3-transition/src/transition/text.js");
-/* harmony import */ var _transition__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./transition */ "./node_modules/d3-transition/src/transition/transition.js");
-/* harmony import */ var _tween__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./tween */ "./node_modules/d3-transition/src/transition/tween.js");
-/* harmony import */ var _end__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./end */ "./node_modules/d3-transition/src/transition/end.js");
+/* harmony import */ var _attr_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./attr.js */ "./node_modules/d3-transition/src/transition/attr.js");
+/* harmony import */ var _attrTween_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./attrTween.js */ "./node_modules/d3-transition/src/transition/attrTween.js");
+/* harmony import */ var _delay_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./delay.js */ "./node_modules/d3-transition/src/transition/delay.js");
+/* harmony import */ var _duration_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./duration.js */ "./node_modules/d3-transition/src/transition/duration.js");
+/* harmony import */ var _ease_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ease.js */ "./node_modules/d3-transition/src/transition/ease.js");
+/* harmony import */ var _filter_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./filter.js */ "./node_modules/d3-transition/src/transition/filter.js");
+/* harmony import */ var _merge_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./merge.js */ "./node_modules/d3-transition/src/transition/merge.js");
+/* harmony import */ var _on_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./on.js */ "./node_modules/d3-transition/src/transition/on.js");
+/* harmony import */ var _remove_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./remove.js */ "./node_modules/d3-transition/src/transition/remove.js");
+/* harmony import */ var _select_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./select.js */ "./node_modules/d3-transition/src/transition/select.js");
+/* harmony import */ var _selectAll_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./selectAll.js */ "./node_modules/d3-transition/src/transition/selectAll.js");
+/* harmony import */ var _selection_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./selection.js */ "./node_modules/d3-transition/src/transition/selection.js");
+/* harmony import */ var _style_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./style.js */ "./node_modules/d3-transition/src/transition/style.js");
+/* harmony import */ var _styleTween_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./styleTween.js */ "./node_modules/d3-transition/src/transition/styleTween.js");
+/* harmony import */ var _text_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./text.js */ "./node_modules/d3-transition/src/transition/text.js");
+/* harmony import */ var _textTween_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./textTween.js */ "./node_modules/d3-transition/src/transition/textTween.js");
+/* harmony import */ var _transition_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ./transition.js */ "./node_modules/d3-transition/src/transition/transition.js");
+/* harmony import */ var _tween_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ./tween.js */ "./node_modules/d3-transition/src/transition/tween.js");
+/* harmony import */ var _end_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ./end.js */ "./node_modules/d3-transition/src/transition/end.js");
+
 
 
 
@@ -39044,30 +39073,31 @@ var selection_prototype = d3_selection__WEBPACK_IMPORTED_MODULE_0__["selection"]
 
 Transition.prototype = transition.prototype = {
   constructor: Transition,
-  select: _select__WEBPACK_IMPORTED_MODULE_10__["default"],
-  selectAll: _selectAll__WEBPACK_IMPORTED_MODULE_11__["default"],
-  filter: _filter__WEBPACK_IMPORTED_MODULE_6__["default"],
-  merge: _merge__WEBPACK_IMPORTED_MODULE_7__["default"],
-  selection: _selection__WEBPACK_IMPORTED_MODULE_12__["default"],
-  transition: _transition__WEBPACK_IMPORTED_MODULE_16__["default"],
+  select: _select_js__WEBPACK_IMPORTED_MODULE_10__["default"],
+  selectAll: _selectAll_js__WEBPACK_IMPORTED_MODULE_11__["default"],
+  filter: _filter_js__WEBPACK_IMPORTED_MODULE_6__["default"],
+  merge: _merge_js__WEBPACK_IMPORTED_MODULE_7__["default"],
+  selection: _selection_js__WEBPACK_IMPORTED_MODULE_12__["default"],
+  transition: _transition_js__WEBPACK_IMPORTED_MODULE_17__["default"],
   call: selection_prototype.call,
   nodes: selection_prototype.nodes,
   node: selection_prototype.node,
   size: selection_prototype.size,
   empty: selection_prototype.empty,
   each: selection_prototype.each,
-  on: _on__WEBPACK_IMPORTED_MODULE_8__["default"],
-  attr: _attr__WEBPACK_IMPORTED_MODULE_1__["default"],
-  attrTween: _attrTween__WEBPACK_IMPORTED_MODULE_2__["default"],
-  style: _style__WEBPACK_IMPORTED_MODULE_13__["default"],
-  styleTween: _styleTween__WEBPACK_IMPORTED_MODULE_14__["default"],
-  text: _text__WEBPACK_IMPORTED_MODULE_15__["default"],
-  remove: _remove__WEBPACK_IMPORTED_MODULE_9__["default"],
-  tween: _tween__WEBPACK_IMPORTED_MODULE_17__["default"],
-  delay: _delay__WEBPACK_IMPORTED_MODULE_3__["default"],
-  duration: _duration__WEBPACK_IMPORTED_MODULE_4__["default"],
-  ease: _ease__WEBPACK_IMPORTED_MODULE_5__["default"],
-  end: _end__WEBPACK_IMPORTED_MODULE_18__["default"]
+  on: _on_js__WEBPACK_IMPORTED_MODULE_8__["default"],
+  attr: _attr_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  attrTween: _attrTween_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+  style: _style_js__WEBPACK_IMPORTED_MODULE_13__["default"],
+  styleTween: _styleTween_js__WEBPACK_IMPORTED_MODULE_14__["default"],
+  text: _text_js__WEBPACK_IMPORTED_MODULE_15__["default"],
+  textTween: _textTween_js__WEBPACK_IMPORTED_MODULE_16__["default"],
+  remove: _remove_js__WEBPACK_IMPORTED_MODULE_9__["default"],
+  tween: _tween_js__WEBPACK_IMPORTED_MODULE_18__["default"],
+  delay: _delay_js__WEBPACK_IMPORTED_MODULE_3__["default"],
+  duration: _duration_js__WEBPACK_IMPORTED_MODULE_4__["default"],
+  ease: _ease_js__WEBPACK_IMPORTED_MODULE_5__["default"],
+  end: _end_js__WEBPACK_IMPORTED_MODULE_19__["default"]
 };
 
 
@@ -39107,7 +39137,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index */ "./node_modules/d3-transition/src/transition/index.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-transition/src/transition/index.js");
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function(transition) {
@@ -39125,7 +39155,7 @@ __webpack_require__.r(__webpack_exports__);
     merges[j] = groups0[j];
   }
 
-  return new _index__WEBPACK_IMPORTED_MODULE_0__["Transition"](merges, this._parents, this._name, this._id);
+  return new _index_js__WEBPACK_IMPORTED_MODULE_0__["Transition"](merges, this._parents, this._name, this._id);
 });
 
 
@@ -39140,7 +39170,7 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 function start(name) {
@@ -39152,7 +39182,7 @@ function start(name) {
 }
 
 function onFunction(id, name, listener) {
-  var on0, on1, sit = start(name) ? _schedule__WEBPACK_IMPORTED_MODULE_0__["init"] : _schedule__WEBPACK_IMPORTED_MODULE_0__["set"];
+  var on0, on1, sit = start(name) ? _schedule_js__WEBPACK_IMPORTED_MODULE_0__["init"] : _schedule_js__WEBPACK_IMPORTED_MODULE_0__["set"];
   return function() {
     var schedule = sit(this, id),
         on = schedule.on;
@@ -39170,7 +39200,7 @@ function onFunction(id, name, listener) {
   var id = this._id;
 
   return arguments.length < 2
-      ? Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).on.on(name)
+      ? Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).on.on(name)
       : this.each(onFunction(id, name, listener));
 });
 
@@ -39389,8 +39419,8 @@ function create(node, id, self) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_selection__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-selection */ "./node_modules/d3-selection/src/index.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index */ "./node_modules/d3-transition/src/transition/index.js");
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-transition/src/transition/index.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 
@@ -39406,12 +39436,12 @@ __webpack_require__.r(__webpack_exports__);
       if ((node = group[i]) && (subnode = select.call(node, node.__data__, i, group))) {
         if ("__data__" in node) subnode.__data__ = node.__data__;
         subgroup[i] = subnode;
-        Object(_schedule__WEBPACK_IMPORTED_MODULE_2__["default"])(subgroup[i], name, id, i, subgroup, Object(_schedule__WEBPACK_IMPORTED_MODULE_2__["get"])(node, id));
+        Object(_schedule_js__WEBPACK_IMPORTED_MODULE_2__["default"])(subgroup[i], name, id, i, subgroup, Object(_schedule_js__WEBPACK_IMPORTED_MODULE_2__["get"])(node, id));
       }
     }
   }
 
-  return new _index__WEBPACK_IMPORTED_MODULE_1__["Transition"](subgroups, this._parents, name, id);
+  return new _index_js__WEBPACK_IMPORTED_MODULE_1__["Transition"](subgroups, this._parents, name, id);
 });
 
 
@@ -39427,8 +39457,8 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_selection__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-selection */ "./node_modules/d3-selection/src/index.js");
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index */ "./node_modules/d3-transition/src/transition/index.js");
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-transition/src/transition/index.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 
@@ -39442,9 +39472,9 @@ __webpack_require__.r(__webpack_exports__);
   for (var groups = this._groups, m = groups.length, subgroups = [], parents = [], j = 0; j < m; ++j) {
     for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
       if (node = group[i]) {
-        for (var children = select.call(node, node.__data__, i, group), child, inherit = Object(_schedule__WEBPACK_IMPORTED_MODULE_2__["get"])(node, id), k = 0, l = children.length; k < l; ++k) {
+        for (var children = select.call(node, node.__data__, i, group), child, inherit = Object(_schedule_js__WEBPACK_IMPORTED_MODULE_2__["get"])(node, id), k = 0, l = children.length; k < l; ++k) {
           if (child = children[k]) {
-            Object(_schedule__WEBPACK_IMPORTED_MODULE_2__["default"])(child, name, id, k, children, inherit);
+            Object(_schedule_js__WEBPACK_IMPORTED_MODULE_2__["default"])(child, name, id, k, children, inherit);
           }
         }
         subgroups.push(children);
@@ -39453,7 +39483,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   }
 
-  return new _index__WEBPACK_IMPORTED_MODULE_1__["Transition"](subgroups, parents, name, id);
+  return new _index_js__WEBPACK_IMPORTED_MODULE_1__["Transition"](subgroups, parents, name, id);
 });
 
 
@@ -39491,9 +39521,9 @@ var Selection = d3_selection__WEBPACK_IMPORTED_MODULE_0__["selection"].prototype
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var d3_interpolate__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! d3-interpolate */ "./node_modules/d3-interpolate/src/index.js");
 /* harmony import */ var d3_selection__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! d3-selection */ "./node_modules/d3-selection/src/index.js");
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
-/* harmony import */ var _tween__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./tween */ "./node_modules/d3-transition/src/transition/tween.js");
-/* harmony import */ var _interpolate__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./interpolate */ "./node_modules/d3-transition/src/transition/interpolate.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _tween_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./tween.js */ "./node_modules/d3-transition/src/transition/tween.js");
+/* harmony import */ var _interpolate_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./interpolate.js */ "./node_modules/d3-transition/src/transition/interpolate.js");
 
 
 
@@ -39549,7 +39579,7 @@ function styleFunction(name, interpolate, value) {
 function styleMaybeRemove(id, name) {
   var on0, on1, listener0, key = "style." + name, event = "end." + key, remove;
   return function() {
-    var schedule = Object(_schedule__WEBPACK_IMPORTED_MODULE_2__["set"])(this, id),
+    var schedule = Object(_schedule_js__WEBPACK_IMPORTED_MODULE_2__["set"])(this, id),
         on = schedule.on,
         listener = schedule.value[key] == null ? remove || (remove = styleRemove(name)) : undefined;
 
@@ -39563,12 +39593,12 @@ function styleMaybeRemove(id, name) {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (function(name, value, priority) {
-  var i = (name += "") === "transform" ? d3_interpolate__WEBPACK_IMPORTED_MODULE_0__["interpolateTransformCss"] : _interpolate__WEBPACK_IMPORTED_MODULE_4__["default"];
+  var i = (name += "") === "transform" ? d3_interpolate__WEBPACK_IMPORTED_MODULE_0__["interpolateTransformCss"] : _interpolate_js__WEBPACK_IMPORTED_MODULE_4__["default"];
   return value == null ? this
       .styleTween(name, styleNull(name, i))
       .on("end.style." + name, styleRemove(name))
     : typeof value === "function" ? this
-      .styleTween(name, styleFunction(name, i, Object(_tween__WEBPACK_IMPORTED_MODULE_3__["tweenValue"])(this, "style." + name, value)))
+      .styleTween(name, styleFunction(name, i, Object(_tween_js__WEBPACK_IMPORTED_MODULE_3__["tweenValue"])(this, "style." + name, value)))
       .each(styleMaybeRemove(this._id, name))
     : this
       .styleTween(name, styleConstant(name, i, value), priority)
@@ -39589,7 +39619,7 @@ function styleMaybeRemove(id, name) {
 __webpack_require__.r(__webpack_exports__);
 function styleInterpolate(name, i, priority) {
   return function(t) {
-    this.style.setProperty(name, i(t), priority);
+    this.style.setProperty(name, i.call(this, t), priority);
   };
 }
 
@@ -39624,7 +39654,7 @@ function styleTween(name, value, priority) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _tween__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tween */ "./node_modules/d3-transition/src/transition/tween.js");
+/* harmony import */ var _tween_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tween.js */ "./node_modules/d3-transition/src/transition/tween.js");
 
 
 function textConstant(value) {
@@ -39642,8 +39672,45 @@ function textFunction(value) {
 
 /* harmony default export */ __webpack_exports__["default"] = (function(value) {
   return this.tween("text", typeof value === "function"
-      ? textFunction(Object(_tween__WEBPACK_IMPORTED_MODULE_0__["tweenValue"])(this, "text", value))
+      ? textFunction(Object(_tween_js__WEBPACK_IMPORTED_MODULE_0__["tweenValue"])(this, "text", value))
       : textConstant(value == null ? "" : value + ""));
+});
+
+
+/***/ }),
+
+/***/ "./node_modules/d3-transition/src/transition/textTween.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/d3-transition/src/transition/textTween.js ***!
+  \****************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+function textInterpolate(i) {
+  return function(t) {
+    this.textContent = i.call(this, t);
+  };
+}
+
+function textTween(value) {
+  var t0, i0;
+  function tween() {
+    var i = value.apply(this, arguments);
+    if (i !== i0) t0 = (i0 = i) && textInterpolate(i);
+    return t0;
+  }
+  tween._value = value;
+  return tween;
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (function(value) {
+  var key = "text";
+  if (arguments.length < 1) return (key = this.tween(key)) && key._value;
+  if (value == null) return this.tween(key, null);
+  if (typeof value !== "function") throw new Error;
+  return this.tween(key, textTween(value));
 });
 
 
@@ -39658,21 +39725,21 @@ function textFunction(value) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index */ "./node_modules/d3-transition/src/transition/index.js");
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.js */ "./node_modules/d3-transition/src/transition/index.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 
 /* harmony default export */ __webpack_exports__["default"] = (function() {
   var name = this._name,
       id0 = this._id,
-      id1 = Object(_index__WEBPACK_IMPORTED_MODULE_0__["newId"])();
+      id1 = Object(_index_js__WEBPACK_IMPORTED_MODULE_0__["newId"])();
 
   for (var groups = this._groups, m = groups.length, j = 0; j < m; ++j) {
     for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
       if (node = group[i]) {
-        var inherit = Object(_schedule__WEBPACK_IMPORTED_MODULE_1__["get"])(node, id0);
-        Object(_schedule__WEBPACK_IMPORTED_MODULE_1__["default"])(node, name, id1, i, group, {
+        var inherit = Object(_schedule_js__WEBPACK_IMPORTED_MODULE_1__["get"])(node, id0);
+        Object(_schedule_js__WEBPACK_IMPORTED_MODULE_1__["default"])(node, name, id1, i, group, {
           time: inherit.time + inherit.delay + inherit.duration,
           delay: 0,
           duration: inherit.duration,
@@ -39682,7 +39749,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   }
 
-  return new _index__WEBPACK_IMPORTED_MODULE_0__["Transition"](groups, this._parents, name, id1);
+  return new _index_js__WEBPACK_IMPORTED_MODULE_0__["Transition"](groups, this._parents, name, id1);
 });
 
 
@@ -39698,13 +39765,13 @@ __webpack_require__.r(__webpack_exports__);
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tweenValue", function() { return tweenValue; });
-/* harmony import */ var _schedule__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule */ "./node_modules/d3-transition/src/transition/schedule.js");
+/* harmony import */ var _schedule_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./schedule.js */ "./node_modules/d3-transition/src/transition/schedule.js");
 
 
 function tweenRemove(id, name) {
   var tween0, tween1;
   return function() {
-    var schedule = Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id),
+    var schedule = Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id),
         tween = schedule.tween;
 
     // If this node shared tween with the previous node,
@@ -39729,7 +39796,7 @@ function tweenFunction(id, name, value) {
   var tween0, tween1;
   if (typeof value !== "function") throw new Error;
   return function() {
-    var schedule = Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id),
+    var schedule = Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id),
         tween = schedule.tween;
 
     // If this node shared tween with the previous node,
@@ -39756,7 +39823,7 @@ function tweenFunction(id, name, value) {
   name += "";
 
   if (arguments.length < 2) {
-    var tween = Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).tween;
+    var tween = Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["get"])(this.node(), id).tween;
     for (var i = 0, n = tween.length, t; i < n; ++i) {
       if ((t = tween[i]).name === name) {
         return t.value;
@@ -39772,12 +39839,12 @@ function tweenValue(transition, name, value) {
   var id = transition._id;
 
   transition.each(function() {
-    var schedule = Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id);
+    var schedule = Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["set"])(this, id);
     (schedule.value || (schedule.value = {}))[name] = value.apply(this, arguments);
   });
 
   return function(node) {
-    return Object(_schedule__WEBPACK_IMPORTED_MODULE_0__["get"])(node, id).value[name];
+    return Object(_schedule_js__WEBPACK_IMPORTED_MODULE_0__["get"])(node, id).value[name];
   };
 }
 
@@ -41583,7 +41650,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "devDependencies", function() { return devDependencies; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "dependencies", function() { return dependencies; });
 var name = "d3";
-var version = "5.11.0";
+var version = "5.15.0";
 var description = "Data-Driven Documents";
 var keywords = ["dom","visualization","svg","animation","canvas"];
 var homepage = "https://d3js.org";
@@ -41606,7 +41673,7 @@ var dependencies = {"d3-array":"1","d3-axis":"1","d3-brush":"1","d3-chord":"1","
 /*!**********************************!*\
   !*** ./node_modules/d3/index.js ***!
   \**********************************/
-/*! exports provided: version, bisect, bisectRight, bisectLeft, ascending, bisector, cross, descending, deviation, extent, histogram, thresholdFreedmanDiaconis, thresholdScott, thresholdSturges, max, mean, median, merge, min, pairs, permute, quantile, range, scan, shuffle, sum, ticks, tickIncrement, tickStep, transpose, variance, zip, axisTop, axisRight, axisBottom, axisLeft, brush, brushX, brushY, brushSelection, chord, ribbon, nest, set, map, keys, values, entries, color, rgb, hsl, lab, hcl, lch, gray, cubehelix, contours, contourDensity, dispatch, drag, dragDisable, dragEnable, dsvFormat, csvParse, csvParseRows, csvFormat, csvFormatBody, csvFormatRows, tsvParse, tsvParseRows, tsvFormat, tsvFormatBody, tsvFormatRows, autoType, easeLinear, easeQuad, easeQuadIn, easeQuadOut, easeQuadInOut, easeCubic, easeCubicIn, easeCubicOut, easeCubicInOut, easePoly, easePolyIn, easePolyOut, easePolyInOut, easeSin, easeSinIn, easeSinOut, easeSinInOut, easeExp, easeExpIn, easeExpOut, easeExpInOut, easeCircle, easeCircleIn, easeCircleOut, easeCircleInOut, easeBounce, easeBounceIn, easeBounceOut, easeBounceInOut, easeBack, easeBackIn, easeBackOut, easeBackInOut, easeElastic, easeElasticIn, easeElasticOut, easeElasticInOut, blob, buffer, dsv, csv, tsv, image, json, text, xml, html, svg, forceCenter, forceCollide, forceLink, forceManyBody, forceRadial, forceSimulation, forceX, forceY, formatDefaultLocale, format, formatPrefix, formatLocale, formatSpecifier, precisionFixed, precisionPrefix, precisionRound, geoArea, geoBounds, geoCentroid, geoCircle, geoClipAntimeridian, geoClipCircle, geoClipExtent, geoClipRectangle, geoContains, geoDistance, geoGraticule, geoGraticule10, geoInterpolate, geoLength, geoPath, geoAlbers, geoAlbersUsa, geoAzimuthalEqualArea, geoAzimuthalEqualAreaRaw, geoAzimuthalEquidistant, geoAzimuthalEquidistantRaw, geoConicConformal, geoConicConformalRaw, geoConicEqualArea, geoConicEqualAreaRaw, geoConicEquidistant, geoConicEquidistantRaw, geoEqualEarth, geoEqualEarthRaw, geoEquirectangular, geoEquirectangularRaw, geoGnomonic, geoGnomonicRaw, geoIdentity, geoProjection, geoProjectionMutator, geoMercator, geoMercatorRaw, geoNaturalEarth1, geoNaturalEarth1Raw, geoOrthographic, geoOrthographicRaw, geoStereographic, geoStereographicRaw, geoTransverseMercator, geoTransverseMercatorRaw, geoRotation, geoStream, geoTransform, cluster, hierarchy, pack, packSiblings, packEnclose, partition, stratify, tree, treemap, treemapBinary, treemapDice, treemapSlice, treemapSliceDice, treemapSquarify, treemapResquarify, interpolate, interpolateArray, interpolateBasis, interpolateBasisClosed, interpolateDate, interpolateDiscrete, interpolateHue, interpolateNumber, interpolateObject, interpolateRound, interpolateString, interpolateTransformCss, interpolateTransformSvg, interpolateZoom, interpolateRgb, interpolateRgbBasis, interpolateRgbBasisClosed, interpolateHsl, interpolateHslLong, interpolateLab, interpolateHcl, interpolateHclLong, interpolateCubehelix, interpolateCubehelixLong, piecewise, quantize, path, polygonArea, polygonCentroid, polygonHull, polygonContains, polygonLength, quadtree, randomUniform, randomNormal, randomLogNormal, randomBates, randomIrwinHall, randomExponential, scaleBand, scalePoint, scaleIdentity, scaleLinear, scaleLog, scaleSymlog, scaleOrdinal, scaleImplicit, scalePow, scaleSqrt, scaleQuantile, scaleQuantize, scaleThreshold, scaleTime, scaleUtc, scaleSequential, scaleSequentialLog, scaleSequentialPow, scaleSequentialSqrt, scaleSequentialSymlog, scaleSequentialQuantile, scaleDiverging, scaleDivergingLog, scaleDivergingPow, scaleDivergingSqrt, scaleDivergingSymlog, tickFormat, schemeCategory10, schemeAccent, schemeDark2, schemePaired, schemePastel1, schemePastel2, schemeSet1, schemeSet2, schemeSet3, schemeTableau10, interpolateBrBG, schemeBrBG, interpolatePRGn, schemePRGn, interpolatePiYG, schemePiYG, interpolatePuOr, schemePuOr, interpolateRdBu, schemeRdBu, interpolateRdGy, schemeRdGy, interpolateRdYlBu, schemeRdYlBu, interpolateRdYlGn, schemeRdYlGn, interpolateSpectral, schemeSpectral, interpolateBuGn, schemeBuGn, interpolateBuPu, schemeBuPu, interpolateGnBu, schemeGnBu, interpolateOrRd, schemeOrRd, interpolatePuBuGn, schemePuBuGn, interpolatePuBu, schemePuBu, interpolatePuRd, schemePuRd, interpolateRdPu, schemeRdPu, interpolateYlGnBu, schemeYlGnBu, interpolateYlGn, schemeYlGn, interpolateYlOrBr, schemeYlOrBr, interpolateYlOrRd, schemeYlOrRd, interpolateBlues, schemeBlues, interpolateGreens, schemeGreens, interpolateGreys, schemeGreys, interpolatePurples, schemePurples, interpolateReds, schemeReds, interpolateOranges, schemeOranges, interpolateCividis, interpolateCubehelixDefault, interpolateRainbow, interpolateWarm, interpolateCool, interpolateSinebow, interpolateTurbo, interpolateViridis, interpolateMagma, interpolateInferno, interpolatePlasma, create, creator, local, matcher, mouse, namespace, namespaces, clientPoint, select, selectAll, selection, selector, selectorAll, style, touch, touches, window, event, customEvent, arc, area, line, pie, areaRadial, radialArea, lineRadial, radialLine, pointRadial, linkHorizontal, linkVertical, linkRadial, symbol, symbols, symbolCircle, symbolCross, symbolDiamond, symbolSquare, symbolStar, symbolTriangle, symbolWye, curveBasisClosed, curveBasisOpen, curveBasis, curveBundle, curveCardinalClosed, curveCardinalOpen, curveCardinal, curveCatmullRomClosed, curveCatmullRomOpen, curveCatmullRom, curveLinearClosed, curveLinear, curveMonotoneX, curveMonotoneY, curveNatural, curveStep, curveStepAfter, curveStepBefore, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone, stackOffsetSilhouette, stackOffsetWiggle, stackOrderAppearance, stackOrderAscending, stackOrderDescending, stackOrderInsideOut, stackOrderNone, stackOrderReverse, timeInterval, timeMillisecond, timeMilliseconds, utcMillisecond, utcMilliseconds, timeSecond, timeSeconds, utcSecond, utcSeconds, timeMinute, timeMinutes, timeHour, timeHours, timeDay, timeDays, timeWeek, timeWeeks, timeSunday, timeSundays, timeMonday, timeMondays, timeTuesday, timeTuesdays, timeWednesday, timeWednesdays, timeThursday, timeThursdays, timeFriday, timeFridays, timeSaturday, timeSaturdays, timeMonth, timeMonths, timeYear, timeYears, utcMinute, utcMinutes, utcHour, utcHours, utcDay, utcDays, utcWeek, utcWeeks, utcSunday, utcSundays, utcMonday, utcMondays, utcTuesday, utcTuesdays, utcWednesday, utcWednesdays, utcThursday, utcThursdays, utcFriday, utcFridays, utcSaturday, utcSaturdays, utcMonth, utcMonths, utcYear, utcYears, timeFormatDefaultLocale, timeFormat, timeParse, utcFormat, utcParse, timeFormatLocale, isoFormat, isoParse, now, timer, timerFlush, timeout, interval, transition, active, interrupt, voronoi, zoom, zoomTransform, zoomIdentity */
+/*! exports provided: version, bisect, bisectRight, bisectLeft, ascending, bisector, cross, descending, deviation, extent, histogram, thresholdFreedmanDiaconis, thresholdScott, thresholdSturges, max, mean, median, merge, min, pairs, permute, quantile, range, scan, shuffle, sum, ticks, tickIncrement, tickStep, transpose, variance, zip, axisTop, axisRight, axisBottom, axisLeft, brush, brushX, brushY, brushSelection, chord, ribbon, nest, set, map, keys, values, entries, color, rgb, hsl, lab, hcl, lch, gray, cubehelix, contours, contourDensity, dispatch, drag, dragDisable, dragEnable, dsvFormat, csvParse, csvParseRows, csvFormat, csvFormatBody, csvFormatRows, csvFormatRow, csvFormatValue, tsvParse, tsvParseRows, tsvFormat, tsvFormatBody, tsvFormatRows, tsvFormatRow, tsvFormatValue, autoType, easeLinear, easeQuad, easeQuadIn, easeQuadOut, easeQuadInOut, easeCubic, easeCubicIn, easeCubicOut, easeCubicInOut, easePoly, easePolyIn, easePolyOut, easePolyInOut, easeSin, easeSinIn, easeSinOut, easeSinInOut, easeExp, easeExpIn, easeExpOut, easeExpInOut, easeCircle, easeCircleIn, easeCircleOut, easeCircleInOut, easeBounce, easeBounceIn, easeBounceOut, easeBounceInOut, easeBack, easeBackIn, easeBackOut, easeBackInOut, easeElastic, easeElasticIn, easeElasticOut, easeElasticInOut, blob, buffer, dsv, csv, tsv, image, json, text, xml, html, svg, forceCenter, forceCollide, forceLink, forceManyBody, forceRadial, forceSimulation, forceX, forceY, formatDefaultLocale, format, formatPrefix, formatLocale, formatSpecifier, precisionFixed, precisionPrefix, precisionRound, geoArea, geoBounds, geoCentroid, geoCircle, geoClipAntimeridian, geoClipCircle, geoClipExtent, geoClipRectangle, geoContains, geoDistance, geoGraticule, geoGraticule10, geoInterpolate, geoLength, geoPath, geoAlbers, geoAlbersUsa, geoAzimuthalEqualArea, geoAzimuthalEqualAreaRaw, geoAzimuthalEquidistant, geoAzimuthalEquidistantRaw, geoConicConformal, geoConicConformalRaw, geoConicEqualArea, geoConicEqualAreaRaw, geoConicEquidistant, geoConicEquidistantRaw, geoEqualEarth, geoEqualEarthRaw, geoEquirectangular, geoEquirectangularRaw, geoGnomonic, geoGnomonicRaw, geoIdentity, geoProjection, geoProjectionMutator, geoMercator, geoMercatorRaw, geoNaturalEarth1, geoNaturalEarth1Raw, geoOrthographic, geoOrthographicRaw, geoStereographic, geoStereographicRaw, geoTransverseMercator, geoTransverseMercatorRaw, geoRotation, geoStream, geoTransform, cluster, hierarchy, pack, packSiblings, packEnclose, partition, stratify, tree, treemap, treemapBinary, treemapDice, treemapSlice, treemapSliceDice, treemapSquarify, treemapResquarify, interpolate, interpolateArray, interpolateBasis, interpolateBasisClosed, interpolateDate, interpolateDiscrete, interpolateHue, interpolateNumber, interpolateObject, interpolateRound, interpolateString, interpolateTransformCss, interpolateTransformSvg, interpolateZoom, interpolateRgb, interpolateRgbBasis, interpolateRgbBasisClosed, interpolateHsl, interpolateHslLong, interpolateLab, interpolateHcl, interpolateHclLong, interpolateCubehelix, interpolateCubehelixLong, piecewise, quantize, path, polygonArea, polygonCentroid, polygonHull, polygonContains, polygonLength, quadtree, randomUniform, randomNormal, randomLogNormal, randomBates, randomIrwinHall, randomExponential, scaleBand, scalePoint, scaleIdentity, scaleLinear, scaleLog, scaleSymlog, scaleOrdinal, scaleImplicit, scalePow, scaleSqrt, scaleQuantile, scaleQuantize, scaleThreshold, scaleTime, scaleUtc, scaleSequential, scaleSequentialLog, scaleSequentialPow, scaleSequentialSqrt, scaleSequentialSymlog, scaleSequentialQuantile, scaleDiverging, scaleDivergingLog, scaleDivergingPow, scaleDivergingSqrt, scaleDivergingSymlog, tickFormat, schemeCategory10, schemeAccent, schemeDark2, schemePaired, schemePastel1, schemePastel2, schemeSet1, schemeSet2, schemeSet3, schemeTableau10, interpolateBrBG, schemeBrBG, interpolatePRGn, schemePRGn, interpolatePiYG, schemePiYG, interpolatePuOr, schemePuOr, interpolateRdBu, schemeRdBu, interpolateRdGy, schemeRdGy, interpolateRdYlBu, schemeRdYlBu, interpolateRdYlGn, schemeRdYlGn, interpolateSpectral, schemeSpectral, interpolateBuGn, schemeBuGn, interpolateBuPu, schemeBuPu, interpolateGnBu, schemeGnBu, interpolateOrRd, schemeOrRd, interpolatePuBuGn, schemePuBuGn, interpolatePuBu, schemePuBu, interpolatePuRd, schemePuRd, interpolateRdPu, schemeRdPu, interpolateYlGnBu, schemeYlGnBu, interpolateYlGn, schemeYlGn, interpolateYlOrBr, schemeYlOrBr, interpolateYlOrRd, schemeYlOrRd, interpolateBlues, schemeBlues, interpolateGreens, schemeGreens, interpolateGreys, schemeGreys, interpolatePurples, schemePurples, interpolateReds, schemeReds, interpolateOranges, schemeOranges, interpolateCividis, interpolateCubehelixDefault, interpolateRainbow, interpolateWarm, interpolateCool, interpolateSinebow, interpolateTurbo, interpolateViridis, interpolateMagma, interpolateInferno, interpolatePlasma, create, creator, local, matcher, mouse, namespace, namespaces, clientPoint, select, selectAll, selection, selector, selectorAll, style, touch, touches, window, event, customEvent, arc, area, line, pie, areaRadial, radialArea, lineRadial, radialLine, pointRadial, linkHorizontal, linkVertical, linkRadial, symbol, symbols, symbolCircle, symbolCross, symbolDiamond, symbolSquare, symbolStar, symbolTriangle, symbolWye, curveBasisClosed, curveBasisOpen, curveBasis, curveBundle, curveCardinalClosed, curveCardinalOpen, curveCardinal, curveCatmullRomClosed, curveCatmullRomOpen, curveCatmullRom, curveLinearClosed, curveLinear, curveMonotoneX, curveMonotoneY, curveNatural, curveStep, curveStepAfter, curveStepBefore, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone, stackOffsetSilhouette, stackOffsetWiggle, stackOrderAppearance, stackOrderAscending, stackOrderDescending, stackOrderInsideOut, stackOrderNone, stackOrderReverse, timeInterval, timeMillisecond, timeMilliseconds, utcMillisecond, utcMilliseconds, timeSecond, timeSeconds, utcSecond, utcSeconds, timeMinute, timeMinutes, timeHour, timeHours, timeDay, timeDays, timeWeek, timeWeeks, timeSunday, timeSundays, timeMonday, timeMondays, timeTuesday, timeTuesdays, timeWednesday, timeWednesdays, timeThursday, timeThursdays, timeFriday, timeFridays, timeSaturday, timeSaturdays, timeMonth, timeMonths, timeYear, timeYears, utcMinute, utcMinutes, utcHour, utcHours, utcDay, utcDays, utcWeek, utcWeeks, utcSunday, utcSundays, utcMonday, utcMondays, utcTuesday, utcTuesdays, utcWednesday, utcWednesdays, utcThursday, utcThursdays, utcFriday, utcFridays, utcSaturday, utcSaturdays, utcMonth, utcMonths, utcYear, utcYears, timeFormatDefaultLocale, timeFormat, timeParse, utcFormat, utcParse, timeFormatLocale, isoFormat, isoParse, now, timer, timerFlush, timeout, interval, transition, active, interrupt, voronoi, zoom, zoomTransform, zoomIdentity */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -41758,6 +41825,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatRows", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["csvFormatRows"]; });
 
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatRow", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["csvFormatRow"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "csvFormatValue", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["csvFormatValue"]; });
+
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvParse", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["tsvParse"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvParseRows", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["tsvParseRows"]; });
@@ -41767,6 +41838,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatBody", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["tsvFormatBody"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatRows", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["tsvFormatRows"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatRow", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["tsvFormatRow"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "tsvFormatValue", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["tsvFormatValue"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "autoType", function() { return d3_dsv__WEBPACK_IMPORTED_MODULE_10__["autoType"]; });
 
@@ -56996,6 +57071,13 @@ var Map = /** @class */ (function () {
                 .attr('x2', 600)
                 .attr('y1', 10)
                 .attr('y2', 600);
+            _this.svg.append('text')
+                .text(_this.modelData == 'model1' ? 'Model 1' : 'Model 2')
+                .attr("x", 500)
+                .attr("y", 30)
+                .attr('alignment-baseline', 'middle')
+                .style('font-weight', 'bold')
+                .style('font-size', '24px');
             _this.currentYearData = _this.results[yearSelected];
             d3.select('#spinner')
                 .classed('d-flex', false)
@@ -57078,7 +57160,7 @@ var Map = /** @class */ (function () {
                         "<tr><td>Supply/Need:</td><td>" + (supplyDemandRatio) + "</td></tr>" +
                         "<tr><td>Population:</td><td>" + (population) + "</td></tr>" +
                         "<tr><td>Supply/100K:</td><td>" + (supplyPer100k) + "</td></tr>" +
-                        "<tr><td>Demand/100K:</td><td>" + (demandPer100k) + "</td></tr>" +
+                        "<tr><td>Need/100K:</td><td>" + (demandPer100k) + "</td></tr>" +
                         "</table>";
                     d3.select("#tooltip").transition().duration(200).style("opacity", .9);
                     d3.select("#tooltip").html(toolTip)
@@ -57182,6 +57264,8 @@ var Map = /** @class */ (function () {
             .labelFormat(d3.format(".0f"))
             .orient('horizontal')
             .scale(linear);
+        console.log(mapData);
+        // console.log(colorScale);
         d3.selectAll('g.legendLinear').call(legendLinear);
         this.svg.select('g.counties').selectAll('path').each(function (d) {
             d3.select(this).transition().duration(duration).attr('fill', colorScale(d, that, mapData));
@@ -57317,7 +57401,9 @@ var MapController = /** @class */ (function () {
     MapController.prototype.updateMapType = function (mapData) {
         this.mapData = mapData;
         this.originalMap.updateMapType(mapData, 1000);
-        this.secondMap.updateMapType(mapData, 1000);
+        if (this.comparisonMode) {
+            this.secondMap.updateMapType(mapData, 1000);
+        }
         this.drawSidebar();
     };
     /**
@@ -57482,6 +57568,8 @@ var MapEvents = /** @class */ (function () {
             _this.map.mapType = document.getElementById('mapType').value;
             var selectedOptions = document.getElementById('modelData').selectedOptions;
             if (selectedOptions.length == 0) {
+                _this.map.selectedCounties = new Set();
+                _this.map.selectedProfessions = {};
                 _this.map.destroy();
                 return;
             }
