@@ -35,7 +35,7 @@ class Sidebar {
 			this.countiesSvg = d3.select('#counties')
 				.append('svg')
 				.attr('height', 1800)
-				.attr("style","width:100%;")
+				.attr("style","width:540;")
 		}
 
 		this.professionsSvg = d3.select('#professions').select('svg');
@@ -52,7 +52,7 @@ class Sidebar {
 			this.countiesHeaderSvg = d3.select('#countiesHeader')
 				.append('svg')
 				.attr('height', 50)
-				.attr('width', 600)
+				.attr('width', 540)
 		}
 	}
 
@@ -72,7 +72,42 @@ class Sidebar {
 		else{
 			this.currentlySelected = new Set<string>(selectedCounties);
 		}
+
+		let countyString:string = "Data for ";
+
+		this.currentlySelected.forEach(d => {
+			countyString += d + ", ";
+		});
+
+		countyString = countyString.substring(0, countyString.length - 2)
+
+		d3.select("#countiesList")
+			.html(countyString);
+
 		this.selectedProfessions = selectedProfessions;
+
+		let profString:string = "Data for ";
+		let allFlag:boolean = true;
+
+		for(let i in this.selectedProfessions)
+		{
+			if(this.selectedProfessions[i])
+			{
+				profString += i + ", "
+			}
+			else{
+				allFlag = false;
+			}
+		}
+
+		profString = profString.substring(0, profString.length - 2);
+
+		if(allFlag)
+			profString = "Data for All Professions"
+
+		d3.select("#professionsList")
+			.html(profString);
+
 		this.countiesSvg.selectAll('*').remove();
 		this.countiesHeaderSvg.selectAll('*').remove();
 		this.margin = {left: 15, top:0, bottom: 0, right:15};
@@ -117,7 +152,7 @@ class Sidebar {
 		* TODO::  this is straight duplicating the code below it atm. Pull into a function.
 		// */
 		this.stateSvg = d3.select('#state');
-		this.stateSvg.selectAll('*').remove();
+		this.stateSvg.selectAll('svg').remove();
 		this.stateSvg = this.stateSvg
 				.append('svg')
 				.attr('height', 30)
@@ -139,6 +174,7 @@ class Sidebar {
 			.attr('height', barHeight)
 			.attr('id', d => d[0].replace(/\s/g, ''))
 			.attr('class', 'background')
+			.attr('border-top', 'double')
 			.attr('fill', 'white')
 
 		stateGroups.on('click', (d) => {

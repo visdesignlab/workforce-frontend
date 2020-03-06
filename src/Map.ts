@@ -1,4 +1,6 @@
 import * as d3 from 'd3';
+import * as fc from 'd3fc';
+
 import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
 import {Sidebar} from './sidebar';
@@ -16,11 +18,14 @@ class Map{
 	currentYearData : any;
 	linechart:Linechart;
 	controller:MapController
+	firstMap:boolean;
 
 	/**
 	 *
 	 */
-	constructor(controller){
+	constructor(controller, firstMap)
+	{
+		this.firstMap = firstMap;
 		this.controller = controller;
 		this.linechart = new Linechart(controller)
 		this.currentYearData = {};
@@ -43,10 +48,13 @@ class Map{
 	drawMap(mapData:any, modelUsed: any, selectedProfessions: any, yearSelected:string, selectedCounties:Set<string>, mapType:string, customModel = false, initSidebar = true):Promise<void>{
 			// d3.select('#spinner')
 			// 	.classed('d-flex', true)
+
 		this.modelData = modelUsed;
 		const map = mapType;
 		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
 		const serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
+
+
 		// const option = (document.getElementById('customModel') as HTMLInputElement).value;
 		// let request = {
 		// 	method:"POST",
@@ -80,6 +88,7 @@ class Map{
 			// } else {
 			// 	this.results[yearSelected][selectedCounties[0]].demand = results.result.demand['w_0.1'] || results.result.demand;
 			// }
+
 			this.svg.selectAll('*').remove();
 			this.svg.append('line')
 			.attr('stroke', 'black')
@@ -92,7 +101,7 @@ class Map{
 			this.svg.append('text')
 				.text(this.modelData == 'model1' ? 'Model 1' : 'Model 2')
 				.attr("x", 500)
-				.attr("y", 30)
+				.attr("y", 90)
 				.attr('alignment-baseline', 'middle')
 				.style('font-weight', 'bold')
 				.style('font-size', '24px')
@@ -129,17 +138,17 @@ class Map{
 					.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
 
 
-				var legendLinear = legendColor()
-					.shapeWidth(115)
-					.labelFormat(d3.format(".0f"))
-					.orient('horizontal')
-					.scale(linear);
+				// var legendLinear = legendColor()
+				// 	.shapeWidth(115)
+				// 	.labelFormat(d3.format(".0f"))
+				// 	.orient('horizontal')
+				// 	.scale(linear);
 
 				this.svg.append("g")
 					.attr("class", "legendLinear")
 					.attr("transform", "translate(20,20)");
-				this.svg.select(".legendLinear")
-					.call(legendLinear);
+				// this.svg.select(".legendLinear")
+				// 	.call(legendLinear);
 				function getSupplyPer100k(county) {
 					return county['totalSupply'] / county['population'] * 100000;
 				};
@@ -278,6 +287,7 @@ class Map{
 			return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
 		}
 	};
+
 	/**
 	 * this updates the map when the user selects a new type of map
 	 * @param mapData this the selection of the new map type
@@ -285,17 +295,74 @@ class Map{
 	updateMapType(mapData:string, duration:number):void{
 		let that:any = this;
 		let colorScale:any = this.myColorScale;
-		let linear:any =this.getLinear(mapData, this.currentYearData)
-		var legendLinear:any = legendColor()
-					.shapeWidth(115)
-					.labelFormat(d3.format(".0f"))
-					.orient('horizontal')
-					.scale(linear);
+		let linear:any = this.getLinear(mapData, this.currentYearData)
 
-		console.log(mapData);
-		// console.log(colorScale);
+		console.log(this.supplyScore);
+		console.log(this.currentYearData);
+		let max;
 
-		d3.selectAll('g.legendLinear').call(legendLinear)
+		if(this.firstMap)
+		{
+			switch(mapData)
+			{
+				case 'supply_need':
+					this.continuous(
+						"#legendDiv",
+						d3.scaleSequential(d3.interpolateRdBu).domain([0, 1]),
+						 "Supply/Need",
+						 [0, 1]
+					 );
+					break;
+				case 'supply_need_per_100K':
+					this.continuous(
+						"#legendDiv",
+						d3.scaleSequential(d3.interpolatePuOr).domain([0, 1]),
+						 "Supply/Need Per 100k",
+						 [0, 1]
+					 );
+					break;
+				case 'population':
+
+				max = d3.max(Object.keys(that.currentYearData).map( d => {
+						return d === "State of Utah" ? 0 : this.currentYearData[d]['population']
+				}));
+
+					this.continuous(
+						"#legendDiv",
+						d3.scaleSequential(d3.interpolateGreens).domain([0, max / 1000000]),
+						 "Population",
+						 [0, max / 1000000]
+					 );
+					break;
+				case 'demand_per_100k':
+
+					max = d3.max(Object.keys(this.currentYearData), d => this.currentYearData[d]['totalDemand']/this.currentYearData[d]['population']*100000)
+
+					this.continuous(
+						"#legendDiv",
+						d3.scaleSequential(d3.interpolateOranges).domain([0, max]),
+						 "Need Per 100k",
+						 [0, max]
+					 );
+					break;
+				case 'supply_per_100k':
+
+
+					max = d3.max(Object.keys(that.currentYearData).map( d =>
+						this.currentYearData[d]['totalSupply'] / this.currentYearData[d]['population'] * 100000
+					));
+
+
+					this.continuous(
+						"#legendDiv",
+						d3.scaleSequential(d3.interpolatePurples).domain([0, max]),
+						 "Supply Per 100k",
+						 [0, max]
+					 );
+					break;
+			}
+		}
+
 		this.svg.select('g.counties').selectAll('path').each(function(d){
 			d3.select(this).transition().duration(duration).attr('fill',colorScale(d,that,mapData));
 		});
@@ -361,6 +428,79 @@ class Map{
 	removeSpaces(s) : string{
 		return s.replace(/\s/g, '');
 	}
+
+	//function found here : http://bl.ocks.org/syntagmatic/e8ccca52559796be775553b467593a9f
+
+	continuous(selector_id, colorscale, label, domain) {
+		console.log(selector_id);
+
+	  var legendheight = 400,
+	      legendwidth = 80,
+	      margin = {top: 10, right: 60, bottom: 10, left: 2};
+
+		d3.select(selector_id)
+			.select("h2")
+			.style("position", "absolute")
+			.style("left", "32px")
+			.html(label)
+
+	  var canvas = d3.select(selector_id)
+	    .style("height", legendwidth + "px")
+	    .style("width", legendheight + "px")
+	    .style("position", "absolute")
+	    .append("canvas")
+	    .attr("height", legendheight - margin.top - margin.bottom)
+	    .attr("width", 1)
+	    .style("height", (legendheight - margin.top - margin.bottom) + "px")
+	    .style("width", (legendwidth - margin.left - margin.right) + "px")
+	    .style("border", "1px solid #000")
+	    .style("position", "absolute")
+			.style('transform', 'rotate(-90deg)')
+	    .style("top", (margin.top - 150) + "px")
+	    .style("left", (margin.left + 211) + "px")
+	    .node();
+
+	  var ctx = canvas.getContext("2d");
+
+	  var legendscale = d3.scaleLinear()
+	    .range([1, legendheight - margin.top - margin.bottom - 1])
+	    .domain(domain);
+
+	  // image data hackery based on http://bl.ocks.org/mbostock/048d21cf747371b11884f75ad896e5a5
+	  var image = ctx.createImageData(1, legendheight);
+	  d3.range(legendheight).forEach(function(i) {
+	    var c = d3.rgb(colorscale(legendscale.invert(i)));
+	    image.data[4*i] = c.r;
+	    image.data[4*i + 1] = c.g;
+	    image.data[4*i + 2] = c.b;
+	    image.data[4*i + 3] = 255;
+	  });
+
+	  ctx.putImageData(image, 0, 0);
+
+	  // A simpler way to do the above, but possibly slower. keep in mind the legend width is stretched because the width attr of the canvas is 1
+	  // See http://stackoverflow.com/questions/4899799/whats-the-best-way-to-set-a-single-pixel-in-an-html5-canvas
+	  /*
+	  d3.range(legendheight).forEach(function(i) {
+	    ctx.fillStyle = colorscale(legendscale.invert(i));
+	    ctx.fillRect(0,i,1,1);
+	  });
+	  */
+
+	  var legendaxis = d3.axisBottom()
+	    .scale(legendscale)
+	    .tickSize(6)
+	    .ticks(8);
+
+
+		this.svg.select(".legendAxis").remove();
+
+	  this.svg
+	    .append("g")
+	    .attr("class", "axis legendAxis")
+	    .attr("transform", "translate(32, 60) ")
+	    .call(legendaxis);
+	};
 
 }
 export{Map};

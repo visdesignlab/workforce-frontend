@@ -204,7 +204,38 @@ body {
 	text-align:center;
 }
 .axis {
-	font: 2px sans-serif;
+	font: 14px sans-serif;
+}
+
+h2{
+	font-family: Roboto;
+}
+
+.line {
+    fill: none;
+    stroke: #c7001e;
+    stroke-width: 3;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+/* Style the dots by assigning a fill and stroke */
+.dot1 {
+    fill: #c7001e;
+    stroke: #fff;
+}
+
+.dot2 {
+    fill: #c7001e;
+    stroke: #fff;
+}
+
+  .focus circle {
+  fill: none;
+  stroke: steelblue;
 }
 
 .axis path,
@@ -212,7 +243,7 @@ body {
 	fill: none;
 	stroke: #000;
 	shape-rendering: crispEdges;
-	stroke-width: 0.1px;
+	stroke-width: 2px;
 }
 
 .entry-wrap {

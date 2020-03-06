@@ -3,6 +3,7 @@ import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
 import {Sidebar} from './sidebar';
 import {Map} from './map';
+import {ModelComparison} from './modelComparison';
 
 /**
  *
@@ -18,14 +19,16 @@ class MapController{
 	selectedCounties:Set<string>;
 	modelsUsed:any[];
 	sidebar:Sidebar;
+	modelComparison:ModelComparison;
+	comparisonType:string;
 
 	/**
 	 *
 	 */
 	constructor()
 	{
-		this.originalMap = new Map(this);
-		this.secondMap = new Map(this);
+		this.originalMap = new Map(this, true);
+		this.secondMap = new Map(this, false);
 		this.sidebar = new Sidebar(this);
 		this.selectedProfessions = {};
 		this.modelsUsed = ['model1'];
@@ -33,6 +36,8 @@ class MapController{
 		this.mapData = "supply_need";
 		this.mapType = 'counties';
 		this.comparisonMode = false;
+		this.modelComparison= new ModelComparison(this);
+		this.comparisonType="gap";
 		this.yearSelected = (document.getElementById('year') as HTMLInputElement).value
 	}
 
@@ -55,6 +60,8 @@ class MapController{
 		if(this.comparisonMode)
 		{
 			promise = promise.then(() => this.secondMap.drawMap(this.mapData, this.modelsUsed[1], this.selectedProfessions, this.yearSelected, this.selectedCounties, this.mapType, customModel, initSidebar));
+			promise = promise.then(() => this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType));
+
 		}
 		else{
 			this.secondMap.destroy();
@@ -191,6 +198,12 @@ class MapController{
 
 	removeSpaces(s) : string{
 		return s.replace(/\s/g, '');
+	}
+
+	changeComparisonType(s)
+	{
+		this.comparisonType = s;
+		this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
 	}
 }
 export{MapController};

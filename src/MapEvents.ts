@@ -15,6 +15,7 @@ class MapEvents{
 		this.changeMapType();
 		this.changeModelData();
 		this.runCustomModel();
+		this.changeComparisonType();
 	}
 
 	updateYear():void{
@@ -69,6 +70,12 @@ class MapEvents{
 			this.map.selectedCounties = new Set<string>();
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			this.map.drawMap().then(() => this.map.drawSidebar());
+		})
+	}
+
+	changeComparisonType() {
+		document.getElementById("supplyDemandGap").addEventListener('change',()=>{
+			this.map.changeComparisonType((document.getElementById('supplyDemandGap') as HTMLInputElement).value);
 		})
 	}
 
