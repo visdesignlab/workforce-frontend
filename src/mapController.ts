@@ -61,9 +61,12 @@ class MapController{
 		{
 			promise = promise.then(() => this.secondMap.drawMap(this.mapData, this.modelsUsed[1], this.selectedProfessions, this.yearSelected, this.selectedCounties, this.mapType, customModel, initSidebar));
 			promise = promise.then(() => this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType));
-
+			d3.select("#comparisonView")
+				.style("display", "block")
 		}
 		else{
+			d3.select("#comparisonView")
+				.style("display", "none")
 			this.secondMap.destroy();
 		}
 

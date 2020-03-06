@@ -33,10 +33,9 @@
 				</select>
 				<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3 " data-width=300px  id='mapData'>
 					<option value="supply_need" selected>Supply/Need</option>
-					<option value="supply_need_per_100K">Supply/Need per 100K</option>
 					<option value="population">Population</option>
-					<option value="supply_per_100k">Supply per 100K</option>
-					<option value="demand_per_100k">Need per 100K</option>
+					<option value="supply">Supply</option>
+					<option value="demand">Need</option>
 				</select>
 				<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3" data-width=300px id='mapType'>
 					<option value="counties" selected>Counties</option>
@@ -108,7 +107,7 @@
 					</div>
 				</div>
 			</div>
-			<div id="comparisonView">
+			<div id="comparisonView" style="display:none">
 				<div class = "row" style="float:top">
 					<select class = "selectpicker col-xs-2 col-sm-2 col-md-2 col-lg-2" data-width=200px id='supplyDemandGap'>
 						<option value="supply">Supply</option>

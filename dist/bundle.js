@@ -51123,8 +51123,8 @@ var Map = /** @class */ (function () {
                 .attr("x", 500)
                 .attr("y", 90)
                 .attr('alignment-baseline', 'middle')
-                .style('font-weight', 'bold')
-                .style('font-size', '24px');
+                .style('font-size', '24px')
+                .classed("goodFont", true);
             _this.currentYearData = _this.results[yearSelected];
             d3.select('#spinner')
                 .classed('d-flex', false)
@@ -51277,24 +51277,41 @@ var Map = /** @class */ (function () {
         else if (mapData == 'supply_need_per_100K') {
             return d3.interpolatePuOr(1 - that.supplyScore[county]);
         }
-        else if (mapData == 'supply_per_100k') {
+        else if (mapData == 'supply') {
             var max = d3.max(Object.keys(that.currentYearData).map(function (d) {
-                return that.currentYearData[d]['totalSupply'] / that.currentYearData[d]['population'] * 100000;
+                if (d == "State of Utah") {
+                    return 0;
+                }
+                return that.currentYearData[d]['totalSupply'];
             }));
             var scale = d3.scaleLinear()
                 .domain([0, max])
                 .range([0, 1]);
-            return d3.interpolatePurples(scale(that.currentYearData[county]['totalSupply'] / that.currentYearData[county]['population'] * 100000));
+            return d3.interpolatePurples(scale(that.currentYearData[county]['totalSupply']));
         }
-        else if (mapData == 'demand_per_100k') {
-            var max = d3.max(Object.keys(that.currentYearData), function (d) { return that.currentYearData[d]['totalDemand'] / that.currentYearData[d]['population'] * 100000; });
+        else if (mapData == 'demand') {
+            var max = d3.max(Object.keys(that.currentYearData), function (d) {
+                if (d == "State of Utah") {
+                    return 0;
+                }
+                return that.currentYearData[d]['totalDemand'];
+            });
             var scale = d3.scaleLinear()
                 .domain([0, max])
                 .range([0, 1]);
-            return d3.interpolateOranges(scale(that.currentYearData[county]['totalDemand'] / that.currentYearData[county]['population'] * 100000));
+            return d3.interpolateOranges(scale(that.currentYearData[county]['totalDemand']));
         }
         else {
-            return d3.interpolateGreens(that.currentYearData[county]['population'] / 1000000);
+            var max = d3.max(Object.keys(that.currentYearData), function (d) {
+                if (d == "State of Utah") {
+                    return 0;
+                }
+                return that.currentYearData[d]['population'];
+            });
+            var scale = d3.scaleLinear()
+                .domain([0, max])
+                .range([0, 1]);
+            return d3.interpolateGreens(scale(that.currentYearData[county]['population']));
         }
     };
     ;
@@ -51313,7 +51330,7 @@ var Map = /** @class */ (function () {
         if (this.firstMap) {
             switch (mapData) {
                 case 'supply_need':
-                    this.continuous("#legendDiv", d3.scaleSequential(d3.interpolateRdBu).domain([0, 1]), "Supply/Need", [0, 1]);
+                    this.continuous("#legendDiv", d3.scaleSequential(d3.interpolateRdBu).domain([0, 2]), "Supply/Need", [0, 2]);
                     break;
                 case 'supply_need_per_100K':
                     this.continuous("#legendDiv", d3.scaleSequential(d3.interpolatePuOr).domain([0, 1]), "Supply/Need Per 100k", [0, 1]);
@@ -51322,17 +51339,19 @@ var Map = /** @class */ (function () {
                     max = d3.max(Object.keys(that.currentYearData).map(function (d) {
                         return d === "State of Utah" ? 0 : _this.currentYearData[d]['population'];
                     }));
-                    this.continuous("#legendDiv", d3.scaleSequential(d3.interpolateGreens).domain([0, max / 1000000]), "Population", [0, max / 1000000]);
+                    this.continuous("#legendDiv", d3.scaleSequential(d3.interpolateGreens).domain([0, max]), "Population", [0, max]);
                     break;
-                case 'demand_per_100k':
-                    max = d3.max(Object.keys(this.currentYearData), function (d) { return _this.currentYearData[d]['totalDemand'] / _this.currentYearData[d]['population'] * 100000; });
-                    this.continuous("#legendDiv", d3.scaleSequential(d3.interpolateOranges).domain([0, max]), "Need Per 100k", [0, max]);
+                case 'demand':
+                    max = d3.max(Object.keys(this.currentYearData), function (d) {
+                        return d === "State of Utah" ? 0 : _this.currentYearData[d]['totalDemand'];
+                    });
+                    this.continuous("#legendDiv", d3.scaleSequential(d3.interpolateOranges).domain([0, max]), "Need", [0, max]);
                     break;
-                case 'supply_per_100k':
+                case 'supply':
                     max = d3.max(Object.keys(that.currentYearData).map(function (d) {
-                        return _this.currentYearData[d]['totalSupply'] / _this.currentYearData[d]['population'] * 100000;
+                        return d === "State of Utah" ? 0 : _this.currentYearData[d]['totalSupply'];
                     }));
-                    this.continuous("#legendDiv", d3.scaleSequential(d3.interpolatePurples).domain([0, max]), "Supply Per 100k", [0, max]);
+                    this.continuous("#legendDiv", d3.scaleSequential(d3.interpolatePurples).domain([0, max]), "Supply", [0, max]);
                     break;
             }
         }
@@ -51424,7 +51443,8 @@ var Map = /** @class */ (function () {
         var ctx = canvas.getContext("2d");
         var legendscale = d3.scaleLinear()
             .range([1, legendheight - margin.top - margin.bottom - 1])
-            .domain(domain);
+            .domain(domain)
+            .nice();
         // image data hackery based on http://bl.ocks.org/mbostock/048d21cf747371b11884f75ad896e5a5
         var image = ctx.createImageData(1, legendheight);
         d3.range(legendheight).forEach(function (i) {
@@ -51446,7 +51466,10 @@ var Map = /** @class */ (function () {
         var legendaxis = d3.axisBottom()
             .scale(legendscale)
             .tickSize(6)
-            .ticks(8);
+            .ticks(5);
+        if (label == "Population")
+            legendaxis = legendaxis.tickFormat(d3.formatPrefix(",.1", 1e6));
+        // .tickFormat(d3.format(".1f"))
         this.svg.select(".legendAxis").remove();
         this.svg
             .append("g")
@@ -51515,8 +51538,12 @@ var MapController = /** @class */ (function () {
         if (this.comparisonMode) {
             promise = promise.then(function () { return _this.secondMap.drawMap(_this.mapData, _this.modelsUsed[1], _this.selectedProfessions, _this.yearSelected, _this.selectedCounties, _this.mapType, customModel, initSidebar); });
             promise = promise.then(function () { return _this.modelComparison.drawComparison(_this.originalMap.results, _this.secondMap.results, _this.comparisonType); });
+            d3.select("#comparisonView")
+                .style("display", "block");
         }
         else {
+            d3.select("#comparisonView")
+                .style("display", "none");
             this.secondMap.destroy();
         }
         promise = promise.then(function () { return _this.setAllHighlights(); });
