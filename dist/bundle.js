@@ -51058,10 +51058,8 @@ var Map = /** @class */ (function () {
         this.currentYearData = {};
         this.supplyScore = {};
         this.svg = d3.select("#map")
-            .append('svg')
-            .attr('width', 600)
-            .attr('height', 600)
-            .attr('transform', 'translate(0,0)');
+            .append('g')
+            .attr('transform', "translate(" + (this.firstMap ? 0 : 600) + ",0)");
     }
     Map.prototype.destroy = function () {
         this.svg.selectAll('*').remove();
@@ -51418,7 +51416,6 @@ var Map = /** @class */ (function () {
     };
     //function found here : http://bl.ocks.org/syntagmatic/e8ccca52559796be775553b467593a9f
     Map.prototype.continuous = function (selector_id, colorscale, label, domain) {
-        console.log(selector_id);
         var legendheight = 400, legendwidth = 80, margin = { top: 10, right: 60, bottom: 10, left: 2 };
         d3.select(selector_id)
             .select("h2")
@@ -52061,7 +52058,7 @@ var Sidebar = /** @class */ (function () {
             this.countiesHeaderSvg = d3.select('#countiesHeader')
                 .append('svg')
                 .attr('height', 50)
-                .attr('width', 540);
+                .attr('width', 510);
         }
     }
     Sidebar.prototype.destroy = function () {

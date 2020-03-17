@@ -138,11 +138,13 @@ body {
 }
 .container{
 	display: flex;
+	justify-content:center
 }
 .fixed{
 	width: 1200px;
 	height: 600px;
 }
+
 .flex-item{
 	flex-grow: 1;
 }
@@ -264,4 +266,20 @@ h2{
 	margin-top:10px;
 	padding-right:0px;
 	padding-left:10px;
+}
+
+#container{
+	display:flex;
+}
+
+#sidebar{
+	margin-left:15px;
+}
+
+svg{
+	position:relative;
+}
+
+#mapContainer{
+	justify-content: center
 }

@@ -52,7 +52,7 @@ class Sidebar {
 			this.countiesHeaderSvg = d3.select('#countiesHeader')
 				.append('svg')
 				.attr('height', 50)
-				.attr('width', 540)
+				.attr('width', 510)
 		}
 	}
 

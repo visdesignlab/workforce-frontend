@@ -31,10 +31,8 @@ class Map{
 		this.currentYearData = {};
 		this.supplyScore = {};
 		this.svg = d3.select("#map")
-			.append('svg')
-			.attr('width', 600)
-			.attr('height', 600)
-			.attr('transform', 'translate(0,0)');
+			.append('g')
+			.attr('transform', `translate(${this.firstMap ? 0 : 600},0)`);
 	}
 
 	destroy() {
@@ -457,7 +455,6 @@ class Map{
 	//function found here : http://bl.ocks.org/syntagmatic/e8ccca52559796be775553b467593a9f
 
 	continuous(selector_id, colorscale, label, domain) {
-		console.log(selector_id);
 
 	  var legendheight = 400,
 	      legendwidth = 80,
