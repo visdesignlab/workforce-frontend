@@ -51103,11 +51103,13 @@ var Map = /** @class */ (function () {
                 .attr('x2', 600)
                 .attr('y1', 10)
                 .attr('y2', 600);
-            _this.svg.append("circle")
-                .style("fill", _this.firstMap ? "#1B9E77" : "#7570B3")
-                .attr("r", 20)
-                .attr("cx", 520)
-                .attr("cy", 40);
+            if (_this.controller.comparisonMode) {
+                _this.svg.append("circle")
+                    .style("fill", _this.firstMap ? "#1B9E77" : "#7570B3")
+                    .attr("r", 20)
+                    .attr("cx", 520)
+                    .attr("cy", 40);
+            }
             _this.svg.append('text')
                 .text(_this.controller.serverModels[_this.modelData].name)
                 .attr("x", 500)

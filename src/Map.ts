@@ -80,11 +80,14 @@ class Map{
 			.attr('y1', 10)
 			.attr('y2', 600);
 
-			this.svg.append("circle")
-				.style("fill", this.firstMap ? "#1B9E77" : "#7570B3")
-				.attr("r", 20)
-				.attr("cx", 520)
-				.attr("cy", 40)
+			if(this.controller.comparisonMode)
+			{
+				this.svg.append("circle")
+					.style("fill", this.firstMap ? "#1B9E77" : "#7570B3")
+					.attr("r", 20)
+					.attr("cx", 520)
+					.attr("cy", 40)
+			}
 
 			this.svg.append('text')
 				.text(this.controller.serverModels[this.modelData].name)
