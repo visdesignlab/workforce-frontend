@@ -51566,7 +51566,6 @@ var MapController = /** @class */ (function () {
      */
     MapController.prototype.updateMapYear = function (year) {
         var _this = this;
-        console.log("updating map year");
         var promise = this.originalMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar);
         if (this.comparisonMode) {
             promise = promise.then(function () { return _this.secondMap.updateMapYear(year, _this.mapData, _this.mapType, _this.sidebar); });
@@ -51739,7 +51738,7 @@ var MapEvents = /** @class */ (function () {
                     d3.select('#modelData')
                         .append('option')
                         .attr("value", mod)
-                        .attr("selected", "true")
+                        .attr("selected", "")
                         .html(results[mod].name);
                 }
                 else {
@@ -51842,7 +51841,6 @@ var ModelComparison = /** @class */ (function () {
             yearCounter++;
             for (var j in secondModel[i]) {
                 for (var k in secondModel[i][j].supply) {
-                    console.log(k);
                     this.supplyMapTwo[i][k] = this.supplyMapTwo[i][k] ? this.supplyMapTwo[i][k] + secondModel[i][j].supply[k] : secondModel[i][j].supply[k];
                     this.supplyMapTwo[i].total = this.supplyMapTwo[i].total ? this.supplyMapTwo[i].total + secondModel[i][j].supply[k] : secondModel[i][j].supply[k];
                     this.gapMapTwo[i][k] = this.gapMapTwo[i][k] ? this.gapMapTwo[i][k] + secondModel[i][j].supply[k] : secondModel[i][j].supply[k];
@@ -51856,7 +51854,6 @@ var ModelComparison = /** @class */ (function () {
                 }
             }
         }
-        console.log(this.gapMapTwo);
         this.svg.selectAll("*").remove();
         var selectedMapOne = undefined;
         var selectedMapTwo = undefined;
@@ -52010,7 +52007,6 @@ var ModelComparison = /** @class */ (function () {
         else {
             smallDom = [smallMin / 2, smallMax / 2];
         }
-        console.log(smallDom);
         this.drawSmallScale(selectedMapOne, selectedMapTwo, "CMHC", margin.left, height + 125, smallDom);
         this.drawSmallScale(selectedMapOne, selectedMapTwo, "Phys", margin.left + 300, height + 125, smallDom);
         this.drawSmallScale(selectedMapOne, selectedMapTwo, "Educ", margin.left + 600, height + 125, smallDom);
@@ -52036,7 +52032,6 @@ var ModelComparison = /** @class */ (function () {
         // // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
         var dataset1 = d3.range(2014, 2025).map(function (d) { return { "y": selectedMapOne[d] ? selectedMapOne[d][subSelected] / 2 : 0 }; });
         var dataset2 = d3.range(2014, 2025).map(function (d) { return { "y": selectedMapTwo[d] ? selectedMapTwo[d][subSelected] / 2 : 0 }; });
-        console.log(dataset2);
         // 1. Add the SVG to the page and employ #2
         var svg = this.svg
             .append("g")

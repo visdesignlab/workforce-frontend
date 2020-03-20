@@ -105,7 +105,6 @@ class MapController{
 	 * @param year this is the new year selected by the user
 	 */
 	updateMapYear(year:string):Promise<void>{
-		console.log("updating map year")
 		let promise = this.originalMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar);
 		if(this.comparisonMode)
 		{

@@ -97,7 +97,7 @@ class MapEvents{
 					d3.select('#modelData')
 						.append('option')
 						.attr("value", mod)
-						.attr("selected", "true")
+						.attr("selected", "")
 						.html(results[mod].name)
 				}
 				else

@@ -82,7 +82,6 @@ class ModelComparison
 
         for(let k in secondModel[i][j].supply)
         {
-          console.log(k)
           this.supplyMapTwo[i][k] = this.supplyMapTwo[i][k] ? this.supplyMapTwo[i][k] + secondModel[i][j].supply[k] : secondModel[i][j].supply[k]
           this.supplyMapTwo[i].total = this.supplyMapTwo[i].total ? this.supplyMapTwo[i].total + secondModel[i][j].supply[k] : secondModel[i][j].supply[k]
 
@@ -101,7 +100,6 @@ class ModelComparison
       }
     }
 
-    console.log(this.gapMapTwo);
 
     this.svg.selectAll("*").remove();
 
@@ -317,8 +315,6 @@ class ModelComparison
       smallDom=[smallMin / 2, smallMax / 2]
     }
 
-    console.log(smallDom)
-
     this.drawSmallScale(selectedMapOne, selectedMapTwo, "CMHC", margin.left, height + 125, smallDom)
     this.drawSmallScale(selectedMapOne, selectedMapTwo, "Phys", margin.left + 300, height + 125, smallDom)
     this.drawSmallScale(selectedMapOne, selectedMapTwo, "Educ", margin.left + 600, height + 125, smallDom)
@@ -353,8 +349,6 @@ class ModelComparison
     // // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
     var dataset1 = d3.range(2014, 2025).map(d => { return {"y": selectedMapOne[d] ? selectedMapOne[d][subSelected] / 2 : 0} })
     var dataset2 = d3.range(2014, 2025).map(d => { return {"y": selectedMapTwo[d] ? selectedMapTwo[d][subSelected] / 2 : 0} })
-
-    console.log(dataset2);
 
     // 1. Add the SVG to the page and employ #2
     var svg = this.svg
