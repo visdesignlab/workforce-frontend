@@ -35,7 +35,7 @@ class Sidebar {
 			this.countiesSvg = d3.select('#counties')
 				.append('svg')
 				.attr('height', 1800)
-				.attr("style","width:540;")
+				.attr("style","width:100%;")
 		}
 
 		this.professionsSvg = d3.select('#professions').select('svg');

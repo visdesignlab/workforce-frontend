@@ -9,7 +9,10 @@ let mapController = new MapController();
 
 let myMapEvents:MapEvents = new MapEvents(mapController);
 
-console.log("in main");
-mapController.drawMap().then(() => {
-  mapController.drawSidebar();
+let promise = myMapEvents.changeModelData();
+
+promise.then(()=>{
+  mapController.drawMap().then(() => {
+    mapController.drawSidebar();
+  });
 });

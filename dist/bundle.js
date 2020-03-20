@@ -51023,9 +51023,11 @@ __webpack_require__(/*! bootstrap */ "./node_modules/bootstrap/dist/js/bootstrap
 __webpack_require__(/*! bootstrap-select */ "./node_modules/bootstrap-select/dist/js/bootstrap-select.js");
 var mapController = new mapController_1.MapController();
 var myMapEvents = new mapEvents_1.MapEvents(mapController);
-console.log("in main");
-mapController.drawMap().then(function () {
-    mapController.drawSidebar();
+var promise = myMapEvents.changeModelData();
+promise.then(function () {
+    mapController.drawMap().then(function () {
+        mapController.drawSidebar();
+    });
 });
 
 
@@ -51076,32 +51078,17 @@ var Map = /** @class */ (function () {
         if (initSidebar === void 0) { initSidebar = true; }
         this.modelData = modelUsed;
         var map = mapType;
-        var modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
-        var serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
+        console.log(this.modelData);
+        var modelFile = this.controller.serverModels[this.modelData].path;
+        var serverUrl = 'http://3.20.123.182/';
         // const option = (document.getElementById('customModel') as HTMLInputElement).value;
-        // let request = {
-        // 	method:"POST",
-        // 	mode: "cors",
-        // 	body: JSON.stringify({
-        // 		"geo": selectedCounties[0],
-        // 		"year": yearSelected,
-        // 		"option": option,
-        // 		"sub_option":"all_combination",
-        // 		"wage_max":"0",
-        // 		"wage_weight":"0"
-        // 	}),
-        // 	headers: {
-        // 		"Content-type": "application/json; charset=UTF-8"
-        // 	}
-        // };
         var promise;
         // if (!customModel) {
-        promise = d3.json("../data/" + modelFile);
+        promise = d3.json(serverUrl + "/" + modelFile);
         // }
         // else {
-        // 	promise = d3.json(serverUrl, request);
-        // }
         promise = promise.then(function (results) {
+            console.log(results);
             // if (!customModel) {
             results = results[map];
             _this.results = results;
@@ -51117,7 +51104,7 @@ var Map = /** @class */ (function () {
                 .attr('y1', 10)
                 .attr('y2', 600);
             _this.svg.append('text')
-                .text(_this.modelData == 'model1' ? 'Model 1' : 'Model 2')
+                .text(_this.controller.serverModels[_this.modelData].name)
                 .attr("x", 500)
                 .attr("y", 90)
                 .attr('alignment-baseline', 'middle')
@@ -51364,8 +51351,9 @@ var Map = /** @class */ (function () {
     Map.prototype.updateMapYear = function (year, mapData, mapType, sidebar) {
         var _this = this;
         var map = mapType;
-        var modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
-        var promise = d3.json("../data/" + modelFile).then(function (results) {
+        var modelFile = this.controller.serverModels[this.modelData].path;
+        ;
+        var promise = d3.json("http://3.20.123.182/" + modelFile).then(function (results) {
             results = results[map];
             _this.currentYearData = results[year];
             var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
@@ -51504,11 +51492,12 @@ var MapController = /** @class */ (function () {
      *
      */
     function MapController() {
+        this.serverModels = {};
         this.originalMap = new map_1.Map(this, true);
         this.secondMap = new map_1.Map(this, false);
         this.sidebar = new sidebar_1.Sidebar(this);
         this.selectedProfessions = {};
-        this.modelsUsed = ['model1'];
+        this.modelsUsed = [];
         this.selectedCounties = new Set();
         this.mapData = "supply_need";
         this.mapType = 'counties';
@@ -51521,6 +51510,9 @@ var MapController = /** @class */ (function () {
         this.sidebar = sideBar;
     };
     MapController.prototype.destroy = function () {
+        d3.select("#legendDiv")
+            .selectAll("*")
+            .remove();
         this.originalMap.destroy();
         this.secondMap.destroy();
         this.sidebar.destroy();
@@ -51567,6 +51559,7 @@ var MapController = /** @class */ (function () {
      */
     MapController.prototype.updateMapYear = function (year) {
         var _this = this;
+        console.log("updating map year");
         var promise = this.originalMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar);
         if (this.comparisonMode) {
             promise = promise.then(function () { return _this.secondMap.updateMapYear(year, _this.mapData, _this.mapType, _this.sidebar); });
@@ -51670,8 +51663,6 @@ var MapEvents = /** @class */ (function () {
         this.updateType();
         this.selectAllClicked();
         this.changeMapType();
-        this.changeModelData();
-        this.runCustomModel();
         this.changeComparisonType();
     }
     MapEvents.prototype.updateYear = function () {
@@ -51730,6 +51721,29 @@ var MapEvents = /** @class */ (function () {
     };
     MapEvents.prototype.changeModelData = function () {
         var _this = this;
+        var serverUrl = 'http://3.20.123.182/';
+        var promise = d3.json(serverUrl + "models");
+        var counter = 0;
+        promise = promise.then(function (results) {
+            _this.map.serverModels = results;
+            for (var mod in results) {
+                if (counter == 0) {
+                    _this.map.modelsUsed = [mod];
+                    d3.select('#modelData')
+                        .append('option')
+                        .attr("value", mod)
+                        .attr("selected", "true")
+                        .html(results[mod].name);
+                }
+                else {
+                    d3.select('#modelData')
+                        .append('option')
+                        .attr("value", mod)
+                        .html(results[mod].name);
+                }
+                counter++;
+            }
+        });
         document.getElementById("modelData").addEventListener('change', function () {
             _this.map.mapType = document.getElementById('mapType').value;
             var selectedOptions = document.getElementById('modelData').selectedOptions;
@@ -51751,12 +51765,7 @@ var MapEvents = /** @class */ (function () {
             }
             _this.map.drawMap().then(function () { return _this.map.drawSidebar(); });
         });
-    };
-    MapEvents.prototype.runCustomModel = function () {
-        var _this = this;
-        d3.select("#runModel").on('click', function () {
-            _this.map.drawMap(true);
-        });
+        return promise;
     };
     return MapEvents;
 }());
@@ -52044,7 +52053,7 @@ var Sidebar = /** @class */ (function () {
             this.countiesSvg = d3.select('#counties')
                 .append('svg')
                 .attr('height', 1800)
-                .attr("style", "width:540;");
+                .attr("style", "width:100%;");
         }
         this.professionsSvg = d3.select('#professions').select('svg');
         if (!this.professionsSvg.node()) {

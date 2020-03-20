@@ -86,6 +86,7 @@ class Linechart{
 
 		}
 
+
 		for (let i in supply_demand) {
 			this.createAreaChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
 		}

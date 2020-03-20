@@ -13,9 +13,8 @@ class MapEvents{
 		this.updateType();
 		this.selectAllClicked();
 		this.changeMapType();
-		this.changeModelData();
-		this.runCustomModel();
 		this.changeComparisonType();
+
 	}
 
 	updateYear():void{
@@ -79,7 +78,41 @@ class MapEvents{
 		})
 	}
 
-	changeModelData() {
+	changeModelData():Promise<void> {
+
+		const serverUrl = 'http://3.20.123.182/';
+
+		let promise = d3.json(serverUrl+"models");
+
+		let counter = 0;
+
+		promise = promise.then((results)=> {
+			this.map.serverModels = results;
+			for(let mod in results)
+			{
+
+				if(counter == 0)
+				{
+					this.map.modelsUsed = [mod];
+					d3.select('#modelData')
+						.append('option')
+						.attr("value", mod)
+						.attr("selected", "true")
+						.html(results[mod].name)
+				}
+				else
+				{
+					d3.select('#modelData')
+						.append('option')
+						.attr("value", mod)
+						.html(results[mod].name)
+				}
+				counter++;
+
+			}
+		})
+
+
 		document.getElementById("modelData").addEventListener('change',()=>{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
@@ -104,13 +137,8 @@ class MapEvents{
 			}
 			this.map.drawMap().then(() => this.map.drawSidebar());
 		})
-	}
 
-	runCustomModel() {
-		d3.select("#runModel").on('click',()=>{
-			this.map.drawMap(true);
-		})
+		return promise;
 	}
-
 }
 export{MapEvents}

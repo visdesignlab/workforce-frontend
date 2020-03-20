@@ -9,6 +9,8 @@ import {ModelComparison} from './modelComparison';
  *
  */
 class MapController{
+
+	serverModels:any;
 	originalMap: Map;
 	secondMap: Map;
 	mapData:string;
@@ -27,11 +29,12 @@ class MapController{
 	 */
 	constructor()
 	{
+		this.serverModels = {};
 		this.originalMap = new Map(this, true);
 		this.secondMap = new Map(this, false);
 		this.sidebar = new Sidebar(this);
 		this.selectedProfessions = {};
-		this.modelsUsed = ['model1'];
+		this.modelsUsed = [];
 		this.selectedCounties = new Set<string>();
 		this.mapData = "supply_need";
 		this.mapType = 'counties';
@@ -46,16 +49,17 @@ class MapController{
 	}
 
 	destroy() {
+		d3.select("#legendDiv")
+			.selectAll("*")
+			.remove();
 		this.originalMap.destroy();
 		this.secondMap.destroy();
 		this.sidebar.destroy();
 	}
 
 	drawMap(customModel = false, initSidebar = true, otherCurrentYearData = []):Promise<void>{
-
-
-
 		let promise;
+
 		promise = this.originalMap.drawMap(this.mapData, this.modelsUsed[0], this.selectedProfessions, this.yearSelected, this.selectedCounties, this.mapType, customModel, initSidebar);
 		if(this.comparisonMode)
 		{
@@ -101,6 +105,7 @@ class MapController{
 	 * @param year this is the new year selected by the user
 	 */
 	updateMapYear(year:string):Promise<void>{
+		console.log("updating map year")
 		let promise = this.originalMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar);
 		if(this.comparisonMode)
 		{
@@ -113,7 +118,6 @@ class MapController{
 		this.updateMapYear(this.yearSelected).then(() => {
 			this.drawSidebar();
 			this.setAllHighlights();
-
 		});
 	}
 

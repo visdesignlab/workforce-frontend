@@ -49,37 +49,21 @@ class Map{
 
 		this.modelData = modelUsed;
 		const map = mapType;
-		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
-		const serverUrl = 'http://mothra.sci.utah.edu:5000/restful';
-
+		console.log(this.modelData);
+		const modelFile = this.controller.serverModels[this.modelData].path;
+		const serverUrl = 'http://3.20.123.182/';
 
 		// const option = (document.getElementById('customModel') as HTMLInputElement).value;
-		// let request = {
-		// 	method:"POST",
-		// 	mode: "cors",
-		// 	body: JSON.stringify({
-		// 		"geo": selectedCounties[0],
-		// 		"year": yearSelected,
-		// 		"option": option,
-		// 		"sub_option":"all_combination",
-		// 		"wage_max":"0",
-		// 		"wage_weight":"0"
-		// 	}),
-		// 	headers: {
-		// 		"Content-type": "application/json; charset=UTF-8"
-		// 	}
-		// };
+
 		let promise;
 		// if (!customModel) {
-			promise = d3.json(`../data/${modelFile}`);
+		promise = d3.json(`${serverUrl}/${modelFile}`);
 		// }
 		// else {
-		// 	promise = d3.json(serverUrl, request);
-		// }
-
 
 
 		promise = promise.then((results)=> {
+			console.log(results);
 			// if (!customModel) {
 				results = results[map];
 				this.results = results;
@@ -97,7 +81,7 @@ class Map{
 			.attr('y2', 600);
 
 			this.svg.append('text')
-				.text(this.modelData == 'model1' ? 'Model 1' : 'Model 2')
+				.text(this.controller.serverModels[this.modelData].name)
 				.attr("x", 500)
 				.attr("y", 90)
 				.attr('alignment-baseline', 'middle')
@@ -397,8 +381,8 @@ class Map{
 	updateMapYear(year:string, mapData:string, mapType:string, sidebar:any):Promise<void>{
 
 		const map = mapType;
-		const modelFile = this.modelData == 'model1' ? 'model-results.json' : 'model2-results.json';
-		let promise = d3.json(`../data/${modelFile}`).then((results)=> {
+		const modelFile = this.controller.serverModels[this.modelData].path;;
+		let promise = d3.json(`http://3.20.123.182/${modelFile}`).then((results)=> {
 			results = results[map];
 			this.currentYearData = results[year]
 				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
