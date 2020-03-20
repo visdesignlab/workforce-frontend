@@ -219,10 +219,18 @@ h2{
 
 }
 
-.line {
-    fill: none;
-    stroke: #c7001e;
-    stroke-width: 3;
+.firstModelCompare {
+    fill: #1B9E77;
+    stroke: grey;
+    stroke-width: 2px;
+		opacity: 0.5;
+
+}
+.secondModelCompare {
+    fill: #7570B3;
+    stroke: grey;
+    stroke-width: 2px;
+		opacity: 0.5;
 }
 
 .overlay {
@@ -232,13 +240,13 @@ h2{
 
 /* Style the dots by assigning a fill and stroke */
 .dot1 {
-    fill: #c7001e;
-    stroke: #fff;
+    fill: #1B9E77;
+    stroke: #333333;
 }
 
 .dot2 {
-    fill: #c7001e;
-    stroke: #fff;
+    fill: #7570B3;
+    stroke:#333333;
 }
 
   .focus circle {

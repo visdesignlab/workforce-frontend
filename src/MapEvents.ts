@@ -134,6 +134,10 @@ class MapEvents{
 			for(let i= 0; i < selectedOptions.length; i++)
 			{
 				this.map.modelsUsed.push(selectedOptions[i].value)
+				if(this.map.modelsUsed.length > 2)
+				{
+					this.map.modelsUsed.shift();
+				}
 			}
 			this.map.drawMap().then(() => this.map.drawSidebar());
 		})

@@ -794,6 +794,19 @@ class Sidebar {
 		}
 		else
 		{
+
+			groups.append("circle")
+				.attr("cx", barWidth - 5)
+				.attr("cy", barHeight / 4)
+				.style("fill", "#1B9E77")
+				.attr("r", 5);
+
+			groups.append("circle")
+				.attr("cx", barWidth - 5)
+				.attr("cy", barHeight / 2 + barHeight/4)
+				.style("fill", "#7570B3")
+				.attr("r", 5);
+
 			groups
 				.append('text')
 				.attr('y', (d, i) => barHeight / 2)
