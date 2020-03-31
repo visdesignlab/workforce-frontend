@@ -67,10 +67,14 @@ class MapController{
 			promise = promise.then(() => this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType));
 			d3.select("#comparisonView")
 				.style("display", "block")
+			d3.select("#map")
+				.attr("width", 1200)
 		}
 		else{
 			d3.select("#comparisonView")
 				.style("display", "none")
+			d3.select("#map")
+				.attr("width", 600)
 			this.secondMap.destroy();
 		}
 

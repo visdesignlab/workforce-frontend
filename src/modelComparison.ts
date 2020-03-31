@@ -123,7 +123,7 @@ class ModelComparison
     }
 
         // 2. Use the margin convention practice
-    var margin = {top: 50, right: 200, bottom: 350, left: 100}
+    var margin = {top: 50, right: 700, bottom: 350, left: 100}
       , width = 750 // Use the window's width
       , height = 500; // Use the window's height
 
@@ -318,6 +318,14 @@ class ModelComparison
     this.drawSmallScale(selectedMapOne, selectedMapTwo, "CMHC", margin.left, height + 125, smallDom)
     this.drawSmallScale(selectedMapOne, selectedMapTwo, "Phys", margin.left + 300, height + 125, smallDom)
     this.drawSmallScale(selectedMapOne, selectedMapTwo, "Educ", margin.left + 600, height + 125, smallDom)
+    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "LCSW", margin.left, height + 125, smallDom)
+    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "MA", margin.left + 300, height + 125, smallDom)
+    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "MFT", margin.left + 600, height + 125, smallDom)
+    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "NP", margin.left, height + 125, smallDom)
+    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "PA", margin.left + 300, height + 125, smallDom)
+    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "PharmD", margin.left + 600, height + 125, smallDom)
+    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "Psych", margin.left + 300, height + 125, smallDom)
+    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "RN", margin.left + 600, height + 125, smallDom)
 
   }
 
@@ -415,8 +423,6 @@ class ModelComparison
             .datum(dataset2) // 10. Binds data to the line
             .attr("class", "secondModelCompare") // Assign a class for styling
             .attr("d", line) // 11. Calls the line generator
-
-
     }
 
 

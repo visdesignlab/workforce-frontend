@@ -97,6 +97,24 @@ class Map{
 				.style('font-size', '24px')
 				.classed("goodFont", true)
 
+			this.svg.append('text')
+				.text("\uf059")
+				.attr("x", 500)
+				.attr("y", 120)
+				.attr('alignment-baseline', 'middle')
+				.style('font-size', '24px')
+				.classed("fontAwesome", true)
+				.on("mouseover", () => {
+					d3.select("#descriptionTooltip").transition().duration(200).style("opacity", .9);
+					d3.select("#descriptionTooltip").html("<h2>" + this.controller.serverModels[this.modelData].description + "</h2>")
+						.style("left", (d3.event.pageX) + "px")
+						.style("top", (d3.event.pageY - 28) + "px");
+				})
+				.on("mouseout", () => {
+					d3.select("#descriptionTooltip").transition().duration(200).style("opacity", 0);
+
+				})
+
 			this.currentYearData = this.results[yearSelected]
 			d3.select('#spinner')
 				.classed('d-flex', false)

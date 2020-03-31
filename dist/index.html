@@ -3,127 +3,149 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>UMEC Gap Analysis Tool</title>
-		<link rel="stylesheet" href="styles/styles.css">
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/css/bootstrap-select.min.css">
 		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+		<link rel="stylesheet" href="styles/bulma.css">
+		<link rel="stylesheet" href="styles/styles.css">
 		<link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
 		<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	</head>
 
 	<body id = "bootstrap-overrides">
-		<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #91B4BA;">
-			<a class="navbar-brand" href="/">
-				<img src="https://umec.utah.gov/wp-content/uploads/UMEC-logo-horizontal.png" height='50'>
-			</a>
-			<div class="navbar-collapse collapse" id="collapsingNavbar">
 
-				<div class = "row">
-					<select class = "selectpicker col-xs-2 col-sm-2 col-md-2 col-lg-2" data-width=200px id='year'>
-						<option value="2014">2014</option>
-						<option value="2015">2015</option>
-						<option value="2016">2016</option>
-						<option value="2017">2017</option>
-						<option value="2018">2018</option>
-						<option value="2019" selected>2019</option>
-						<option value="2020">2020</option>
-						<option value="2021">2021</option>
-						<option value="2022">2022</option>
-						<option value="2022">2023</option>
-						<option value="2022">2024</option>
-					</select>
-					<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3 " data-width=300px  id='mapData'>
-						<option value="supply_need" selected>Supply/Need</option>
-						<option value="population">Population</option>
-						<option value="supply">Supply</option>
-						<option value="demand">Need</option>
-					</select>
-					<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3" data-width=300px id='mapType'>
-						<option value="counties" selected>Counties</option>
-						<option value="LHD">Local Health Districts</option>
-					</select>
-					<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3" data-width=300px multiple id='modelData'>
+		<div class="tabs" style="margin-bottom:0">
+			<ul style="margin-bottom:0; font-size:18px">
+				<li id="visualization" class="is-active"><a>View Model</a></li>
+				<li id="modelCreate"><a>Create Model</a></li>
+			</ul>
+		</div>
 
-					</select>
-				</div>
+		<div id="mainPage">
 
-				<ul class="navbar-nav ml-auto">
-					<li class="nav-item">
-						<a class="nav-link"  href="about.html">About</a>
-					</li>
-				</ul>
+			<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #91B4BA;">
+				<a class="navbar-brand" href="/">
+					<img src="https://umec.utah.gov/wp-content/uploads/UMEC-logo-horizontal.png" height='50'>
+				</a>
 
-			</div>
-		</nav>
+				<div class="navbar-collapse collapse" id="collapsingNavbar">
 
-		<div class='container-fluid'>
-			<div id='spinner' class="d-flex justify-content-center">
-			  <div class="spinner-border" role="status">
-			    <span class="sr-only">Loading...</span>
-			  </div>
-			</div>
+					<div class = "row">
+						<select class = "selectpicker col-xs-2 col-sm-2 col-md-2 col-lg-2" data-width=200px id='year'>
+							<option value="2014">2014</option>
+							<option value="2015">2015</option>
+							<option value="2016">2016</option>
+							<option value="2017">2017</option>
+							<option value="2018">2018</option>
+							<option value="2019" selected>2019</option>
+							<option value="2020">2020</option>
+							<option value="2021">2021</option>
+							<option value="2022">2022</option>
+							<option value="2022">2023</option>
+							<option value="2022">2024</option>
+						</select>
+						<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3 " data-width=300px  id='mapData'>
+							<option value="supply_need" selected>Supply/Need</option>
+							<option value="population">Population</option>
+							<option value="supply">Supply</option>
+							<option value="demand">Need</option>
+						</select>
+						<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3" data-width=300px id='mapType'>
+							<option value="counties" selected>Counties</option>
+							<option value="LHD">Local Health Districts</option>
+						</select>
+						<select class = "selectpicker col-xs-3 col-sm-3 col-md-3 col-lg-3" data-width=300px multiple id='modelData'>
 
-			<div id="tooltip"></div><!-- div to hold tooltip. -->
-			<div id ="barTooltip"></div>
-
-			<div class = 'container'>
-
-
-				<div id = "mapContainer" class='flex-row' style="position:relative">
-					<div id="legendDiv"><h2></h2></div>
-					<div id='mapDiv'>
-						<svg id='map' width='1200' height='600'></svg>
+						</select>
 					</div>
 
+					<ul class="navbar-nav ml-auto">
+						<li class="nav-item">
+							<a class="nav-link"  href="about.html">About</a>
+						</li>
+					</ul>
 
+				</div>
+			</nav>
 
-					<div id='linechart'></div>
+			<div class='container-fluid'>
+				<div id='spinner' class="d-flex justify-content-center">
+				  <div class="spinner-border" role="status">
+				    <span class="sr-only">Loading...</span>
+				  </div>
 				</div>
 
-				<div id="sidebar" class='flex-row' style='width:540px;'>
-					<div>
-						<h1>Counties</h1>
-						<h5 id=professionsList></h5>
-						<div id='countiesHeader'></div>
+				<div id="tooltip"></div><!-- div to hold tooltip. -->
+				<div id ="barTooltip"></div>
+				<div id ="descriptionTooltip"></div>
 
-						<div id="state" style='width: 510px; max-width: 510px; min-width: 510px; min-height: 30px; overflow-y: auto; overflow-x: hidden;'>
-							<div style='width: 510px; max-width: 510px; min-width: 510px; min-height: 0px; overflow-y: auto; overflow-x: hidden; border-top: double; border-top: double;'></div>
+				<div class = 'container'>
+
+
+					<div id = "mapContainer" class='flex-row' style="position:relative">
+						<div id="legendDiv"><h2></h2></div>
+						<div id='mapDiv'>
+							<svg id='map' width='1200' height='600'></svg>
 						</div>
 
-						<div id="counties" style='width: 540px; max-width: 540px; min-width: 540px; height: 600px; overflow-y: auto; overflow-x: hidden;'>
-							<div style='width: 510px; max-width: 510px; min-width: 510px; min-height: 0px; overflow-y: auto; overflow-x: hidden;  border-top: double; border-top: double;'></div>
+
+
+						<div id='linechart'></div>
+					</div>
+
+					<div id="sidebar" class='flex-row' style='width:540px;'>
+						<div>
+							<h1>Counties</h1>
+							<h5 id=professionsList></h5>
+							<div id='countiesHeader'></div>
+
+							<div id="state" style='width: 510px; max-width: 510px; min-width: 510px; min-height: 30px; overflow-y: auto; overflow-x: hidden;'>
+								<div style='width: 510px; max-width: 510px; min-width: 510px; min-height: 0px; overflow-y: auto; overflow-x: hidden; border-top: double; border-top: double;'></div>
+							</div>
+
+							<div id="counties" style='width: 540px; max-width: 540px; min-width: 540px; height: 600px; overflow-y: auto; overflow-x: hidden;'>
+								<div style='width: 510px; max-width: 510px; min-width: 510px; min-height: 0px; overflow-y: auto; overflow-x: hidden;  border-top: double; border-top: double;'></div>
+							</div>
+
 						</div>
 
+						<div>
+							<h1>Professions</h1>
+							<h5 id=countiesList></h5>
+							<button id = "selectAll" style="background-color: rgb(204, 204, 204);" type="button" class="btn btn-light btn-sm">Unselect All</button>
+
+						</div>
+
+						<div id='professionsHeader'></div>
+
+						<div id="professions" style='width: 510px;max-width: 510px; min-width: 510px;  border-top: double;'></div>
+
 					</div>
-
-					<div>
-						<h1>Professions</h1>
-						<h5 id=countiesList></h5>
-						<button id = "selectAll" style="background-color: rgb(204, 204, 204);" type="button" class="btn btn-light btn-sm">Unselect All</button>
-
-					</div>
-
-					<div id='professionsHeader'></div>
-
-					<div id="professions" style='width: 510px;max-width: 510px; min-width: 510px;  border-top: double;'></div>
 
 				</div>
 
-			</div>
-
-			<div id="comparisonView" style="display:none">
-				<div class = "row" style="float:top">
-					<select class = "selectpicker col-xs-2 col-sm-2 col-md-2 col-lg-2" data-width=200px id='supplyDemandGap'>
-						<option value="supply">Supply</option>
-						<option value="demand">Demand</option>
-						<option value="gap" selected>Gap</option>
-					</select>
+				<div id="comparisonView" style="display:none">
+					<div class = "row" style="float:top">
+						<select class = "selectpicker col-xs-2 col-sm-2 col-md-2 col-lg-2" data-width=200px id='supplyDemandGap'>
+							<option value="supply">Supply</option>
+							<option value="demand">Demand</option>
+							<option value="gap" selected>Gap</option>
+						</select>
+					</div>
 				</div>
 			</div>
 		</div>
+		<iframe id="modelPage"
+				style="display:none"
+				width="100%"
+				height="100%"
+		    title="Inline Frame Example"
+		    src="https://zachcutler04.github.io/DataVisProjectGroup/">
+		</iframe>
 
 	<script src="bundle.js"></script>
 	<script>
 		alert('The current model is based on dummy data.');
 	</script>
+
 </body>
 </html>

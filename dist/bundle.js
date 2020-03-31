@@ -50899,8 +50899,9 @@ var Linechart = /** @class */ (function () {
         if (yi === void 0) { yi = 0; }
         this.data.dates = Object.keys(results);
         this.data.series = demand;
+        console.log(d3.extent(this.data.dates));
         var x = d3.scaleLinear()
-            .domain(d3.extent(this.data.dates))
+            .domain([+d3.min(this.data.dates), +d3.max(this.data.dates)])
             .range([this.margin.left, this.width - this.margin.right]);
         var y = d3.scaleLinear()
             .domain([0, d3.max([max, d3.max(demand), d3.max(supply)])]).nice()
@@ -51021,6 +51022,20 @@ var mapController_1 = __webpack_require__(/*! ./mapController */ "./src/mapContr
 var mapEvents_1 = __webpack_require__(/*! ./mapEvents */ "./src/mapEvents.ts");
 __webpack_require__(/*! bootstrap */ "./node_modules/bootstrap/dist/js/bootstrap.js");
 __webpack_require__(/*! bootstrap-select */ "./node_modules/bootstrap-select/dist/js/bootstrap-select.js");
+var d3 = __webpack_require__(/*! d3 */ "./node_modules/d3/index.js");
+d3.select('#visualization').on('click', function () {
+    d3.select('#visualization').node().className = 'is-active';
+    d3.select('#modelCreate').node().className = '';
+    d3.select('#mainPage').style('display', 'block');
+    d3.select('#modelPage').style('display', 'none');
+});
+d3.select('#modelCreate').on('click', function () {
+    console.log("here");
+    d3.select('#visualization').node().className = '';
+    d3.select('#modelCreate').node().className = 'is-active';
+    d3.select('#mainPage').style('display', 'none');
+    d3.select('#modelPage').style('display', 'block');
+});
 var mapController = new mapController_1.MapController();
 var myMapEvents = new mapEvents_1.MapEvents(mapController);
 var promise = myMapEvents.changeModelData();
@@ -51117,6 +51132,22 @@ var Map = /** @class */ (function () {
                 .attr('alignment-baseline', 'middle')
                 .style('font-size', '24px')
                 .classed("goodFont", true);
+            _this.svg.append('text')
+                .text("\uf059")
+                .attr("x", 500)
+                .attr("y", 120)
+                .attr('alignment-baseline', 'middle')
+                .style('font-size', '24px')
+                .classed("fontAwesome", true)
+                .on("mouseover", function () {
+                d3.select("#descriptionTooltip").transition().duration(200).style("opacity", .9);
+                d3.select("#descriptionTooltip").html("<h2>" + _this.controller.serverModels[_this.modelData].description + "</h2>")
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+                .on("mouseout", function () {
+                d3.select("#descriptionTooltip").transition().duration(200).style("opacity", 0);
+            });
             _this.currentYearData = _this.results[yearSelected];
             d3.select('#spinner')
                 .classed('d-flex', false)
@@ -51536,10 +51567,14 @@ var MapController = /** @class */ (function () {
             promise = promise.then(function () { return _this.modelComparison.drawComparison(_this.originalMap.results, _this.secondMap.results, _this.comparisonType); });
             d3.select("#comparisonView")
                 .style("display", "block");
+            d3.select("#map")
+                .attr("width", 1200);
         }
         else {
             d3.select("#comparisonView")
                 .style("display", "none");
+            d3.select("#map")
+                .attr("width", 600);
             this.secondMap.destroy();
         }
         promise = promise.then(function () { return _this.setAllHighlights(); });
@@ -51870,7 +51905,7 @@ var ModelComparison = /** @class */ (function () {
             selectedMapTwo = this.demandMapTwo;
         }
         // 2. Use the margin convention practice
-        var margin = { top: 50, right: 200, bottom: 350, left: 100 }, width = 750 // Use the window's width
+        var margin = { top: 50, right: 700, bottom: 350, left: 100 }, width = 750 // Use the window's width
         , height = 500; // Use the window's height
         // The number of datapoints
         var n = yearCounter;
@@ -52010,6 +52045,14 @@ var ModelComparison = /** @class */ (function () {
         this.drawSmallScale(selectedMapOne, selectedMapTwo, "CMHC", margin.left, height + 125, smallDom);
         this.drawSmallScale(selectedMapOne, selectedMapTwo, "Phys", margin.left + 300, height + 125, smallDom);
         this.drawSmallScale(selectedMapOne, selectedMapTwo, "Educ", margin.left + 600, height + 125, smallDom);
+        // this.drawSmallScale(selectedMapOne, selectedMapTwo, "LCSW", margin.left, height + 125, smallDom)
+        // this.drawSmallScale(selectedMapOne, selectedMapTwo, "MA", margin.left + 300, height + 125, smallDom)
+        // this.drawSmallScale(selectedMapOne, selectedMapTwo, "MFT", margin.left + 600, height + 125, smallDom)
+        // this.drawSmallScale(selectedMapOne, selectedMapTwo, "NP", margin.left, height + 125, smallDom)
+        // this.drawSmallScale(selectedMapOne, selectedMapTwo, "PA", margin.left + 300, height + 125, smallDom)
+        // this.drawSmallScale(selectedMapOne, selectedMapTwo, "PharmD", margin.left + 600, height + 125, smallDom)
+        // this.drawSmallScale(selectedMapOne, selectedMapTwo, "Psych", margin.left + 300, height + 125, smallDom)
+        // this.drawSmallScale(selectedMapOne, selectedMapTwo, "RN", margin.left + 600, height + 125, smallDom)
     };
     ModelComparison.prototype.drawSmallScale = function (selectedMapOne, selectedMapTwo, subSelected, x, y, dom) {
         // 2. Use the margin convention practice
