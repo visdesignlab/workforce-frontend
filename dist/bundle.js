@@ -51114,24 +51114,19 @@ var Map = /** @class */ (function () {
                 .attr('x2', 600)
                 .attr('y1', 10)
                 .attr('y2', 600);
-            if (_this.controller.comparisonMode) {
-                _this.svg.append("circle")
-                    .style("fill", _this.firstMap ? "#1B9E77" : "#7570B3")
-                    .attr("r", 20)
-                    .attr("cx", 520)
-                    .attr("cy", 40);
-            }
+            _this.controller.comparisonMode;
             _this.svg.append('text')
                 .text(_this.controller.serverModels[_this.modelData].name)
-                .attr("x", 500)
-                .attr("y", 90)
+                .attr("x", 20)
+                .attr("y", 20)
                 .attr('alignment-baseline', 'middle')
-                .style('font-size', '24px')
+                .style('font-size', '24')
+                .style("fill", _this.controller.comparisonMode ? (_this.firstMap ? "#1B9E77" : "#7570B3") : "#333333")
                 .classed("goodFont", true);
             _this.svg.append('text')
                 .text("\uf059")
-                .attr("x", 500)
-                .attr("y", 120)
+                .attr("x", 20)
+                .attr("y", 50)
                 .attr('alignment-baseline', 'middle')
                 .style('font-size', '24px')
                 .classed("fontAwesome", true)
@@ -51436,11 +51431,12 @@ var Map = /** @class */ (function () {
     };
     //function found here : http://bl.ocks.org/syntagmatic/e8ccca52559796be775553b467593a9f
     Map.prototype.continuous = function (selector_id, colorscale, label, domain) {
-        var legendheight = 400, legendwidth = 80, margin = { top: 10, right: 60, bottom: 10, left: 2 };
+        var legendheight = 200, legendwidth = 76, margin = { top: 10, right: 60, bottom: 10, left: 2 };
         d3.select(selector_id)
             .select("h2")
             .style("position", "absolute")
-            .style("left", "32px")
+            .style("left", "380px")
+            .style("top", '10px')
             .html(label);
         var canvas = d3.select(selector_id)
             .style("height", legendwidth + "px")
@@ -51454,8 +51450,8 @@ var Map = /** @class */ (function () {
             .style("border", "1px solid #000")
             .style("position", "absolute")
             .style('transform', 'rotate(-90deg)')
-            .style("top", (margin.top - 150) + "px")
-            .style("left", (margin.left + 211) + "px")
+            .style("top", (margin.top - 50) + "px")
+            .style("left", (margin.left + 462) + "px")
             .node();
         var ctx = canvas.getContext("2d");
         var legendscale = d3.scaleLinear()
@@ -51482,8 +51478,8 @@ var Map = /** @class */ (function () {
         */
         var legendaxis = d3.axisBottom()
             .scale(legendscale)
-            .tickSize(6)
-            .ticks(5);
+            .tickSize(3)
+            .ticks(3);
         if (label == "Population")
             legendaxis = legendaxis.tickFormat(d3.formatPrefix(",.1", 1e6));
         // .tickFormat(d3.format(".1f"))
@@ -51491,7 +51487,7 @@ var Map = /** @class */ (function () {
         this.svg
             .append("g")
             .attr("class", "axis legendAxis")
-            .attr("transform", "translate(32, 60) ")
+            .attr("transform", "translate(380, 60) ")
             .call(legendaxis);
     };
     ;
@@ -51793,6 +51789,19 @@ var MapEvents = /** @class */ (function () {
         document.getElementById("modelData").addEventListener('change', function () {
             _this.map.mapType = document.getElementById('mapType').value;
             var selectedOptions = document.getElementById('modelData').selectedOptions;
+            console.log(document.getElementById('modelData').options);
+            var ele = document.getElementById('modelData');
+            if (selectedOptions.length > 2) {
+                counter = 0;
+                for (var i = void 0; i < ele.options.length; i++) {
+                    if (ele.options[i].selected) {
+                        counter++;
+                        if (counter > 2) {
+                            ele.options[i].selected = false;
+                        }
+                    }
+                }
+            }
             if (selectedOptions.length == 0) {
                 _this.map.selectedCounties = new Set();
                 _this.map.selectedProfessions = {};
@@ -51807,10 +51816,12 @@ var MapEvents = /** @class */ (function () {
             }
             _this.map.modelsUsed = [];
             for (var i = 0; i < selectedOptions.length; i++) {
-                _this.map.modelsUsed.push(selectedOptions[i].value);
                 if (_this.map.modelsUsed.length > 2) {
-                    _this.map.modelsUsed.shift();
+                    selectedOptions[i].selected = false;
+                    continue;
+                    // this.map.modelsUsed.shift();
                 }
+                _this.map.modelsUsed.push(selectedOptions[i].value);
             }
             _this.map.drawMap().then(function () { return _this.map.drawSidebar(); });
         });
@@ -51864,6 +51875,9 @@ var ModelComparison = /** @class */ (function () {
                 if (!this.mapController.selectedCounties.has(j) && this.mapController.selectedCounties.size > 0) {
                     continue;
                 }
+                if (j == "State of Utah") {
+                    continue;
+                }
                 for (var k in firstModel[i][j].supply) {
                     this.supplyMapOne[i][k] = this.supplyMapOne[i][k] ? this.supplyMapOne[i][k] + firstModel[i][j].supply[k] : firstModel[i][j].supply[k];
                     this.supplyMapOne[i].total = this.supplyMapOne[i].total ? this.supplyMapOne[i].total + firstModel[i][j].supply[k] : firstModel[i][j].supply[k];
@@ -51878,6 +51892,8 @@ var ModelComparison = /** @class */ (function () {
                 }
             }
         }
+        console.log(this.supplyMapOne);
+        console.log(firstModel);
         for (var i in secondModel) {
             this.supplyMapTwo[i] = {};
             this.demandMapTwo[i] = {};
@@ -51885,6 +51901,9 @@ var ModelComparison = /** @class */ (function () {
             yearCounter++;
             for (var j in secondModel[i]) {
                 if (!this.mapController.selectedCounties.has(j) && this.mapController.selectedCounties.size > 0) {
+                    continue;
+                }
+                if (j == "State of Utah") {
                     continue;
                 }
                 for (var k in secondModel[i][j].supply) {
@@ -51918,17 +51937,27 @@ var ModelComparison = /** @class */ (function () {
         }
         var dataList1 = [];
         var dataList2 = [];
+        var mapOneKeys = [];
+        var mapTwoKeys = [];
+        for (var i = 0; i < Object.keys(selectedMapOne).length; i++) {
+            var c = Object.keys(selectedMapOne);
+            mapOneKeys.push(+c[i]);
+        }
+        for (var i = 0; i < Object.keys(selectedMapTwo).length; i++) {
+            var c = Object.keys(selectedMapTwo);
+            mapTwoKeys.push(+c[i]);
+        }
         var _loop_1 = function (i) {
             if (!this_1.mapController.selectedProfessions[i]) {
                 return "continue";
             }
-            var currObj1 = {};
+            var currObj1 = { "prof": undefined, "dataset": undefined };
             currObj1.prof = i;
-            currObj1.dataset = d3.range(+d3.min(Object.keys(selectedMapOne)), +d3.max(Object.keys(selectedMapOne)) + 1).map(function (d) { return { "y": selectedMapOne[d] ? selectedMapOne[d][i] : 0 }; });
+            currObj1.dataset = mapOneKeys.map(function (d) { return { "y": selectedMapOne[d] ? selectedMapOne[d][i] : 0, "year": d }; });
             dataList1.push(currObj1);
-            var currObj2 = {};
+            var currObj2 = { "prof": undefined, "dataset": undefined };
             currObj2.prof = i;
-            currObj2.dataset = d3.range(+d3.min(Object.keys(selectedMapTwo)), +d3.max(Object.keys(selectedMapTwo)) + 1).map(function (d) { return { "y": selectedMapTwo[d] ? selectedMapTwo[d][i] : 0 }; });
+            currObj2.dataset = mapTwoKeys.map(function (d) { return { "y": selectedMapTwo[d] ? selectedMapTwo[d][i] : 0, "year": d }; });
             dataList2.push(currObj2);
         };
         var this_1 = this;
@@ -51953,12 +51982,14 @@ var ModelComparison = /** @class */ (function () {
             if (!this_2.mapController.selectedProfessions[i]) {
                 return "continue";
             }
-            var localMax = Math.max(+d3.max(Object.keys(selectedMapOne), function (d) { return selectedMapOne[d][i]; }), +d3.max(Object.keys(selectedMapTwo), function (d) { return selectedMapTwo[d][i]; }));
-            var localMin = Math.min(+d3.min(Object.keys(selectedMapOne), function (d) { return selectedMapOne[d][i]; }), +d3.min(Object.keys(selectedMapTwo), function (d) { return selectedMapTwo[d][i]; }));
-            if (localMax > smallMax || smallMax === undefined) {
+            var localMax = Math.max(+d3.max(Object.keys(selectedMapOne), function (d) { return isNaN(+selectedMapOne[d][i]) ? smallMax : +selectedMapOne[d][i]; }), +d3.max(Object.keys(selectedMapTwo), function (d) { return isNaN(+selectedMapTwo[d][i]) ? smallMax : +selectedMapTwo[d][i]; }));
+            var localMin = Math.min(+d3.min(Object.keys(selectedMapOne), function (d) { return isNaN(+selectedMapOne[d][i]) ? smallMin : +selectedMapOne[d][i]; }), +d3.min(Object.keys(selectedMapTwo), function (d) { return isNaN(+selectedMapTwo[d][i]) ? smallMin : +selectedMapTwo[d][i]; }));
+            console.log(localMax);
+            console.log(localMin);
+            if (localMax != NaN && localMax > smallMax || smallMax === undefined) {
                 smallMax = localMax;
             }
-            if (localMin < smallMin || smallMin === undefined) {
+            if (localMax != NaN && localMin < smallMin || smallMin === undefined) {
                 smallMin = localMin;
             }
         };
@@ -51966,14 +51997,15 @@ var ModelComparison = /** @class */ (function () {
         for (var i in this.mapController.selectedProfessions) {
             _loop_2(i);
         }
-        smallDom = [smallMin / 2, smallMax / 2];
+        smallDom = [smallMin, smallMax];
+        console.log(smallDom);
         var yScale = d3.scaleLinear()
             .domain(smallDom) // input
             .range([height, 0]); // output
         // 7. d3's line generator
         var line = d3.line()
-            .x(function (d, i) { return xScale(i + _this.currentMin); }) // set the x values for the line generator
-            .y(function (d) { return yScale(d.y / 2); }) // set the y values for the line generator
+            .x(function (d, i) { return xScale(d.year); }) // set the x values for the line generator
+            .y(function (d) { return yScale(d.y); }) // set the y values for the line generator
             .curve(d3.curveMonotoneX); // apply smoothing to the line
         var lineCreator = function (d) {
             return line(d.dataset);
@@ -52006,28 +52038,36 @@ var ModelComparison = /** @class */ (function () {
             .enter()
             .append("path")
             .attr("class", "firstModelCompare") // Assign a class for styling
-            .attr("d", lineCreator);
+            .attr("d", function (d) {
+            return lineCreator(d);
+        });
         this.currentMin = +d3.min(Object.keys(selectedMapTwo));
         svg.selectAll("path .secondModelCompare")
             .data(dataList2)
             .enter()
             .append("path")
             .attr("class", "secondModelCompare") // Assign a class for styling
-            .attr("d", lineCreator);
+            .attr("d", function (d) {
+            console.log(Object.keys(d));
+            if (d.dataset[0].y === undefined) {
+                return "";
+            }
+            return lineCreator(d);
+        });
         var _loop_3 = function (j) {
             if (!this_3.mapController.selectedProfessions[j]) {
                 return "continue";
             }
-            dataset1 = d3.range(+d3.min(Object.keys(selectedMapOne)), +d3.max(Object.keys(selectedMapOne)) + 1).map(function (d) { return { "y": selectedMapOne[d] ? selectedMapOne[d][j] : 0 }; });
-            dataset2 = d3.range(+d3.min(Object.keys(selectedMapTwo)), +d3.max(Object.keys(selectedMapTwo)) + 1).map(function (d) { return { "y": selectedMapTwo[d] ? selectedMapTwo[d][j] : 0 }; });
+            dataset1 = mapOneKeys.map(function (d) { return { "y": selectedMapOne[d] ? selectedMapOne[d][j] : 0, "year": d }; });
+            dataset2 = mapTwoKeys.map(function (d) { return { "y": selectedMapTwo[d] ? selectedMapTwo[d][j] : 0, "year": d }; });
             var f = d3.format(".1f");
             svg.selectAll(".dot1" + j)
                 .data(dataset1)
                 .enter().append("circle") // Uses the enter().append() method
                 .attr("class", "dot1") // Assign a class for styling
-                .attr("cx", function (d, i) { return xScale(i + +d3.min(Object.keys(selectedMapOne))); })
-                .attr("cy", function (d) { return yScale(d.y / 2); })
-                .attr("r", 3)
+                .attr("cx", function (d, i) { return xScale(d.year); })
+                .attr("cy", function (d) { return yScale(d.y); })
+                .attr("r", function (d) { return d.y === undefined ? 0 : 3; })
                 .on("mouseover", function (d, i) {
                 d3.select("#comparisonTooltip").transition().duration(200).style("opacity", .9);
                 d3.select("#comparisonTooltip").html("<h3>" + j + "</h3><h4>" + (i + +d3.min(Object.keys(selectedMapOne))) + "</h4><h4>" + f(d.y) + "</h4>")
@@ -52041,12 +52081,12 @@ var ModelComparison = /** @class */ (function () {
                 .data(dataset2)
                 .enter().append("circle") // Uses the enter().append() method
                 .attr("class", "dot2") // Assign a class for styling
-                .attr("cx", function (d, i) { return xScale(i + +d3.min(Object.keys(selectedMapTwo))); })
-                .attr("cy", function (d) { return yScale(d.y / 2); })
-                .attr("r", 3)
+                .attr("cx", function (d, i) { return xScale(d.year); })
+                .attr("cy", function (d) { return yScale(d.y); })
+                .attr("r", function (d) { return d.y === undefined ? 0 : 3; })
                 .on("mouseover", function (d, i) {
                 d3.select("#comparisonTooltip").transition().duration(200).style("opacity", .9);
-                d3.select("#comparisonTooltip").html("<h3>" + j + "</h3><h4>" + (i + +d3.min(Object.keys(selectedMapTwo))) + "</h4><h4>" + f(d.y) + "</h4>")
+                d3.select("#comparisonTooltip").html("<h3>" + j + "</h3><h4>" + d.year + "</h4><h4>" + f(d.y) + "</h4>")
                     .style("left", (d3.event.pageX) + "px")
                     .style("top", (d3.event.pageY - 28) + "px");
             })
@@ -52082,13 +52122,17 @@ var ModelComparison = /** @class */ (function () {
             .attr("x", 20)
             .attr("y", function (d, i) { return 30 * i; })
             .text(function (d, i) { return _this.mapController.serverModels[_this.mapController.modelsUsed[i]].name; });
+        console.log(legend.node().getBoundingClientRect().width);
         legend.append("rect")
             .attr("x", -10)
             .attr("y", function (d, i) { return 30 * i - 12; })
             .attr("rx", 10)
             .attr("ry", 10)
             .attr("height", 24)
-            .attr("width", legend.node().getBoundingClientRect().width + 20)
+            .attr("width", function (d) {
+            console.log(d3.select(this));
+            return d3.select(this).node().previousElementSibling.textLength.baseVal.value + 40;
+        })
             .style("fill", "lightgrey")
             .style("cursor", "pointer")
             .style("opacity", 0)
@@ -52109,10 +52153,10 @@ var ModelComparison = /** @class */ (function () {
                     .style("opacity", 0);
                 d3.selectAll(dotSelected)
                     .transition(1000)
-                    .style("opacity", 1);
+                    .attr("r", 3);
                 d3.selectAll(otherDotSelected)
                     .transition(1000)
-                    .style("opacity", 0);
+                    .attr("r", 0);
                 d3.select(otherRectSelected)
                     .transition(1000)
                     .style("opacity", 0);
@@ -52126,7 +52170,7 @@ var ModelComparison = /** @class */ (function () {
                     .style("opacity", 1);
                 d3.selectAll(otherDotSelected)
                     .transition(1000)
-                    .style("opacity", 1);
+                    .attr("r", 3);
                 d3.select(rectSelected)
                     .transition(1000)
                     .style("opacity", 0);
@@ -52137,7 +52181,7 @@ var ModelComparison = /** @class */ (function () {
                     .style("opacity", 0);
                 d3.selectAll(otherDotSelected)
                     .transition(1000)
-                    .style("opacity", 0);
+                    .attr("r", 0);
                 d3.select(rectSelected)
                     .transition(1000)
                     .style("opacity", .3);
@@ -52649,6 +52693,11 @@ var Sidebar = /** @class */ (function () {
         if (jColor === void 0) { jColor = '#c7001e'; }
         var radius = 6;
         x += leftMargin;
+        console.log(svg.data());
+        // if(isNaN(d[i]))
+        // {
+        // 	return;
+        // }
         var xAxis = function (g) { return g
             .attr("transform", "translate(" + barWidth + "," + 20 + ")")
             .call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s"))); };
@@ -52660,7 +52709,8 @@ var Sidebar = /** @class */ (function () {
             .attr('x1', x)
             .attr('x2', x + barWidth)
             .attr('y1', function (d, i) { return y + 0 * barHeight + barHeight / 2; })
-            .attr('y2', function (d, i) { return y + 0 * barHeight + barHeight / 2; });
+            .attr('y2', function (d, i) { return y + 0 * barHeight + barHeight / 2; })
+            .style("opacity", function (d) { return isNaN(d[i]) ? 0 : 1; });
         groups
             .append('rect')
             .attr('class', 'scatterPlotRect')
@@ -52668,7 +52718,8 @@ var Sidebar = /** @class */ (function () {
             .attr('width', function (d) { return Math.abs(xScale(d[i]) - xScale(d[j])); })
             .attr('x', function (d) { return x + xScale(d3.min([d[i], d[j]])); })
             .attr('y', function (d, i) { return y + 0 * barHeight + barHeight / 2 - radius / 2; })
-            .attr('fill', function (d) { return d[i] > d[j] ? iColor : jColor; });
+            .attr('fill', function (d) { return d[i] > d[j] ? iColor : jColor; })
+            .style("opacity", function (d) { return isNaN(d[i]) ? 0 : 1; });
         groups
             .append('circle')
             .attr('class', 'supplyCircle')
@@ -52676,7 +52727,8 @@ var Sidebar = /** @class */ (function () {
             .attr('stroke', iColor)
             .attr('fill', iColor)
             .attr('cx', function (d) { return x + xScale(d[i]); })
-            .attr('cy', function (d, i) { return y + 0 * barHeight + barHeight / 2; });
+            .attr('cy', function (d, i) { return y + 0 * barHeight + barHeight / 2; })
+            .style("opacity", function (d) { return isNaN(d[i]) ? 0 : 1; });
         groups
             .append('circle')
             .attr('class', 'needCircle')
@@ -52684,7 +52736,8 @@ var Sidebar = /** @class */ (function () {
             .attr('stroke', jColor)
             .attr('fill', jColor)
             .attr('cx', function (d) { return x + xScale(d[j]); })
-            .attr('cy', function (d, i) { return y + 0 * barHeight + barHeight / 2; });
+            .attr('cy', function (d, i) { return y + 0 * barHeight + barHeight / 2; })
+            .style("opacity", function (d) { return isNaN(d[j]) ? 0 : 1; });
         //making tooltip for side bars. Considered adding color to match scale, but problems with white.
         groups
             .on('mouseover', function (d) {
@@ -52825,13 +52878,13 @@ var Sidebar = /** @class */ (function () {
                 .attr('y', function (d, i) { return barHeight / 2; })
                 .attr('x', leftMargin + barWidth)
                 .style("dominant-baseline", "middle")
-                .text(function (d) { return isNaN(d[1]) ? d[1] : f(d[1]); });
+                .text(function (d) { return isNaN(d[1]) ? "--" : f(d[1]); });
             groups
                 .append('text')
                 .attr('y', function (d, i) { return barHeight / 2; })
                 .attr('x', leftMargin + 2 * barWidth)
                 .style("dominant-baseline", "middle")
-                .text(function (d) { return isNaN(d[2]) ? d[2] : f(d[2]); });
+                .text(function (d) { return isNaN(d[2]) ? "--" : f(d[2]); });
         }
         else {
             groups.append("circle")
@@ -52855,25 +52908,25 @@ var Sidebar = /** @class */ (function () {
                 .attr('y', function (d, i) { return barHeight / 4; })
                 .attr('x', leftMargin + barWidth)
                 .style("dominant-baseline", "middle")
-                .text(function (d) { return isNaN(d[1]) ? d[1] : f(d[1]); });
+                .text(function (d) { return isNaN(d[1]) ? "--" : f(d[1]); });
             groups
                 .append('text')
                 .attr('y', function (d, i) { return barHeight / 4; })
                 .attr('x', leftMargin + 2 * barWidth)
                 .style("dominant-baseline", "middle")
-                .text(function (d) { return isNaN(d[2]) ? d[2] : f(d[2]); });
+                .text(function (d) { return isNaN(d[2]) ? "--" : f(d[2]); });
             groups
                 .append('text')
                 .attr('y', function (d, i) { return barHeight / 2 + barHeight / 4; })
                 .attr('x', leftMargin + barWidth)
                 .style("dominant-baseline", "middle")
-                .text(function (d) { return isNaN(d[4]) ? d[4] : f(d[4]); });
+                .text(function (d) { return isNaN(d[4]) ? "--" : f(d[4]); });
             groups
                 .append('text')
                 .attr('y', function (d, i) { return barHeight / 2 + barHeight / 4; })
                 .attr('x', leftMargin + 2 * barWidth)
                 .style("dominant-baseline", "middle")
-                .text(function (d) { return isNaN(d[5]) ? d[5] : f(d[5]); });
+                .text(function (d) { return isNaN(d[5]) ? "--" : f(d[5]); });
         }
     };
     Sidebar.prototype.getSortingOptions = function (index, ascending) {

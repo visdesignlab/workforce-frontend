@@ -78,27 +78,20 @@ class Map{
 			.attr('y1', 10)
 			.attr('y2', 600);
 
-			if(this.controller.comparisonMode)
-			{
-				this.svg.append("circle")
-					.style("fill", this.firstMap ? "#1B9E77" : "#7570B3")
-					.attr("r", 20)
-					.attr("cx", 520)
-					.attr("cy", 40)
-			}
-
+			this.controller.comparisonMode
 			this.svg.append('text')
 				.text(this.controller.serverModels[this.modelData].name)
-				.attr("x", 500)
-				.attr("y", 90)
+				.attr("x", 20)
+				.attr("y", 20)
 				.attr('alignment-baseline', 'middle')
-				.style('font-size', '24px')
+				.style('font-size', '24')
+				.style("fill", this.controller.comparisonMode ? (this.firstMap ? "#1B9E77" : "#7570B3") : "#333333")
 				.classed("goodFont", true)
 
 			this.svg.append('text')
 				.text("\uf059")
-				.attr("x", 500)
-				.attr("y", 120)
+				.attr("x", 20)
+				.attr("y", 50)
 				.attr('alignment-baseline', 'middle')
 				.style('font-size', '24px')
 				.classed("fontAwesome", true)
@@ -462,14 +455,15 @@ class Map{
 
 	continuous(selector_id, colorscale, label, domain) {
 
-	  var legendheight = 400,
-	      legendwidth = 80,
+	  var legendheight = 200,
+	      legendwidth = 76,
 	      margin = {top: 10, right: 60, bottom: 10, left: 2};
 
 		d3.select(selector_id)
 			.select("h2")
 			.style("position", "absolute")
-			.style("left", "32px")
+			.style("left", "380px")
+			.style("top", '10px')
 			.html(label)
 
 	  var canvas = d3.select(selector_id)
@@ -484,8 +478,8 @@ class Map{
 	    .style("border", "1px solid #000")
 	    .style("position", "absolute")
 			.style('transform', 'rotate(-90deg)')
-	    .style("top", (margin.top - 150) + "px")
-	    .style("left", (margin.left + 211) + "px")
+	    .style("top", (margin.top - 50) + "px")
+	    .style("left", (margin.left + 462) + "px")
 	    .node();
 
 	  var ctx = canvas.getContext("2d");
@@ -518,8 +512,8 @@ class Map{
 
 	  var legendaxis = d3.axisBottom()
 	    .scale(legendscale)
-	    .tickSize(6)
-	    .ticks(5)
+	    .tickSize(3)
+	    .ticks(3)
 
 		if(label == "Population")
 			legendaxis = legendaxis.tickFormat(d3.formatPrefix(",.1", 1e6))
@@ -531,7 +525,7 @@ class Map{
 	  this.svg
 	    .append("g")
 	    .attr("class", "axis legendAxis")
-	    .attr("transform", "translate(32, 60) ")
+	    .attr("transform", "translate(380, 60) ")
 	    .call(legendaxis);
 	};
 

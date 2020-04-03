@@ -116,6 +116,26 @@ class MapEvents{
 		document.getElementById("modelData").addEventListener('change',()=>{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
+
+			console.log((document.getElementById('modelData')as HTMLSelectElement).options);
+			let ele = (document.getElementById('modelData')as HTMLSelectElement)
+
+			if(selectedOptions.length > 2)
+			{
+				counter = 0;
+				for(let i; i < ele.options.length; i++)
+				{
+					if(ele.options[i].selected)
+					{
+						counter++;
+						if(counter > 2)
+						{
+							ele.options[i].selected = false;
+						}
+					}
+				}
+			}
+
 			if(selectedOptions.length == 0)
 			{
 				this.map.selectedCounties = new Set<string>();
@@ -133,11 +153,14 @@ class MapEvents{
 			this.map.modelsUsed = [];
 			for(let i= 0; i < selectedOptions.length; i++)
 			{
-				this.map.modelsUsed.push(selectedOptions[i].value)
 				if(this.map.modelsUsed.length > 2)
 				{
-					this.map.modelsUsed.shift();
+					selectedOptions[i].selected = false;
+					continue;
+					// this.map.modelsUsed.shift();
 				}
+				this.map.modelsUsed.push(selectedOptions[i].value)
+
 			}
 			this.map.drawMap().then(() => this.map.drawSidebar());
 		})

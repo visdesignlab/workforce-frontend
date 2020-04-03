@@ -588,6 +588,11 @@ class Sidebar {
 	draw1DScatterPlot(svg, xScale, barWidth, barHeight, leftMargin, x = 0, y = 0, i = 0, j = 1, iColor = '#086fad', jColor = '#c7001e') {
 		const radius = 6;
 		x += leftMargin;
+		console.log(svg.data())
+		// if(isNaN(d[i]))
+		// {
+		// 	return;
+		// }
 
 			var xAxis = g => g
 				.attr("transform", `translate(${barWidth},${20})`)
@@ -603,6 +608,7 @@ class Sidebar {
 				.attr('x2', x + barWidth)
 				.attr('y1', (d, i) => y + 0 * barHeight + barHeight / 2)
 				.attr('y2', (d, i) => y + 0 * barHeight + barHeight / 2)
+				.style("opacity", d => isNaN(d[i]) ? 0 : 1)
 
 			groups
 				.append('rect')
@@ -612,7 +618,8 @@ class Sidebar {
 				.attr('width', d => Math.abs(xScale(d[i]) - xScale(d[j])))
 				.attr('x', d => {return x + xScale(d3.min([d[i], d[j]]))})
 				.attr('y', (d, i) => y + 0 * barHeight + barHeight / 2 - radius / 2)
-				.attr('fill', d => d[i] > d[j] ? iColor : jColor);
+				.attr('fill', d => d[i] > d[j] ? iColor : jColor)
+				.style("opacity", d => isNaN(d[i]) ? 0 : 1);
 
 			groups
 				.append('circle')
@@ -622,6 +629,7 @@ class Sidebar {
 				.attr('fill', iColor)
 				.attr('cx', d => x + xScale(d[i]))
 				.attr('cy', (d, i) => y + 0 * barHeight + barHeight / 2)
+				.style("opacity", d => isNaN(d[i]) ? 0 : 1);
 
 			groups
 				.append('circle')
@@ -631,6 +639,7 @@ class Sidebar {
 				.attr('fill', jColor)
 				.attr('cx', d => x + xScale(d[j]))
 				.attr('cy', (d, i) => y + 0 * barHeight + barHeight / 2)
+				.style("opacity", d => isNaN(d[j]) ? 0 : 1)
 
 
 			//making tooltip for side bars. Considered adding color to match scale, but problems with white.
@@ -783,14 +792,14 @@ class Sidebar {
 				.attr('y', (d, i) => barHeight / 2)
 				.attr('x', leftMargin + barWidth)
 				.style("dominant-baseline", "middle")
-				.text(d => isNaN(d[1]) ? d[1] : f(d[1]));
+				.text(d => isNaN(d[1]) ? "--" : f(d[1]));
 
 			groups
 				.append('text')
 				.attr('y', (d, i) => barHeight / 2)
 				.attr('x', leftMargin + 2 * barWidth)
 				.style("dominant-baseline", "middle")
-				.text(d => isNaN(d[2]) ? d[2] : f(d[2]));
+				.text(d => isNaN(d[2]) ? "--" : f(d[2]));
 		}
 		else
 		{
@@ -819,28 +828,28 @@ class Sidebar {
 				.attr('y', (d, i) => barHeight / 4)
 				.attr('x', leftMargin + barWidth)
 				.style("dominant-baseline", "middle")
-				.text(d => isNaN(d[1]) ? d[1] : f(d[1]));
+				.text(d => isNaN(d[1]) ? "--" : f(d[1]));
 
 			groups
 				.append('text')
 				.attr('y', (d, i) => barHeight / 4)
 				.attr('x', leftMargin + 2 * barWidth)
 				.style("dominant-baseline", "middle")
-				.text(d => isNaN(d[2]) ? d[2] : f(d[2]));
+				.text(d => isNaN(d[2]) ? "--" : f(d[2]));
 
 			groups
 				.append('text')
 				.attr('y', (d, i) => barHeight/2 + barHeight / 4)
 				.attr('x', leftMargin + barWidth)
 				.style("dominant-baseline", "middle")
-				.text(d => isNaN(d[4]) ? d[4] : f(d[4]));
+				.text(d => isNaN(d[4]) ? "--" : f(d[4]));
 
 			groups
 				.append('text')
 				.attr('y', (d, i) => barHeight/2 +  barHeight / 4)
 				.attr('x', leftMargin + 2 * barWidth)
 				.style("dominant-baseline", "middle")
-				.text(d => isNaN(d[5]) ? d[5] : f(d[5]));
+				.text(d => isNaN(d[5]) ? "--" : f(d[5]));
 		}
 	}
 
