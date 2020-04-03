@@ -49,7 +49,6 @@ class Map{
 
 		this.modelData = modelUsed;
 		const map = mapType;
-		console.log(this.modelData);
 		const modelFile = this.controller.serverModels[this.modelData].path;
 		const serverUrl = 'http://3.20.123.182/';
 
@@ -63,7 +62,6 @@ class Map{
 
 
 		promise = promise.then((results)=> {
-			console.log(results);
 			// if (!customModel) {
 				results = results[map];
 				this.results = results;
@@ -106,7 +104,7 @@ class Map{
 				.classed("fontAwesome", true)
 				.on("mouseover", () => {
 					d3.select("#descriptionTooltip").transition().duration(200).style("opacity", .9);
-					d3.select("#descriptionTooltip").html("<h2>" + this.controller.serverModels[this.modelData].description + "</h2>")
+					d3.select("#descriptionTooltip").html("<h2>" + this.controller.serverModels[this.modelData].author + "</h2><h2>" + this.controller.serverModels[this.modelData].description + "</h2>")
 						.style("left", (d3.event.pageX) + "px")
 						.style("top", (d3.event.pageY - 28) + "px");
 				})
@@ -329,9 +327,6 @@ class Map{
 		let that:any = this;
 		let colorScale:any = this.myColorScale;
 		let linear:any = this.getLinear(mapData, this.currentYearData)
-
-		console.log(this.supplyScore);
-		console.log(this.currentYearData);
 		let max;
 
 		if(this.firstMap)

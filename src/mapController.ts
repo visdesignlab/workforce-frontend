@@ -121,6 +121,10 @@ class MapController{
 		this.updateMapYear(this.yearSelected).then(() => {
 			this.drawSidebar();
 			this.setAllHighlights();
+			if(this.comparisonMode)
+			{
+				this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+			}
 		});
 	}
 
@@ -145,6 +149,11 @@ class MapController{
 			this.secondMap.highlightPath(name);
 		}
 		this.setAllHighlights();
+
+		if(this.comparisonMode)
+		{
+			this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+		}
 
 		this.drawSidebar();
 	}
@@ -174,17 +183,17 @@ class MapController{
 				this.unHighlightProfession(prof);
 			}
 		}
+
+
 	}
 
 	highlightProfession(name:string){
-
 		d3.selectAll(`.${name}rect`)
 			.classed('highlightProfRect', true)
 	}
 
 	unHighlightProfession(name:string)
 	{
-
 		d3.selectAll(`.${name}rect`)
 			.classed('highlightProfRect', false)
 	}
@@ -203,6 +212,11 @@ class MapController{
 			this.drawSidebar();
 		}
 
+		if(this.comparisonMode)
+		{
+			this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+		}
+
 		this.updateSelections(this.selectedProfessions);
 	}
 
@@ -213,7 +227,11 @@ class MapController{
 	changeComparisonType(s)
 	{
 		this.comparisonType = s;
-		this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+		if(this.comparisonMode)
+		{
+			this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+
+		}
 	}
 }
 export{MapController};

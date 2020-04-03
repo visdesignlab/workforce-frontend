@@ -14,6 +14,7 @@ class ModelComparison
   supplyMapTwo:any;
   demandMapTwo:any;
   gapMapTwo:any;
+  currentMin:number;
 
   constructor(mapController:MapController)
   {
@@ -27,7 +28,7 @@ class ModelComparison
     this.supplyMapTwo = {};
     this.demandMapTwo = {};
     this.gapMapTwo = {};
-
+    this.currentMin = 0;
   }
 
   drawComparison(firstModel, secondModel, comparisonType)
@@ -50,6 +51,11 @@ class ModelComparison
       yearCounter++;
       for(let j in firstModel[i])
       {
+
+        if(!this.mapController.selectedCounties.has(j) && this.mapController.selectedCounties.size > 0)
+        {
+          continue;
+        }
         for(let k in firstModel[i][j].supply)
         {
           this.supplyMapOne[i][k] = this.supplyMapOne[i][k] ? this.supplyMapOne[i][k] + firstModel[i][j].supply[k] : firstModel[i][j].supply[k]
@@ -80,6 +86,10 @@ class ModelComparison
       for(let j in secondModel[i])
       {
 
+        if(!this.mapController.selectedCounties.has(j) && this.mapController.selectedCounties.size > 0)
+        {
+          continue;
+        }
         for(let k in secondModel[i][j].supply)
         {
           this.supplyMapTwo[i][k] = this.supplyMapTwo[i][k] ? this.supplyMapTwo[i][k] + secondModel[i][j].supply[k] : secondModel[i][j].supply[k]
@@ -122,6 +132,27 @@ class ModelComparison
       selectedMapTwo = this.demandMapTwo;
     }
 
+    let dataList1 = []
+    let dataList2 = []
+
+    for (let i in this.mapController.selectedProfessions)
+    {
+      if(!this.mapController.selectedProfessions[i])
+      {
+        continue;
+      }
+      let currObj1 = {};
+      currObj1.prof = i;
+      currObj1.dataset = d3.range(+d3.min(Object.keys(selectedMapOne)), +d3.max(Object.keys(selectedMapOne)) + 1).map(d => { return {"y": selectedMapOne[d] ? selectedMapOne[d][i] : 0} })
+      dataList1.push(currObj1);
+
+      let currObj2 = {};
+      currObj2.prof = i;
+      currObj2.dataset = d3.range(+d3.min(Object.keys(selectedMapTwo)), +d3.max(Object.keys(selectedMapTwo)) + 1).map(d => { return {"y": selectedMapTwo[d] ? selectedMapTwo[d][i] : 0} })
+      dataList2.push(currObj2);
+    }
+
+
         // 2. Use the margin convention practice
     var margin = {top: 50, right: 700, bottom: 350, left: 100}
       , width = 750 // Use the window's width
@@ -131,40 +162,65 @@ class ModelComparison
     var n = yearCounter;
 
     var xScale = d3.scaleLinear()
-        .domain([d3.min(Object.keys(selectedMapOne)), d3.max(Object.keys(selectedMapOne))]) // input
+        .domain([+d3.min(Object.keys(selectedMapOne)), +d3.max(Object.keys(selectedMapOne))]) // input
         .range([0, width]); // output
 
     // 6. Y scale will use the randomly generate number
     let max = Math.max(
-      d3.max(Object.keys(selectedMapOne), d => selectedMapOne[d].total),
-      d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total));
+      +d3.max(Object.keys(selectedMapOne), d => selectedMapOne[d].total),
+      +d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total));
 
     let min = Math.min(
-      d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d].total),
-      d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total));
+      +d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d].total),
+      +d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total));
 
-    let dom;
-    if(max < 0)
+    let smallDom;
+
+    let smallMax = undefined;
+    let smallMin = undefined;
+
+    for (let i in this.mapController.selectedProfessions)
     {
-      dom = [min / 2, 0]
+      if(!this.mapController.selectedProfessions[i])
+      {
+        continue;
+      }
+      let localMax = Math.max(+d3.max(Object.keys(selectedMapOne), d => selectedMapOne[d][i]), +d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d][i]));
+      let localMin = Math.min(+d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d][i]), +d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d][i]));
+
+      if(localMax > smallMax || smallMax === undefined)
+      {
+        smallMax = localMax
+      }
+
+      if(localMin < smallMin || smallMin === undefined)
+      {
+        smallMin = localMin
+      }
     }
-    else{
-      dom = [0, max / 2]
-    }
+
+    smallDom = [smallMin / 2, smallMax / 2];
+
+
 
     var yScale = d3.scaleLinear()
-        .domain(dom) // input
+        .domain(smallDom) // input
         .range([height, 0]); // output
 
     // 7. d3's line generator
-    var line = d3.area()
-        .x(function(d, i) { return xScale(i + 2014); }) // set the x values for the line generator
-        .y0(function(d) { return yScale(d.y); }) // set the y values for the line generator
-        .y1(function(d) { return yScale(0); }) // set the y values for the line generator
+    var line = d3.line()
+        .x((d, i) => { return xScale(i + this.currentMin); }) // set the x values for the line generator
+        .y(function(d) { return yScale(d.y / 2); }) // set the y values for the line generator
+        .curve(d3.curveMonotoneX) // apply smoothing to the line
 
+    let lineCreator = (d) =>
+    {
+      return line(d.dataset);
+    }
+ // apply smoothing to the line
     // // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-    var dataset1 = d3.range(2014, 2025).map(d => { return {"y": selectedMapOne[d] ? selectedMapOne[d].total / 2 : 0} })
-    var dataset2 = d3.range(2014, 2025).map(d => { return {"y": selectedMapTwo[d] ? selectedMapTwo[d].total / 2 : 0} })
+    // var dataset1 = d3.range(2014, 2025).map(d => { return {"y": selectedMapOne[d] ? selectedMapOne[d].total : 0} })
+    // var dataset2 = d3.range(2014, 2025).map(d => { return {"y": selectedMapTwo[d] ? selectedMapTwo[d].total : 0} })
 
     // 1. Add the SVG to the page and employ #2
     var svg = this.svg
@@ -178,58 +234,75 @@ class ModelComparison
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(xScale).tickFormat(d3.format("d")))
-        .call(g => g.select(".domain").remove()); // Create an axis component with d3.axisBottom
 
     // 4. Call the y axis in a group tag
     svg.append("g")
         .attr("class", "y axis")
         .call(d3.axisLeft(yScale))
-        .call(g => g.select(".domain").remove())
-; // Create an axis component with d3.axisLeft
 
-    if(d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d].total) >
-          d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total) && d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total) < 0)
+    // if(d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d].total) >
+    //       d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total) && d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total) < 0)
+    // {
+    this.currentMin = +d3.min(Object.keys(selectedMapOne))
+    svg.selectAll("path .firstModelCompare")
+      .data(dataList1)
+      .enter()
+      .append("path")
+      .attr("class", "firstModelCompare") // Assign a class for styling
+      .attr("d", lineCreator)
+
+    this.currentMin = +d3.min(Object.keys(selectedMapTwo))
+    svg.selectAll("path .secondModelCompare")
+      .data(dataList2)
+      .enter()
+      .append("path")
+      .attr("class", "secondModelCompare") // Assign a class for styling
+      .attr("d", lineCreator)
+
+    for (let j in this.mapController.selectedProfessions)
     {
-        svg.append("path")
-            .datum(dataset2) // 10. Binds data to the line
-            .attr("class", "secondModelCompare") // Assign a class for styling
-            .attr("d", line) // 11. Calls the line generator
+      if(!this.mapController.selectedProfessions[j])
+      {
+        continue;
+      }
+      var dataset1 = d3.range(+d3.min(Object.keys(selectedMapOne)), +d3.max(Object.keys(selectedMapOne)) + 1).map(d => { return {"y": selectedMapOne[d] ? selectedMapOne[d][j] : 0} })
+      var dataset2 = d3.range(+d3.min(Object.keys(selectedMapTwo)), +d3.max(Object.keys(selectedMapTwo)) + 1).map(d => { return {"y": selectedMapTwo[d] ? selectedMapTwo[d][j] : 0} })
 
-        svg.append("path")
-            .datum(dataset1) // 10. Binds data to the line
-            .attr("class", "firstModelCompare") // Assign a class for styling
-            .attr("d", line) // 11. Calls the line generator
+      let f = d3.format(".1f")
+      svg.selectAll(".dot1" + j)
+        .data(dataset1)
+        .enter().append("circle") // Uses the enter().append() method
+        .attr("class", "dot1") // Assign a class for styling
+        .attr("cx", function(d, i) { return xScale(i + +d3.min(Object.keys(selectedMapOne))) })
+        .attr("cy", function(d) { return yScale(d.y / 2) })
+        .attr("r", 3)
+        .on("mouseover", function(d, i) {
+          d3.select("#comparisonTooltip").transition().duration(200).style("opacity", .9);
+          d3.select("#comparisonTooltip").html("<h3>" + j + "</h3><h4>" + (i + +d3.min(Object.keys(selectedMapOne))) + "</h4><h4>" + f(d.y) + "</h4>" )
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            d3.select("#comparisonTooltip").transition().duration(200).style("opacity", 0);
+        });
 
+      svg.selectAll(".dot2" + j)
+        .data(dataset2)
+        .enter().append("circle") // Uses the enter().append() method
+        .attr("class", "dot2") // Assign a class for styling
+        .attr("cx", function(d, i) { return xScale(i + +d3.min(Object.keys(selectedMapTwo))) })
+        .attr("cy", function(d) { return yScale(d.y / 2) })
+        .attr("r", 3)
+        .on("mouseover", function(d, i) {
+            d3.select("#comparisonTooltip").transition().duration(200).style("opacity", .9);
+            d3.select("#comparisonTooltip").html("<h3>" + j + "</h3><h4>" + (i + +d3.min(Object.keys(selectedMapTwo))) + "</h4><h4>" + f(d.y) + "</h4>" )
+              .style("left", (d3.event.pageX) + "px")
+              .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            d3.select("#comparisonTooltip").transition().duration(200).style("opacity", 0);
+        });
     }
-    else if (d3.max(Object.keys(selectedMapOne), d => selectedMapOne[d].total) <
-          d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total) && d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d].total) > 0)
-    {
-      svg.append("path")
-          .datum(dataset2) // 10. Binds data to the line
-          .attr("class", "secondModelCompare") // Assign a class for styling
-          .attr("d", line) // 11. Calls the line generator
-
-
-      svg.append("path")
-          .datum(dataset1) // 10. Binds data to the line
-          .attr("class", "firstModelCompare") // Assign a class for styling
-          .attr("d", line) // 11. Calls the line generator
-
-    }
-    else{
-        svg.append("path")
-            .datum(dataset1) // 10. Binds data to the line
-            .attr("class", "firstModelCompare") // Assign a class for styling
-            .attr("d", line) // 11. Calls the line generator
-
-        svg.append("path")
-            .datum(dataset2) // 10. Binds data to the line
-            .attr("class", "secondModelCompare") // Assign a class for styling
-            .attr("d", line) // 11. Calls the line generator
-
-
-    }
-
 
     svg.append("text")
       .text("Total")
@@ -237,31 +310,6 @@ class ModelComparison
       .attr("text-anchor", "middle")
       .attr("x", 375)
       .attr("y", -20)
-
-    // // 12. Appends a circle for each datapoint
-    // svg.selectAll(".dot1")
-    //     .data(dataset1)
-    //   .enter().append("circle") // Uses the enter().append() method
-    //     .attr("class", "dot1") // Assign a class for styling
-    //     .attr("cx", function(d, i) { return xScale(i + 2014) })
-    //     .attr("cy", function(d) { return yScale(d.y) })
-    //     .attr("r", 3)
-    //       .on("mouseover", function(a, b, c) {
-    //   			console.log(a)
-    //         // this.attr('class', 'focus')
-    // 		});
-    //
-    // svg.selectAll(".dot2")
-    //     .data(dataset2)
-    //   .enter().append("circle") // Uses the enter().append() method
-    //     .attr("class", "dot2") // Assign a class for styling
-    //     .attr("cx", function(d, i) { return xScale(i + 2014) })
-    //     .attr("cy", function(d) { return yScale(d.y) })
-    //     .attr("r", 3)
-    //       .on("mouseover", function(a, b, c) {
-    //   			console.log(a)
-    //         // this.attr('class', 'focus')
-    // 		});
 
     var legend = svg.selectAll(".legend")
      .data(["#1B9E77", "#7570B3"]).enter()
@@ -271,185 +319,97 @@ class ModelComparison
 
     legend.append("circle")
       .attr("cx", 0)
-      .attr("cy", function(d, i) { return 20 * i; })
+      .attr("cy", function(d, i) { return 30 * i; })
       .attr("r", 5)
       .style("fill", function(d, i) {
        return d;
-     });
+      });
 
      legend.append("text")
       .attr("alignment-baseline", "middle")
       .attr("text-anchor", "left")
       .attr("x", 20)
-      .attr("y", function(d, i) { return 20 * i; })
+      .attr("y", function(d, i) { return 30 * i; })
       .text((d, i) => {return this.mapController.serverModels[this.mapController.modelsUsed[i]].name});
 
 
-    let smallDom;
+    legend.append("rect")
+     .attr("x", -10)
+     .attr("y", function(d, i) { return 30 * i - 12; })
+     .attr("rx", 10)
+     .attr("ry", 10)
+     .attr("height", 24)
+     .attr("width", legend.node().getBoundingClientRect().width + 20)
+     .style("fill", "lightgrey")
+     .style("cursor", "pointer")
+     .style("opacity", 0)
+     .attr("id", (d, i) => i == 0 ? "firstModelCompareRect" : "secondModelCompareRect" )
+     .on("click", (d, i) =>
+     {
+       let modelSelected = i == 0 ? ".firstModelCompare" : ".secondModelCompare"
+       let otherModel = i == 1 ? ".firstModelCompare" : ".secondModelCompare"
 
-    let smallMax = Math.max(
-      d3.max(Object.keys(selectedMapOne), d => selectedMapOne[d]["CMHC"]),
-      d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d]["CMHC"]),
-      d3.max(Object.keys(selectedMapOne), d => selectedMapOne[d]["Phys"]),
-      d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d]["Phys"]),
-      d3.max(Object.keys(selectedMapOne), d => selectedMapOne[d]["Educ"]),
-      d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d]["Educ"]));
+       let dotSelected = i == 0 ? ".dot1" : ".dot2"
+       let otherDotSelected = i == 1 ? ".dot1" : ".dot2"
 
-    let smallMin = Math.min(
-      d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d]["CMHC"]),
-      d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d]["CMHC"]),
-      d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d]["Phys"]),
-      d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d]["Phys"]),
-      d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d]["Educ"]),
-      d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d]["Educ"]));
+       let rectSelected = i == 0 ? "#firstModelCompareRect" : "#secondModelCompareRect"
+       let otherRectSelected = i == 1 ? "#firstModelCompareRect" : "#secondModelCompareRect"
 
+       if(d3.select(modelSelected).style("opacity") == 0)
+       {
+         d3.selectAll(modelSelected)
+          .transition(1000)
+          .style("opacity", 1)
 
-    if(smallMax < 0)
-    {
-      smallDom = [smallMin/ 2, 0]
-    }
-    else if (smallMin > 0){
-      smallDom = [0, smallMax / 2]
-    }
-    else{
-      smallDom=[smallMin / 2, smallMax / 2]
-    }
+        d3.selectAll(otherModel)
+         .transition(1000)
+         .style("opacity", 0)
 
-    this.drawSmallScale(selectedMapOne, selectedMapTwo, "CMHC", margin.left, height + 125, smallDom)
-    this.drawSmallScale(selectedMapOne, selectedMapTwo, "Phys", margin.left + 300, height + 125, smallDom)
-    this.drawSmallScale(selectedMapOne, selectedMapTwo, "Educ", margin.left + 600, height + 125, smallDom)
-    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "LCSW", margin.left, height + 125, smallDom)
-    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "MA", margin.left + 300, height + 125, smallDom)
-    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "MFT", margin.left + 600, height + 125, smallDom)
-    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "NP", margin.left, height + 125, smallDom)
-    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "PA", margin.left + 300, height + 125, smallDom)
-    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "PharmD", margin.left + 600, height + 125, smallDom)
-    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "Psych", margin.left + 300, height + 125, smallDom)
-    // this.drawSmallScale(selectedMapOne, selectedMapTwo, "RN", margin.left + 600, height + 125, smallDom)
+        d3.selectAll(dotSelected)
+          .transition(1000)
+          .style("opacity", 1)
 
-  }
+        d3.selectAll(otherDotSelected)
+         .transition(1000)
+         .style("opacity", 0)
 
-  drawSmallScale(selectedMapOne, selectedMapTwo, subSelected, x, y, dom)
-  {
-    // 2. Use the margin convention practice
-    var margin = {top: 50, right: 50, bottom: 50, left: 100}
-      , width = 200 // Use the window's width
-      , height = 200; // Use the window's height
+         d3.select(otherRectSelected)
+           .transition(1000)
+           .style("opacity", 0)
 
-    // The number of datapoints
-    var n = 11;
+         d3.select(rectSelected)
+          .transition(1000)
+          .style("opacity", .3)
+       }
+       else if(d3.select(otherModel).style("opacity") == 0)
+       {
+         d3.selectAll(otherModel)
+          .transition(1000)
+          .style("opacity", 1)
 
-    // 5. X scale will use the index of our data
-    var xScale = d3.scaleLinear()
-        .domain([d3.min(Object.keys(selectedMapOne)), d3.max(Object.keys(selectedMapOne))]) // input
-        .range([0, width]); // output
+        d3.selectAll(otherDotSelected)
+         .transition(1000)
+         .style("opacity", 1)
 
-    var yScale = d3.scaleLinear()
-        .domain(dom) // input
-        .range([height, 0]); // output
+         d3.select(rectSelected)
+          .transition(1000)
+          .style("opacity", 0)
+       }
+       else{
+         d3.selectAll(otherModel)
+          .transition(1000)
+          .style("opacity", 0)
+          d3.selectAll(otherDotSelected)
+           .transition(1000)
+           .style("opacity", 0)
 
-    // 7. d3's line generator
-    var line = d3.area()
-        .x(function(d, i) { return xScale(i + 2014); }) // set the x values for the line generator
-        .y0(function(d) { return yScale(d.y); }) // set the y values for the line generator
-        .y1(function(d) { return yScale(0); }) // set the y values for the line generator
-
-    // // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-    var dataset1 = d3.range(2014, 2025).map(d => { return {"y": selectedMapOne[d] ? selectedMapOne[d][subSelected] / 2 : 0} })
-    var dataset2 = d3.range(2014, 2025).map(d => { return {"y": selectedMapTwo[d] ? selectedMapTwo[d][subSelected] / 2 : 0} })
-
-    // 1. Add the SVG to the page and employ #2
-    var svg = this.svg
-      .append("g")
-        .attr("transform", "translate(" + x + "," + y + ")");
-
-    // 3. Call the x axis in a group tag
-    svg.append("g")
-        .attr("class", "x axis smallaxis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(xScale).ticks(4).tickFormat(d3.format("d")))
-        .call(g => g.select(".domain").remove())
-; // Create an axis component with d3.axisBottom
-
-    // 4. Call the y axis in a group tag
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(d3.axisLeft(yScale).ticks(4))
-        .call(g => g.select(".domain").remove())
-; // Create an axis component with d3.axisLeft
-
-    svg.append("text")
-      .text(subSelected)
-      .attr("alignment-baseline", "middle")
-      .attr("text-anchor", "middle")
-      .attr("x", 100)
-      .attr("y", -20)
+           d3.select(rectSelected)
+            .transition(1000)
+            .style("opacity", 0)
+       }
+     })
 
 
-    if(d3.min(Object.keys(selectedMapOne), d => selectedMapOne[d][subSelected]) >
-          d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d][subSelected]) && d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d][subSelected]) < 0)
-    {
-        svg.append("path")
-            .datum(dataset2) // 10. Binds data to the line
-            .attr("class", "secondModelCompare") // Assign a class for styling
-            .attr("d", line); // 11. Calls the line generator
-
-        svg.append("path")
-            .datum(dataset1) // 10. Binds data to the line
-            .attr("class", "firstModelCompare") // Assign a class for styling
-            .attr("d", line) // 11. Calls the line generator
-
-    }
-    else if (d3.max(Object.keys(selectedMapOne), d => selectedMapOne[d][subSelected]) <
-          d3.max(Object.keys(selectedMapTwo), d => selectedMapTwo[d][subSelected]) && d3.min(Object.keys(selectedMapTwo), d => selectedMapTwo[d][subSelected]) > 0)
-    {
-      svg.append("path")
-          .datum(dataset2) // 10. Binds data to the line
-          .attr("class", "secondModelCompare") // Assign a class for styling
-          .attr("d", line); // 11. Calls the line generator
-
-      svg.append("path")
-          .datum(dataset1) // 10. Binds data to the line
-          .attr("class", "firstModelCompare") // Assign a class for styling
-          .attr("d", line) // 11. Calls the line generator
-
-    }
-    else{
-        svg.append("path")
-            .datum(dataset1) // 10. Binds data to the line
-            .attr("class", "firstModelCompare") // Assign a class for styling
-            .attr("d", line); // 11. Calls the line generator
-        svg.append("path")
-            .datum(dataset2) // 10. Binds data to the line
-            .attr("class", "secondModelCompare") // Assign a class for styling
-            .attr("d", line) // 11. Calls the line generator
-    }
-
-
-    // 12. Appends a circle for each datapoint
-    // svg.selectAll(".dot1")
-    //     .data(dataset1)
-    //   .enter().append("circle") // Uses the enter().append() method
-    //     .attr("class", "dot1") // Assign a class for styling
-    //     .attr("cx", function(d, i) { return xScale(i + 2014) })
-    //     .attr("cy", function(d) { return yScale(d.y) })
-    //     .attr("r", 2)
-    //       .on("mouseover", function(a, b, c) {
-    //         console.log(a)
-    //         // this.attr('class', 'focus')
-    //     });
-    //
-    // svg.selectAll(".dot2")
-    //     .data(dataset2)
-    //   .enter().append("circle") // Uses the enter().append() method
-    //     .attr("class", "dot2") // Assign a class for styling
-    //     .attr("cx", function(d, i) { return xScale(i + 2014) })
-    //     .attr("cy", function(d) { return yScale(d.y) })
-    //     .attr("r", 2)
-    //       .on("mouseover", function(a, b, c) {
-    //         console.log(a)
-    //         // this.attr('class', 'focus')
-    //     });
   }
 }
 

@@ -47,7 +47,7 @@
 	pointer-events:visibleFill;
 }
 
-#descriptionTooltip {
+#descriptionTooltip, #comparisonTooltip {
 	z-index: 1000;
 	position: absolute;
 	text-align: center;
@@ -249,17 +249,17 @@ h2{
 }
 
 .firstModelCompare {
-    fill: #1B9E77;
-    stroke: grey;
-    stroke-width: 2px;
-		opacity: 0.5;
+    fill: none;
+    stroke: #1B9E77;
+    stroke-width: 4px;
+		opacity: .9;
 
 }
 .secondModelCompare {
-    fill: #7570B3;
-    stroke: grey;
-    stroke-width: 2px;
-		opacity: 0.5;
+    fill: none;
+    stroke: #7570B3;
+    stroke-width: 4px;
+		opacity: .9;
 }
 
 .overlay {
