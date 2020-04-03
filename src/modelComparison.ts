@@ -405,7 +405,7 @@ class ModelComparison
 
            d3.select(rectSelected)
             .transition(1000)
-            .style("opacity", 0)
+            .style("opacity", .3)
        }
      })
 
