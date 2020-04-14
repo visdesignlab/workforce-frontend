@@ -273,7 +273,7 @@ class Sidebar {
 			.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 		axis.call(xAxis);
 
-		groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
+		groups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode, this);
 		//
 		// if (Object.keys(otherCurrentYearData).length) {
 		// 	groups.call(this.drawText, barWidth, barHeight / 2, this.margin.left, 1, barWidth );
@@ -310,7 +310,7 @@ class Sidebar {
 			})
 
 
-		stateGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
+		stateGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode, this);
 
 		if (this.map.comparisonMode) {
 			this.stateSvg.attr("height", "60");
@@ -517,7 +517,7 @@ class Sidebar {
 		.call(d3.axisTop(xScale).ticks(4).tickSize(1.5).tickFormat(d3.format(".1s")))
 	axis.call(xAxis);
 
-	professionsGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode);
+	professionsGroups.call(this.drawAllText, barWidth, barHeight, this.margin.left, this.map.comparisonMode, this);
 	//
 	// if (Object.keys(otherCurrentYearData).length) {
 	// 	professionsGroups.call(this.drawText, barWidth, barHeight/2, this.margin.left, 1, barWidth);
@@ -766,7 +766,7 @@ class Sidebar {
 			.text(d => isNaN(d[i]) ? d[i] : f(d[i]));
 	}
 
-	drawAllText(selection, barWidth, barHeight, leftMargin, doubleBars) {
+	drawAllText(selection, barWidth, barHeight, leftMargin, doubleBars, that) {
 		var groups = selection.append('g');
 		const f = d3.format('.0f');
 
@@ -808,13 +808,31 @@ class Sidebar {
 				.attr("cx", barWidth - 5)
 				.attr("cy", barHeight / 4)
 				.style("fill", "#1B9E77")
-				.attr("r", 5);
+				.attr("r", 5)
+				.on("mouseover", () => {
+					d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
+					d3.select("#modelNameTooltip").html("<h5>" + that.map.serverModels[that.map.modelsUsed[0]].name + "</h5>")
+						.style("left", (d3.event.pageX) + "px")
+						.style("top", (d3.event.pageY - 28) + "px");
+				})
+				.on("mouseout", () => {
+					d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
+				});
 
 			groups.append("circle")
 				.attr("cx", barWidth - 5)
 				.attr("cy", barHeight / 2 + barHeight/4)
 				.style("fill", "#7570B3")
-				.attr("r", 5);
+				.attr("r", 5)
+				.on("mouseover", () => {
+					d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
+					d3.select("#modelNameTooltip").html("<h5>" + that.map.serverModels[that.map.modelsUsed[1]].name + "</h5>")
+						.style("left", (d3.event.pageX) + "px")
+						.style("top", (d3.event.pageY - 28) + "px");
+				})
+				.on("mouseout", () => {
+					d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
+				});
 
 			groups
 				.append('text')

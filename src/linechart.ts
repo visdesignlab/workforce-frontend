@@ -162,6 +162,7 @@ class Linechart{
 		this.data.dates = Object.keys(results);
 		this.data.series = demand;
 
+		console.log(d3.extent(this.data.dates))
 
 		var x = d3.scaleLinear()
 			.domain([+d3.min(this.data.dates), +d3.max(this.data.dates)])

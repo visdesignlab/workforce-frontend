@@ -47,12 +47,12 @@
 	pointer-events:visibleFill;
 }
 
-#descriptionTooltip, #comparisonTooltip {
+#descriptionTooltip, #comparisonTooltip, #modelNameTooltip {
 	z-index: 1000;
 	position: absolute;
 	text-align: center;
-	padding: 20px;
-	margin: 10px;
+	margin: 2px;
+	margin-bottom: 0px;
 	font: 12px sans-serif;
 	background: lightsteelblue;
 	border: 1px;
@@ -65,8 +65,13 @@
 	max-width:400px;
 	width:auto;
 	padding:4px;
+	padding-bottom: 0px;
 	color:white;
 	opacity:0;
+}
+
+#modelNameTooltip h5 {
+	font-size: 12px;
 }
 
 #tooltip {
