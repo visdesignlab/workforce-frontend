@@ -51705,6 +51705,10 @@ var MapEvents = /** @class */ (function () {
         this.updateType();
         this.changeMapType();
         this.changeComparisonType();
+        d3.select("#countyLabel")
+            .on("click", function () {
+            console.log(d3.select("#countyCollapse").node());
+        });
     }
     MapEvents.prototype.updateYear = function () {
         var _this = this;
@@ -52504,7 +52508,7 @@ var Sidebar = /** @class */ (function () {
             d3.select("#sortCounties #" + this.lastSelected).transition().duration(500).text(function (d) { return '\uf0dd'; });
         }
         d3.select("#allProfessions").selectAll("*").remove();
-        var allProfSvg = d3.select("#allProfessions").append("svg").attr("style", "width:100%").attr('height', 30);
+        var allProfSvg = d3.select("#allProfessions").append("svg").attr("style", "width:100%").attr('height', this.map.comparisonMode ? 60 : 30);
         var allProfData = ["All", 0, 0, 0, 0, 0, 0];
         for (var k in professionsData) {
             for (var j = 1; j < 7; j++) {

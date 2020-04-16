@@ -276,6 +276,19 @@ body {
   pointer-events: all;
 }
 
+.collapsible {
+  background-color: #A9A9A9;
+  color: #333333;
+  cursor: pointer;
+  padding: 5px;
+	margin-top:5px;
+	margin-bottom:5px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  font-size: 28px;
+}
+
 /* Style the dots by assigning a fill and stroke */
 .dot1 {
     fill: #1B9E77;

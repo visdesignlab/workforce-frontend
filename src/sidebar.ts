@@ -409,7 +409,7 @@ class Sidebar {
 	}
 
 	d3.select("#allProfessions").selectAll("*").remove();
-	let allProfSvg = d3.select("#allProfessions").append("svg").attr("style", "width:100%").attr('height', 30);
+	let allProfSvg = d3.select("#allProfessions").append("svg").attr("style", "width:100%").attr('height', this.map.comparisonMode ? 60 : 30);
 
 
 	let allProfData = ["All", 0, 0, 0, 0, 0, 0];

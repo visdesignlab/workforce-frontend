@@ -14,6 +14,11 @@ class MapEvents{
 		this.changeMapType();
 		this.changeComparisonType();
 
+		d3.select("#countyLabel")
+			.on("click", () => {
+				console.log(d3.select("#countyCollapse").node());
+			})
+
 	}
 
 	updateYear():void{
