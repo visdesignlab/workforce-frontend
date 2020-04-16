@@ -322,10 +322,18 @@ body {
 	margin-left:15px;
 }
 
+h1 {
+	font-size:28px !important;
+}
+
 svg{
 	position:relative;
 }
 
 #mapContainer{
 	justify-content: center
+}
+
+#countiesList, #professionsList {
+	display:none;
 }

@@ -11,7 +11,6 @@ class MapEvents{
 		this.selectAll=false;
 		this.updateYear();
 		this.updateType();
-		this.selectAllClicked();
 		this.changeMapType();
 		this.changeComparisonType();
 
@@ -30,39 +29,6 @@ class MapEvents{
 			this.map.updateMapType(mapData);
 		})
 	}
-
-	selectAllClicked():void{
-		d3.select("#selectAll").on('click',()=>{
-
-			if(this.selectAll){
-				d3.select("#selectAll").transition().text('Unselect All');
-				Object.keys(this.map.selectedProfessions).forEach(profession => {
-					this.map.selectedProfessions[profession] = true;
-				d3.select("#" + profession)
-					.select('rect')
-					.attr('fill', '#cccccc');
-
-				})
-				this.selectAll = false;
-
-			}
-
-
-			else{
-				d3.select("#selectAll").transition().text('Select All');
-
-				Object.keys(this.map.selectedProfessions).forEach(profession => {
-						this.map.selectedProfessions[profession] = false;
-						d3.selectAll("#" + profession)
-							.select('rect')
-							.attr('fill', '#ffffff');
-
-					})
-				this.selectAll = true;
-
-			}
-				this.map.updateSelections(this.map.selectedProfessions)
-			})}
 
 	changeMapType() {
 		document.getElementById("mapType").addEventListener('change',()=>{
