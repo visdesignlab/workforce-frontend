@@ -91,7 +91,7 @@ class Map{
 			this.svg.append('text')
 				.text("\uf059")
 				.attr("x", 20)
-				.attr("y", 40)
+				.attr("y", 45)
 				.attr('alignment-baseline', 'middle')
 				.style('font-size', '24px')
 				.classed("fontAwesome", true)
