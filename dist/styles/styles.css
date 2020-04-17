@@ -240,6 +240,36 @@ body {
 	font: 14px sans-serif;
 }
 
+.collapsible:hover {
+  background-color: #808080;
+}
+
+.plusClass:after {
+	content: '\02795';
+	/* Unicode character for "plus" sign (+) */
+	text-align:center;
+	align-content: center;
+	font-size: 13px;
+	color: white;
+	float: right;
+	margin-left: 5px;
+	padding: 5px;
+	margin-top:5px;
+}
+
+.minusClass:after {
+	content: '\2796';
+	/* Unicode character for "plus" sign (+) */
+	text-align:center;
+	align-content: center;
+	font-size: 13px;
+	color: white;
+	float: right;
+	margin-left: 5px;
+	padding: 5px;
+	margin-top:5px;
+}
+
 .legendAxis {
 	font: 11px sans-serif;
 }
@@ -277,6 +307,8 @@ body {
 }
 
 .collapsible {
+	outline: none !important;
+	box-shadow: none;
   background-color: #A9A9A9;
   color: #333333;
   cursor: pointer;

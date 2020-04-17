@@ -14,9 +14,18 @@ class MapEvents{
 		this.changeMapType();
 		this.changeComparisonType();
 
-		d3.select("#countyLabel")
-			.on("click", () => {
-				console.log(d3.select("#countyCollapse").node());
+		d3.selectAll(".plusClass")
+			.on("click", function(){
+				console.log("clicked", this);
+				if(d3.select(this).classed("plusClass"))
+				{
+					d3.select(this).classed("minusClass", true)
+					d3.select(this).classed("plusClass", false)
+				}
+				else{
+					d3.select(this).classed("minusClass", false)
+					d3.select(this).classed("plusClass", true)
+				}
 			})
 
 	}

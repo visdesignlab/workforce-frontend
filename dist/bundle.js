@@ -51705,9 +51705,17 @@ var MapEvents = /** @class */ (function () {
         this.updateType();
         this.changeMapType();
         this.changeComparisonType();
-        d3.select("#countyLabel")
+        d3.selectAll(".plusClass")
             .on("click", function () {
-            console.log(d3.select("#countyCollapse").node());
+            console.log("clicked", this);
+            if (d3.select(this).classed("plusClass")) {
+                d3.select(this).classed("minusClass", true);
+                d3.select(this).classed("plusClass", false);
+            }
+            else {
+                d3.select(this).classed("minusClass", false);
+                d3.select(this).classed("plusClass", true);
+            }
         });
     }
     MapEvents.prototype.updateYear = function () {
