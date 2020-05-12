@@ -6,6 +6,8 @@
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/css/bootstrap-select.min.css">
 		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 		<link rel="stylesheet" href="styles/bulma.css">
+		<link rel="stylesheet" href="styles/bulma-radio-checkbox.min.css">
+
 		<link rel="stylesheet" href="styles/styles.css">
 		<link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
 		<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -94,24 +96,52 @@
 						<div height="630px" style="padding-bottom:10px;" style='width:540px;'>
 							<button class="collapsible goodFont plusClass" type="button" data-toggle="collapse" data-target="#collapseCounty" aria-expanded="false" aria-controls="collapseCounty">Counties</button>
 							<div class="collapse" id="collapseCounty" >
-								<h5 id=professionsList></h5>
-								<div id='countiesHeader'></div>
+								<table id="countiesTable">
+										<thead>
+										<tr>
+												<th style="max-width: 30px; min-width:30px;"></th>
+												<th>Name</th>
+												<th style="max-width: 90px; min-width:90px;"> Supply <span class="glyphicon glyphicon-sort"></span><br/></th>
+												<th style="max-width: 90px; min-width:90px;">Need</th>
+												<th>Gap</th>
 
-								<div id="state" style='width: 510px; max-width: 510px; min-width: 510px; min-height: 30px; overflow-y: auto; overflow-x: hidden;'>
-									<div style='width: 510px; max-width: 510px; min-width: 510px; min-height: 0px; overflow-y: auto; overflow-x: hidden; border-top: double; border-top: double;'></div>
-								</div>
-
-								<div id="counties" style='width: 540px; max-width: 540px; min-width: 540px; height: 600px; overflow-y: auto; overflow-x: hidden;'>
-									<div style='width: 510px; max-width: 510px; min-width: 510px; min-height: 0px; overflow-y: auto; overflow-x: hidden;  border-top: double; border-top: double;'></div>
-								</div>
+										</tr>
+										<tr>
+												<td></td>
+												<td id="goalHeader"></td>
+										</tr>
+										</thead>
+										<tbody>
+											<tr id="utahRow">
+										</tbody>
+								</table>
 							</div>
 						</div>
 
+
+
 						<button class="collapsible goodFont plusClass" type="button" data-toggle="collapse" data-target="#collapseProf" aria-expanded="false" aria-controls="collapseProf">Professions</button>
 						<div class="collapse" id="collapseProf" style='width:540px;'>
-							<div id='professionsHeader'></div>
-							<div id="allProfessions" style='width: 510px;max-width: 510px; min-width: 510px; border-top: double;'></div>
-							<div id="professions" style='width: 510px;max-width: 510px; min-width: 510px;  border-top: double;'></div>
+							<table id="professionsTable">
+									<thead>
+									<tr>
+											<th style="max-width: 30px; min-width:30px;"></th>
+											<th style="max-width: 30px; min-width:30px;"></th>
+											<th>Name</th>
+											<th style="max-width: 90px; min-width:90px;"> Supply <span class="glyphicon glyphicon-sort"></span><br/></th>
+											<th style="max-width: 90px; min-width:90px;">Need</th>
+											<th>Gap</th>
+
+									</tr>
+									<tr>
+											<td></td>
+											<td id="goalHeader"></td>
+									</tr>
+									</thead>
+									<tbody>
+										<tr id="allProfRow">
+									</tbody>
+							</table>
 						</div>
 					</div>
 

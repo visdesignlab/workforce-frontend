@@ -17,7 +17,7 @@ class Map{
 	results: any;
 	currentYearData : any;
 	linechart:Linechart;
-	controller:MapController
+	controller:MapController;
 	firstMap:boolean;
 
 	/**
@@ -103,7 +103,6 @@ class Map{
 				})
 				.on("mouseout", () => {
 					d3.select("#descriptionTooltip").transition().duration(200).style("opacity", 0);
-
 				})
 
 			this.currentYearData = this.results[yearSelected]
@@ -393,34 +392,99 @@ class Map{
 	 * This handles when the user selects a new year
 	 * @param year this is the new year selected by the user
 	 */
-	updateMapYear(year:string, mapData:string, mapType:string, sidebar:any):Promise<void>{
+	updateMapYear(year:string, mapData:string, mapType:string, sidebar:any):Promise<any>{
 
 		const map = mapType;
-		const modelFile = this.controller.serverModels[this.modelData].path;;
-		let promise = d3.json(`http://3.20.123.182/${modelFile}`).then((results)=> {
-			results = results[map];
-			this.currentYearData = results[year]
-				var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
-				for (let county in this.currentYearData) {
-					let totalSupply = 0;
-					let totalDemand = 0;
-					for (let profession of professions) {
-						if (!sidebar.selectedProfessions.hasOwnProperty(profession)
-							|| sidebar.selectedProfessions[profession]) {
-							totalSupply += this.currentYearData[county]['supply'][profession];
-							totalDemand += this.currentYearData[county]['demand'][profession];
+		const modelFile = this.controller.serverModels[this.modelData].path;
+
+		let replacementJson = undefined
+
+		let promise1 = d3.json('../data/profReplacements.json').then((res) => {
+			replacementJson = res;
+		})
+
+		let innerPromise = undefined;
+
+
+		let promise2 = d3.json(`http://3.20.123.182/${modelFile}`).then((results)=> {
+
+			promise1.then(() => {
+				console.log(results);
+				console.log(this.controller.removedProfessions);
+
+				for(let a in results)
+				{
+					for(let year in results[a])
+					{
+						for(let local in results[a][year])
+						{
+							let newDemand = results[a][year][local].demand;
+							let newSupply = results[a][year][local].supply;
+
+							for(let i of Array.from(this.controller.removedProfessions))
+							{
+								let redistributeNum = newDemand[i];
+								let redistributeList = replacementJson[i].Replacements;
+
+								redistributeList = redistributeList.filter(d => {
+									return !this.controller.removedProfessions.has(d)
+								});
+
+								redistributeNum /= redistributeList.length;
+
+								for (let newProfDist of redistributeList)
+								{
+									newDemand[newProfDist] += redistributeNum;
+								}
+
+								newDemand[i] = 0
+
+								let redistributeNumSup = newSupply[i];
+
+								redistributeNumSup /= redistributeList.length;
+
+								for (let newProfDist of redistributeList)
+								{
+									newSupply[newProfDist] += redistributeNumSup;
+								}
+
+								newDemand[i] = 0;
+								newSupply[i] = 0;
+							}
+
+							results[a][year][local].demand = newDemand
+							results[a][year][local].supply = newSupply
+
 						}
 					}
-						let population = this.currentYearData[county].population;
-						this.currentYearData[county]['totalSupply'] = totalSupply;
-						this.currentYearData[county]['totalDemand'] = totalDemand;
-						this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
-						this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
-						this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
 				}
-				this.updateMapType(mapData, 1000);
+
+				console.log(results);
+
+				results = results[map];
+				this.currentYearData = results[year]
+					var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
+					for (let county in this.currentYearData) {
+						let totalSupply = 0;
+						let totalDemand = 0;
+						for (let profession of professions) {
+							if (!sidebar.selectedProfessions.hasOwnProperty(profession)
+								|| sidebar.selectedProfessions[profession]) {
+								totalSupply += this.currentYearData[county]['supply'][profession];
+								totalDemand += this.currentYearData[county]['demand'][profession];
+							}
+						}
+							let population = this.currentYearData[county].population;
+							this.currentYearData[county]['totalSupply'] = totalSupply;
+							this.currentYearData[county]['totalDemand'] = totalDemand;
+							this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
+							this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
+							this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
+					}
+					this.updateMapType(mapData, 1000);
+			})
 		});
-		return promise;
+		return Promise.all([promise1, promise2]);
 	}
 
 	mouseOut(){

@@ -27,7 +27,6 @@ class MapEvents{
 					d3.select(this).classed("plusClass", true)
 				}
 			})
-
 	}
 
 	updateYear():void{

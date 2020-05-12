@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
-import {Sidebar} from './sidebar';
+import {Sidebar} from './newSidebar';
 import {Map} from './map';
 import {ModelComparison} from './modelComparison';
 
@@ -21,6 +21,7 @@ class MapController{
 	selectedCounties:Set<string>;
 	modelsUsed:any[];
 	sidebar:Sidebar;
+	removedProfessions:Set<string>;
 	modelComparison:ModelComparison;
 	comparisonType:string;
 
@@ -29,9 +30,11 @@ class MapController{
 	 */
 	constructor()
 	{
+		this.removedProfessions = new Set<string>();
 		this.serverModels = {};
 		this.originalMap = new Map(this, true);
 		this.secondMap = new Map(this, false);
+
 		this.sidebar = new Sidebar(this);
 		this.selectedProfessions = {};
 		this.modelsUsed = [];
@@ -55,6 +58,7 @@ class MapController{
 		this.originalMap.destroy();
 		this.secondMap.destroy();
 		this.sidebar.destroy();
+
 	}
 
 	drawMap(customModel = false, initSidebar = true, otherCurrentYearData = []):Promise<void>{
@@ -85,6 +89,7 @@ class MapController{
 
 	drawSidebar()
 	{
+
 		this.sidebar.initSideBar(this.selectedProfessions, this.originalMap.currentYearData, this.selectedCounties, this.secondMap.currentYearData);
 	}
 
@@ -118,7 +123,11 @@ class MapController{
 	}
 
 	updateSelections(selectedProfessions:any){
+		console.log(this.removedProfessions);
 		this.updateMapYear(this.yearSelected).then(() => {
+			console.log(
+				"NOW"
+			)
 			this.drawSidebar();
 			this.setAllHighlights();
 			if(this.comparisonMode)
@@ -155,7 +164,7 @@ class MapController{
 			this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
 		}
 
-		this.drawSidebar();
+		this.sidebar.highlightBar(name);
 	}
 
 	unHighlightPath(name:string) {
@@ -167,8 +176,7 @@ class MapController{
 		}
 		this.setAllHighlights();
 
-
-		this.drawSidebar();
+		this.sidebar.unHighlightBar(name);
 	}
 
 	setAllHighlights(){
@@ -183,8 +191,6 @@ class MapController{
 				this.unHighlightProfession(prof);
 			}
 		}
-
-
 	}
 
 	highlightProfession(name:string){

@@ -146,7 +146,7 @@ class Sidebar {
 		.domain([0, domainMax])
 		.range([0, barWidth]);
 		let countiesData = this.calculateCountiesData(currentYear, otherCurrentYearData, mapData.includes('100'));
-
+		console.log(countiesData)
 		/**
 		* Pull out the state, put it in its own SVG above.
 		* TODO::  this is straight duplicating the code below it atm. Pull into a function.
@@ -485,7 +485,6 @@ class Sidebar {
 
 					this.selectedProfessions[d[0]] = false;
 					this.map.updateSelections(this.selectedProfessions);
-
 			}
 			else {
 				this.selectedProfessions[d[0]] = true;
