@@ -1,35 +1,35 @@
 {
   "Phys":{
-    "Replacements": ["PA", "NP", "RN", "PharmD", "MA", "Educ", "Psych", "LCSW", "CMHC", "MFT"]
+    "Replacements": ["PA", "NP", "RN"]
   },
   "PA":{
-    "Replacements": ["Phys", "NP", "RN", "PharmD", "MA", "Educ", "Psych", "LCSW", "CMHC", "MFT"]
+    "Replacements": ["Phys", "NP", "RN"]
   },
   "NP":{
-    "Replacements": ["PA", "Phys", "RN", "PharmD", "MA", "Educ", "Psych", "LCSW", "CMHC", "MFT"]
+    "Replacements": ["PA", "Phys", "RN"]
   },
   "RN":{
-    "Replacements": ["PA", "NP", "Phys", "PharmD", "MA", "Educ", "Psych", "LCSW", "CMHC", "MFT"]
+    "Replacements": ["PA", "NP", "Phys"]
   },
   "PharmD":{
-    "Replacements": ["PA", "NP", "RN", "Phys", "MA", "Educ", "Psych", "LCSW", "CMHC", "MFT"]
+    "Replacements": []
   },
   "MA":{
-    "Replacements": ["PA", "NP", "RN", "PharmD", "Phys", "Educ", "Psych", "LCSW", "CMHC", "MFT"]
+    "Replacements": ["PA", "NP", "RN", "Phys"]
   },
   "Educ":{
     "Replacements": ["PA", "NP", "RN", "PharmD", "MA", "Phys", "Psych", "LCSW", "CMHC", "MFT"]
   },
   "Psych":{
-    "Replacements": ["PA", "NP", "RN", "PharmD", "MA", "Educ", "Phys", "LCSW", "CMHC", "MFT"]
+    "Replacements": ["LCSW", "CMHC", "MFT"]
   },
   "LCSW":{
-    "Replacements": ["PA", "NP", "RN", "PharmD", "MA", "Educ", "Psych", "Phys", "CMHC", "MFT"]
+    "Replacements": ["Psych", "CMHC", "MFT"]
   },
   "CMHC":{
-    "Replacements": ["PA", "NP", "RN", "PharmD", "MA", "Educ", "Psych", "LCSW", "Phys", "MFT"]
+    "Replacements": [ "Psych", "LCSW", "MFT"]
   },
   "MFT":{
-    "Replacements": ["PA", "NP", "RN", "PharmD", "MA", "Educ", "Psych", "LCSW", "CMHC", "Phys"]
+    "Replacements": ["Psych", "LCSW", "CMHC"]
   }
 }

@@ -65,6 +65,8 @@ class MapEvents{
 
 		let counter = 0;
 
+
+
 		promise = promise.then((results)=> {
 			this.map.serverModels = results;
 			for(let mod in results)
@@ -93,6 +95,9 @@ class MapEvents{
 
 
 		document.getElementById("modelData").addEventListener('change',()=>{
+			this.map.removedProfessions.clear();
+			this.map.modelRemovedComparison = false;
+
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
 

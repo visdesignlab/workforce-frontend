@@ -36,11 +36,14 @@ class Linechart{
 	}
 
 	public initLineChart(results, selectedCounties:string[]) {
+		console.log(results);
 		if(selectedCounties.length == 0)
 		{
 			this.initLineChart(results, ['State of Utah']);
 			return;
 		}
+
+
 		this.lineChartSvg.selectAll('*').remove();
 		// this.lineChartSvg.append('line')
 		// 	.attr('stroke', 'black')
@@ -80,11 +83,19 @@ class Linechart{
 				}
 				demand.push(counter);
 			}
+
+			if(supply.filter((d) => d !== 0).length == 0 && demand.filter((d) => d !== 0).length == 0)
+			{
+				continue;
+			}
+
 			supply_demand.push([supply, demand, profession]);
 
 			max = d3.max([d3.max(demand), d3.max(supply), max])
 
 		}
+
+		console.log(supply_demand)
 
 
 		for (let i in supply_demand) {

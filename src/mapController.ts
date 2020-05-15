@@ -24,6 +24,7 @@ class MapController{
 	removedProfessions:Set<string>;
 	modelComparison:ModelComparison;
 	comparisonType:string;
+	modelRemovedComparison:boolean;
 
 	/**
 	 *
@@ -68,7 +69,7 @@ class MapController{
 		if(this.comparisonMode)
 		{
 			promise = promise.then(() => this.secondMap.drawMap(this.mapData, this.modelsUsed[1], this.selectedProfessions, this.yearSelected, this.selectedCounties, this.mapType, customModel, initSidebar));
-			promise = promise.then(() => this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType));
+			// promise = promise.then(() => this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType));
 			d3.select("#comparisonView")
 				.style("display", "block")
 			d3.select("#map")
@@ -109,32 +110,65 @@ class MapController{
 		this.drawSidebar();
 	}
 
+
 	/**
 	 * This handles when the user selects a new year
 	 * @param year this is the new year selected by the user
 	 */
-	updateMapYear(year:string):Promise<void>{
-		let promise = this.originalMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar);
-		if(this.comparisonMode)
+	updateMapYear(year:string):Promise<any>{
+
+		if(this.removedProfessions.size > 0)
 		{
-			promise = promise.then(() => this.secondMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar));
+			this.comparisonMode = true;
 		}
-		return promise;
+
+		let promise = this.originalMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar)
+		.then(() => {
+			return this.secondMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar);
+		})
+
+		return Promise.all([promise]);
 	}
 
 	updateSelections(selectedProfessions:any){
-		console.log(this.removedProfessions);
 		this.updateMapYear(this.yearSelected).then(() => {
-			console.log(
-				"NOW"
-			)
+
 			this.drawSidebar();
 			this.setAllHighlights();
 			if(this.comparisonMode)
 			{
-				this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+				// this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
 			}
 		});
+	}
+
+	createDuplicateMap()
+	{
+		if(!this.modelRemovedComparison)
+		{
+			d3.select("#comparisonView")
+				.style("display", "block")
+			d3.select("#map")
+				.attr("width", 1200)
+
+			this.modelRemovedComparison = true;
+			this.comparisonMode = true;
+			this.secondMap.drawMap(this.mapData, this.modelsUsed[0], this.selectedProfessions, this.yearSelected, this.selectedCounties, this.mapType, false, true);
+		}
+	}
+
+	removeDuplicateMap()
+	{
+		if(this.modelRemovedComparison)
+		{
+			d3.select("#comparisonView")
+				.style("display", "none")
+			d3.select("#map")
+				.attr("width", 600)
+			this.modelRemovedComparison = false;
+			this.comparisonMode = false;
+			this.secondMap.destroy();
+		}
 	}
 
 	mouseOut(){
@@ -161,7 +195,7 @@ class MapController{
 
 		if(this.comparisonMode)
 		{
-			this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+			// this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
 		}
 
 		this.sidebar.highlightBar(name);
@@ -220,7 +254,7 @@ class MapController{
 
 		if(this.comparisonMode)
 		{
-			this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+			// this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
 		}
 
 		this.updateSelections(this.selectedProfessions);
@@ -235,7 +269,7 @@ class MapController{
 		this.comparisonType = s;
 		if(this.comparisonMode)
 		{
-			this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+			// this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
 
 		}
 	}

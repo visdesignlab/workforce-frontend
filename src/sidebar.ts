@@ -133,7 +133,9 @@ class Sidebar {
 		if (mapData.includes('100')) {
 			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupplyPer100K'], currentYear[d]['totalDemandPer100K']));
 		} else {
-			domainMax = d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand']));
+			domainMax = d3.max(
+				d3.max(Object.keys(currentYear), d => Math.max(currentYear[d]['totalSupply'], currentYear[d]['totalDemand'])),
+				d3.max(Object.keys(otherCurrentYearData), d => Math.max(otherCurrentYearData[d]['totalSupply'], otherCurrentYearData[d]['totalDemand'])));
 		}
 
 		currentYear[currState] = temp;

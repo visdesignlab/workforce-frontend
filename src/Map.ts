@@ -18,6 +18,7 @@ class Map{
 	currentYearData : any;
 	linechart:Linechart;
 	controller:MapController;
+	totalResults:any;
 	firstMap:boolean;
 
 	/**
@@ -78,12 +79,12 @@ class Map{
 			.attr('y1', 10)
 			.attr('y2', 600);
 
-			this.controller.comparisonMode
 			this.svg.append('text')
-				.text(this.controller.serverModels[this.modelData].name)
+				.text((!this.firstMap && this.controller.modelRemovedComparison) ? this.controller.serverModels[this.modelData].name + "(Modified)" : this.controller.serverModels[this.modelData].name)
 				.attr("x", 20)
 				.attr("y", 20)
 				.attr('alignment-baseline', 'middle')
+				.attr("id", this.controller.comparisonMode ? (this.firstMap ? "firstTitle" : "secondTitle") : "onlyTitle")
 				.style('font-size', '24')
 				.style("fill", this.controller.comparisonMode ? (this.firstMap ? "#1B9E77" : "#7570B3") : "#333333")
 				.classed("goodFont", true)
@@ -394,6 +395,11 @@ class Map{
 	 */
 	updateMapYear(year:string, mapData:string, mapType:string, sidebar:any):Promise<any>{
 
+		if(!this.firstMap && !this.controller.comparisonMode)
+		{
+			return Promise.resolve();
+		}
+
 		const map = mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
@@ -403,65 +409,36 @@ class Map{
 			replacementJson = res;
 		})
 
-		let innerPromise = undefined;
-
-
 		let promise2 = d3.json(`http://3.20.123.182/${modelFile}`).then((results)=> {
 
 			promise1.then(() => {
-				console.log(results);
-				console.log(this.controller.removedProfessions);
 
-				for(let a in results)
+				if(this.firstMap)
 				{
-					for(let year in results[a])
+					if(this.controller.removedProfessions.size > 0 && !this.controller.modelRemovedComparison)
 					{
-						for(let local in results[a][year])
-						{
-							let newDemand = results[a][year][local].demand;
-							let newSupply = results[a][year][local].supply;
+						this.controller.createDuplicateMap()
+						d3.select("#onlyTitle")
+							.style("fill", "#1B9E77")
 
-							for(let i of Array.from(this.controller.removedProfessions))
-							{
-								let redistributeNum = newDemand[i];
-								let redistributeList = replacementJson[i].Replacements;
+					}
 
-								redistributeList = redistributeList.filter(d => {
-									return !this.controller.removedProfessions.has(d)
-								});
+					else if(this.controller.removedProfessions.size == 0 && this.controller.modelRemovedComparison)
+					{
 
-								redistributeNum /= redistributeList.length;
-
-								for (let newProfDist of redistributeList)
-								{
-									newDemand[newProfDist] += redistributeNum;
-								}
-
-								newDemand[i] = 0
-
-								let redistributeNumSup = newSupply[i];
-
-								redistributeNumSup /= redistributeList.length;
-
-								for (let newProfDist of redistributeList)
-								{
-									newSupply[newProfDist] += redistributeNumSup;
-								}
-
-								newDemand[i] = 0;
-								newSupply[i] = 0;
-							}
-
-							results[a][year][local].demand = newDemand
-							results[a][year][local].supply = newSupply
-
-						}
+						this.controller.removeDuplicateMap();
+					}
+				}
+				else{
+					if(this.controller.modelRemovedComparison)
+					{
+						this.removeProfessionsFromData(results, replacementJson);
 					}
 				}
 
-				console.log(results);
-
 				results = results[map];
+				this.results = results;
+
 				this.currentYearData = results[year]
 					var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
 					for (let county in this.currentYearData) {
@@ -481,7 +458,10 @@ class Map{
 							this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
 							this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
 					}
+
 					this.updateMapType(mapData, 1000);
+					this.linechart.initLineChart(this.results, Array.from(this.controller.selectedCounties));
+
 			})
 		});
 		return Promise.all([promise1, promise2]);
@@ -510,6 +490,59 @@ class Map{
 			.filter(d => d.properties.NAME == name)
 			.classed('selected', false);
 	}
+
+	removeProfessionsFromData(results, replacementJson)
+	{
+
+
+		for(let a in results)
+		{
+			for(let year in results[a])
+			{
+				for(let local in results[a][year])
+				{
+					let newDemand = results[a][year][local].demand;
+					let newSupply = results[a][year][local].supply;
+
+					for(let i of Array.from(this.controller.removedProfessions))
+					{
+						let redistributeNum = newDemand[i];
+						let redistributeList = replacementJson[i].Replacements;
+
+						redistributeList = redistributeList.filter(d => {
+							return !this.controller.removedProfessions.has(d)
+						});
+
+						redistributeNum /= redistributeList.length;
+
+						for (let newProfDist of redistributeList)
+						{
+							newDemand[newProfDist] += redistributeNum;
+						}
+
+						newDemand[i] = 0
+
+						// let redistributeNumSup = newSupply[i];
+						//
+						// redistributeNumSup /= redistributeList.length;
+						//
+						// for (let newProfDist of redistributeList)
+						// {
+						// 	newSupply[newProfDist] += redistributeNumSup;
+						// }
+						//
+						newDemand[i] = 0;
+						newSupply[i] = 0;
+					}
+
+					results[a][year][local].demand = newDemand
+					// results[a][year][local].supply = newSupply
+
+				}
+			}
+		}
+	}
+
 
 	removeSpaces(s) : string{
 		return s.replace(/\s/g, '');

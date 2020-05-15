@@ -85,7 +85,6 @@ class Sidebar {
     }
 
     this.selectedProfessions = selectedProfessions;
-    console.log(selectedProfessions)
     //
     // console.log(countiesData)
     this.updateTable(selectedProfessions, currentYear, selectedCounties, otherCurrentYearData);
@@ -140,6 +139,7 @@ class Sidebar {
   }
 
   highlightRect(id) {
+		console.log(id);
     if(id == "State of Utah")
     {
       this.currentlySelected.forEach(id => {
@@ -149,20 +149,31 @@ class Sidebar {
       })
 
       this.currentlySelected = new Set<string>().add("State of Utah");
+			this.map.highlightPath("State of Utah");
       return;
     }
+
+		if(this.currentlySelected.has("State of Utah"))
+		{
+			this.map.unHighlightPath("State of Utah");
+		}
+
 
     if(this.currentlySelected.has(id))
     {
       this.currentlySelected.delete(id);
-      this.map.unHighlightPath(id);
 
       if(this.currentlySelected.size == 0)
       {
         this.currentlySelected = new Set<string>().add("State of Utah");
+				this.map.highlightPath("State of Utah")
       }
+
+			this.map.unHighlightPath(id);
+
       return;
     }
+
 
     this.currentlySelected.add(id);
     this.map.highlightPath(id);
@@ -171,7 +182,6 @@ class Sidebar {
   highlightBar(id){
     id = this.removeSpaces(id);
 
-    console.log(id)
 
     this.updateProfessions();
 
@@ -200,6 +210,34 @@ class Sidebar {
       })
       .text(function(d){return d.value;});
 
+
+		let allCheckbox = td.filter((d) => {
+			 return d.vis == 'allCheck' && d.type == 'selectedCheck';
+			})
+			.append("input")
+			.property("checked", d => {
+				return d.value
+			})
+			// .attr("class", "styled")
+			.attr("type", "checkbox")
+			.attr("id", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
+			.on("click", d => {
+				if(d.type == "selectedCheck")
+				{
+					this.highlightRect(d.name)
+				}
+				else if (d.type == "profSelected")
+				{
+					this.changeProfession(d.name)
+				}
+				else if(d.type == "profIncluded")
+				{
+					this.changeIncludedProfession(d.name)
+				}
+			})
+			.append("label")
+			.attr("for", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
+
     let checkbox = td.filter((d) => {
        return d.vis == 'check';
       })
@@ -207,7 +245,7 @@ class Sidebar {
       .property("checked", d => {
         return d.value
       })
-      .attr("class", "styled")
+      // .attr("class", "styled")
       .attr("type", "checkbox")
       .attr("id", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
       .on("click", d => {
@@ -224,6 +262,8 @@ class Sidebar {
           this.changeIncludedProfession(d.name)
         }
       })
+			.append("label")
+			.attr("for", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
 
     let barSVGs = td.filter((d) => {
        return d.vis == 'bar';
@@ -307,6 +347,50 @@ class Sidebar {
       })
       .text(function(d){return d.value;});
 
+		let doubleLabels = td.filter((d) => {
+			 return d.vis == 'textDouble';
+			})
+			.attr("rowspan", 2)
+			.text(function(d){return d.value;});
+
+		let circlesSvg = td.filter((d) => {
+       return d.vis == 'svg';
+      })
+      .append("svg")
+			.attr("width", 10)
+			.attr("height", this.cell.height)
+
+		circlesSvg.append("circle")
+			.attr("cx", 5)
+			.attr("cy", 15)
+			.style("fill", d => d.value ? "#1B9E77" : "#7570B3")
+			.attr("r", 5)
+			.on("mouseover", () => {
+				d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
+				d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.modelsUsed[0]].name + "</h5>")
+					.style("left", (d3.event.pageX) + "px")
+					.style("top", (d3.event.pageY - 28) + "px");
+			})
+			.on("mouseout", () => {
+				d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
+			});
+
+	// circlesSvg.append("circle")
+	// 	.attr("cx", 10)
+	// 	.attr("cy", 30)
+	// 	.style("fill", "#7570B3")
+	// 	.attr("r", 5)
+	// 	.on("mouseover", () => {
+	// 		d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
+	// 		d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.modelsUsed[0]].name + "</h5>")
+	// 			.style("left", (d3.event.pageX) + "px")
+	// 			.style("top", (d3.event.pageY - 28) + "px");
+	// 	})
+	// 	.on("mouseout", () => {
+	// 		d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
+	// 	});
+
+
     let checkbox = td.filter((d) => {
        return d.vis == 'check';
       })
@@ -327,6 +411,10 @@ class Sidebar {
         {
           this.changeProfession(d.name)
         }
+				else if(d.type == "profIncluded")
+				{
+					this.changeIncludedProfession(d.name)
+				}
       })
 
     let barSVGs = td.filter((d) => {
@@ -351,6 +439,7 @@ class Sidebar {
     let lines = barCircleGroups
       .append("line")
       .attr("x1", function(d){
+				console.log(xScale(0));
         return xScale(0);
       })
       .attr("x2", function(d){
@@ -417,11 +506,9 @@ class Sidebar {
 
     if(false)
     {
-      console.log(this.selectedProfessions)
 
       for( let k in this.selectedProfessions)
       {
-        console.log(k)
         this.selectedProfessions[k] = false;
       }
 
@@ -445,8 +532,8 @@ class Sidebar {
   updateCounties()
   {
 
-    d3.select("#countiesTable").select("tbody").selectAll('tr .notState').remove();
-    d3.select("#countiesTable").attr("class", this.map.comparisonMode ? "doubleShade" : "singleShade")
+    d3.select("#countiesTable").select("tbody").selectAll('.notState').remove();
+    d3.select("#countiesTable").attr("class", this.map.comparisonMode ? "doubleShade svgTable" : "singleShade svgTable")
 
     let countiesData = this.calculateCountiesData(this.currentYearData, this.otherCurrentYearData, false);
 
@@ -469,7 +556,16 @@ class Sidebar {
     if (mapData.includes('100')) {
       domainMax = d3.max(Object.keys(this.currentYearData), d => Math.max(this.currentYearData[d]['totalSupplyPer100K'], this.currentYearData[d]['totalDemandPer100K']));
     } else {
-      domainMax = d3.max(Object.keys(this.currentYearData), d => Math.max(this.currentYearData[d]['totalSupply'], this.currentYearData[d]['totalDemand']));
+
+			if(this.map.comparisonMode)
+			{
+				domainMax = d3.max([
+					d3.max(Object.keys(this.currentYearData), d => Math.max(this.currentYearData[d]['totalSupply'], this.currentYearData[d]['totalDemand'])),
+					d3.max(Object.keys(this.otherCurrentYearData), d => Math.max(this.otherCurrentYearData[d]['totalSupply'], this.otherCurrentYearData[d]['totalDemand']))]);
+			}
+			else{
+				domainMax =	d3.max(Object.keys(this.currentYearData), d => Math.max(this.currentYearData[d]['totalSupply'], this.currentYearData[d]['totalDemand']));
+			}
     }
 
     this.currentYearData[stateData[0]] = temp;
@@ -479,6 +575,7 @@ class Sidebar {
       .range([0, this.cell.width - this.cell.margin * 2]);
 
 
+		console.log(this.currentlySelected);
 
     let check = {type:"selectedCheck", vis:"allCheck", value:this.currentlySelected.has(stateData[0]), name:stateData[0]}
     let name = {type:"name", vis:"text", value:stateData[0]}
@@ -486,12 +583,35 @@ class Sidebar {
     let need = {type:"need", vis:"text", value:stateData[2]}
     let gap = {type:"axis", vis:"axis", value:[stateData[1], stateData[2]]}
 
+		let check2 = {type:"selectedCheck", vis:"allCheck", value:this.currentlySelected.has(stateData[0]), name:stateData[0]}
+		let name2 = {type:"name", vis:"text", value:stateData[0]}
+		let supply2 = {type:"supply", vis:"text", value:stateData[4]}
+		let need2 = {type:"need", vis:"text", value:stateData[5]}
+		let gap2 = {type:"axis", vis:"axis", value:[stateData[4], stateData[5]]}
+
+		d3.select("#utahRow").selectAll("td").remove();
+
     let stateRow = d3.select("#utahRow").selectAll("td")
       .data([check, name, supply, need, gap])
       .enter()
       .append("td");
 
-    this.singleMapRows(stateRow, xScale, domainMax)
+		let stateRow2 = d3.select("#utahSecondRow").selectAll("td")
+			.data([name2, supply2, need2, gap2])
+			.enter()
+			.append("td");
+
+		// if(!this.map.comparisonMode)
+		// {
+
+		console.log("DRAWING SINGLE ROW")
+		this.singleMapRows(stateRow, xScale, domainMax)
+		// }
+		// else
+		// {
+		// 	this.doubleMapRows(stateRow2, xScale, domainMax)
+		// 	this.doubleMapRows(stateRow, xScale, domainMax)
+		// }
 
     let doubleCountyData = []
 
@@ -505,9 +625,6 @@ class Sidebar {
 
       }
     }
-
-
-
 
     let tr = d3.select("#countiesTable").select("tbody")
       .selectAll("tr .notState")
@@ -525,7 +642,8 @@ class Sidebar {
         if(i % 2 == 0)
         {
           let check = {type:"selectedCheck", vis:"check", value:this.currentlySelected.has(d[0]), name:d[0]}
-          let name = {type:"name", vis:"text", value:d[0]}
+          let name = {type:"name", vis:"textDouble", value:d[0]}
+					// let circle = {type:"circle", vis:"svg", value:true}
           let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
           let need = {type:"need", vis:"text", value:Math.round(d[2])}
           let gap = {type:"gap", vis:"bar", value:[Math.round(d[1]), Math.round(d[2])]}
@@ -533,12 +651,12 @@ class Sidebar {
           return [check, name, supply, need, gap];
         }
         else{
-          let name = {type:"name", vis:"text", value:d[0]}
+					// let circle = {type:"circle", vis:"svg", value:false}
           let supply = {type:"supply", vis:"text", value:Math.round(d[4])}
           let need = {type:"need", vis:"text", value:Math.round(d[5])}
           let gap = {type:"gap", vis:"bar", value:[Math.round(d[4]), Math.round(d[5])]}
 
-          return [name, supply, need, gap];
+          return [supply, need, gap];
         }
       }
       else
@@ -564,8 +682,8 @@ class Sidebar {
 
   updateProfessions()
   {
-    d3.select("#professionsTable").select("tbody").selectAll('tr').remove();
-    d3.select("#professionsTable").attr("class", this.map.comparisonMode ? "doubleShade" : "singleShade")
+    d3.select("#professionsTable").select("tbody").selectAll('.notState').remove();
+    d3.select("#professionsTable").attr("class", this.map.comparisonMode ? "doubleShade svgTable" : "singleShade svgTable")
 
 
     if(this.currentlySelected.size > 1 && this.currentlySelected.has("State of Utah"))
@@ -578,9 +696,19 @@ class Sidebar {
       this.currentlySelected.add("State of Utah")
     }
 
-    console.log(this.currentYearData);
+
     let profData = this.getProfessionsData(this.currentYearData, this.otherCurrentYearData, this.mapData);
     let doubleProfData = [];
+
+    let allProfData = ["All", 0, 0, 0, 0, 0, 0];
+
+    for(let k in profData)
+    {
+      for (let j = 1; j < 7; j++)
+      {
+        allProfData[j] += profData[k][j];
+      }
+    }
 
     for(let i = 0; i < profData.length; i++)
     {
@@ -588,11 +716,27 @@ class Sidebar {
       doubleProfData.push(profData[i]);
     }
 
-    console.log(profData)
 
     let profScale = d3.scaleLinear()
-    		.domain([0, d3.max(profData, (d) => d3.max([d[1], d[2]]))])
+    		.domain([0, d3.max(profData, (d) => d3.max([d[1], d[2], d[4], d[5]]))])
     		.range([0, this.cell.width - this.cell.margin * 2 ])
+
+    let check1 = {type:"profSelectedCheck", vis:"allCheck", value:this.currentlySelected.has(allProfData[0] as string), name:allProfData[0]}
+    let check2 = {type:"infoCheck", vis:"allCheck", value:this.currentlySelected.has(allProfData[0] as string), name:allProfData[0]}
+
+    let name = {type:"name", vis:"text", value:allProfData[0]}
+    let supply = {type:"supply", vis:"text", value:allProfData[1]}
+    let need = {type:"need", vis:"text", value:allProfData[2]}
+    let gap = {type:"axis", vis:"axis", value:[allProfData[1], allProfData[2]]}
+
+		d3.select("#allProfRow").selectAll("td").remove()
+
+    let allProfRow = d3.select("#allProfRow").selectAll("td")
+      .data((this.map.comparisonMode && !this.map.modelRemovedComparison) ? [check1, name, supply, need, gap] : [check1, check2, name, supply, need, gap])
+      .enter()
+      .append("td");
+
+    this.singleMapRows(allProfRow, profScale, d3.max(profData, (d) => d3.max([d[1], d[2], d[4], d[5]])))
 
     let profTr = d3.select("#professionsTable").select("tbody")
       .selectAll("tr .notState")
@@ -610,17 +754,23 @@ class Sidebar {
         {
           let check1 = {type:"profSelected", vis:"check", value:this.selectedProfessions[d[0]], name:d[0]}
           let check2 = {type:"profIncluded", vis:"check", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
-          let name = {type:"name", vis:"text", value:d[0]}
+          let name = {type:"name", vis:"textDouble", value:d[0]}
           let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
           let need = {type:"need", vis:"text", value:Math.round(d[2])}
           let gap = {type:"gap", vis:"bar", value:[Math.round(d[1]), Math.round(d[2])]}
-          return [check1, check2, name, supply, need, gap];
+
+					if(this.map.modelRemovedComparison)
+					{
+						return [check1, check2, name, supply, need, gap];
+					}
+					else{
+						return [check1, name, supply, need, gap];
+					}
         }
-        let name = {type:"name", vis:"text", value:d[0]}
         let supply = {type:"supply", vis:"text", value:Math.round(d[4])}
         let need = {type:"need", vis:"text", value:Math.round(d[5])}
         let gap = {type:"gap", vis:"bar", value:[Math.round(d[4]), Math.round(d[5])]}
-        return [name, supply, need, gap];
+        return [supply, need, gap];
       }
       else{
         let check1 = {type:"profSelected", vis:"check", value:this.selectedProfessions[d[0]], name:d[0]}
@@ -633,19 +783,19 @@ class Sidebar {
       }
     }).enter().append("td");
 
-    console.log(profTd)
 
     if(this.map.comparisonMode)
     {
-      this.doubleMapRows(profTd, profScale, d3.max(profData, (d) => d3.max([d[1], d[2]])));
+      this.doubleMapRows(profTd, profScale, d3.max(profData, (d) => d3.max([d[1], d[2], d[4], d[5]])));
     }
     else{
-      this.singleMapRows(profTd, profScale, d3.max(profData, (d) => d3.max([d[1], d[2]])));
+      this.singleMapRows(profTd, profScale, d3.max(profData, (d) => d3.max([d[1], d[2], d[4], d[5]])));
     }
   }
 
   changeIncludedProfession(id:string)
   {
+
     if(this.map.removedProfessions.has(id))
     {
       this.map.removedProfessions.delete(id);
@@ -660,7 +810,6 @@ class Sidebar {
   getProfessionsData(currentYear, otherCurrentYearData, mapData)
   {
       let tempSelectedList = Array.from(this.currentlySelected);
-      console.log(tempSelectedList)
 
       var professions = Object.keys(currentYear[tempSelectedList[0]]['supply']);
       var population = currentYear[tempSelectedList[0]]['population'];

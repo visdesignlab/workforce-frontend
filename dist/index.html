@@ -96,23 +96,21 @@
 						<div height="630px" style="padding-bottom:10px;" style='width:540px;'>
 							<button class="collapsible goodFont plusClass" type="button" data-toggle="collapse" data-target="#collapseCounty" aria-expanded="false" aria-controls="collapseCounty">Counties</button>
 							<div class="collapse" id="collapseCounty" >
-								<table id="countiesTable">
+								<table id="countiesTable" class="svgTable">
 										<thead>
 										<tr>
 												<th style="max-width: 30px; min-width:30px;"></th>
-												<th>Name</th>
+												<th>County</th>
+												<!-- <th style="max-width: 10px; min-width:10px;"><span class="glyphicon glyphicon-sort"></span><br/></th> -->
 												<th style="max-width: 90px; min-width:90px;"> Supply <span class="glyphicon glyphicon-sort"></span><br/></th>
 												<th style="max-width: 90px; min-width:90px;">Need</th>
 												<th>Gap</th>
 
 										</tr>
-										<tr>
-												<td></td>
-												<td id="goalHeader"></td>
-										</tr>
 										</thead>
-										<tbody>
+										<tbody class="svgTable">
 											<tr id="utahRow">
+											<!-- <tr id="utahSecondRow"> -->
 										</tbody>
 								</table>
 							</div>
@@ -122,12 +120,12 @@
 
 						<button class="collapsible goodFont plusClass" type="button" data-toggle="collapse" data-target="#collapseProf" aria-expanded="false" aria-controls="collapseProf">Professions</button>
 						<div class="collapse" id="collapseProf" style='width:540px;'>
-							<table id="professionsTable">
+							<table id="professionsTable" class="svgTable">
 									<thead>
 									<tr>
 											<th style="max-width: 30px; min-width:30px;"></th>
 											<th style="max-width: 30px; min-width:30px;"></th>
-											<th>Name</th>
+											<th>Profession</th>
 											<th style="max-width: 90px; min-width:90px;"> Supply <span class="glyphicon glyphicon-sort"></span><br/></th>
 											<th style="max-width: 90px; min-width:90px;">Need</th>
 											<th>Gap</th>
@@ -138,7 +136,7 @@
 											<td id="goalHeader"></td>
 									</tr>
 									</thead>
-									<tbody>
+									<tbody class="svgTable">
 										<tr id="allProfRow">
 									</tbody>
 							</table>

@@ -50792,6 +50792,7 @@ var Linechart = /** @class */ (function () {
         this.lineChartSvg.selectAll('*').remove();
     };
     Linechart.prototype.initLineChart = function (results, selectedCounties) {
+        console.log(results);
         if (selectedCounties.length == 0) {
             this.initLineChart(results, ['State of Utah']);
             return;
@@ -50832,9 +50833,13 @@ var Linechart = /** @class */ (function () {
                 }
                 demand.push(counter);
             }
+            if (supply.filter(function (d) { return d !== 0; }).length == 0 && demand.filter(function (d) { return d !== 0; }).length == 0) {
+                continue;
+            }
             supply_demand.push([supply, demand, profession]);
             max = d3.max([d3.max(demand), d3.max(supply), max]);
         }
+        console.log(supply_demand);
         for (var i in supply_demand) {
             this.createAreaChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
         }
@@ -51114,12 +51119,12 @@ var Map = /** @class */ (function () {
                 .attr('x2', 600)
                 .attr('y1', 10)
                 .attr('y2', 600);
-            _this.controller.comparisonMode;
             _this.svg.append('text')
-                .text(_this.controller.serverModels[_this.modelData].name)
+                .text((!_this.firstMap && _this.controller.modelRemovedComparison) ? _this.controller.serverModels[_this.modelData].name + "(Modified)" : _this.controller.serverModels[_this.modelData].name)
                 .attr("x", 20)
                 .attr("y", 20)
                 .attr('alignment-baseline', 'middle')
+                .attr("id", _this.controller.comparisonMode ? (_this.firstMap ? "firstTitle" : "secondTitle") : "onlyTitle")
                 .style('font-size', '24')
                 .style("fill", _this.controller.comparisonMode ? (_this.firstMap ? "#1B9E77" : "#7570B3") : "#333333")
                 .classed("goodFont", true);
@@ -51377,58 +51382,41 @@ var Map = /** @class */ (function () {
      */
     Map.prototype.updateMapYear = function (year, mapData, mapType, sidebar) {
         var _this = this;
+        if (!this.firstMap && !this.controller.comparisonMode) {
+            return Promise.resolve();
+        }
         var map = mapType;
         var modelFile = this.controller.serverModels[this.modelData].path;
         var replacementJson = undefined;
         var promise1 = d3.json('../data/profReplacements.json').then(function (res) {
             replacementJson = res;
         });
-        var innerPromise = undefined;
         var promise2 = d3.json("http://3.20.123.182/" + modelFile).then(function (results) {
             promise1.then(function () {
-                console.log(results);
-                console.log(_this.controller.removedProfessions);
-                for (var a in results) {
-                    for (var year_1 in results[a]) {
-                        for (var local in results[a][year_1]) {
-                            var newDemand = results[a][year_1][local].demand;
-                            var newSupply = results[a][year_1][local].supply;
-                            for (var _i = 0, _a = Array.from(_this.controller.removedProfessions); _i < _a.length; _i++) {
-                                var i = _a[_i];
-                                var redistributeNum = newDemand[i];
-                                var redistributeList = replacementJson[i].Replacements;
-                                redistributeList = redistributeList.filter(function (d) {
-                                    return !_this.controller.removedProfessions.has(d);
-                                });
-                                redistributeNum /= redistributeList.length;
-                                for (var _b = 0, redistributeList_1 = redistributeList; _b < redistributeList_1.length; _b++) {
-                                    var newProfDist = redistributeList_1[_b];
-                                    newDemand[newProfDist] += redistributeNum;
-                                }
-                                newDemand[i] = 0;
-                                var redistributeNumSup = newSupply[i];
-                                redistributeNumSup /= redistributeList.length;
-                                for (var _c = 0, redistributeList_2 = redistributeList; _c < redistributeList_2.length; _c++) {
-                                    var newProfDist = redistributeList_2[_c];
-                                    newSupply[newProfDist] += redistributeNumSup;
-                                }
-                                newDemand[i] = 0;
-                                newSupply[i] = 0;
-                            }
-                            results[a][year_1][local].demand = newDemand;
-                            results[a][year_1][local].supply = newSupply;
-                        }
+                if (_this.firstMap) {
+                    if (_this.controller.removedProfessions.size > 0 && !_this.controller.modelRemovedComparison) {
+                        _this.controller.createDuplicateMap();
+                        d3.select("#onlyTitle")
+                            .style("fill", "#1B9E77");
+                    }
+                    else if (_this.controller.removedProfessions.size == 0 && _this.controller.modelRemovedComparison) {
+                        _this.controller.removeDuplicateMap();
                     }
                 }
-                console.log(results);
+                else {
+                    if (_this.controller.modelRemovedComparison) {
+                        _this.removeProfessionsFromData(results, replacementJson);
+                    }
+                }
                 results = results[map];
+                _this.results = results;
                 _this.currentYearData = results[year];
                 var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
                 for (var county in _this.currentYearData) {
                     var totalSupply = 0;
                     var totalDemand = 0;
-                    for (var _d = 0, professions_2 = professions; _d < professions_2.length; _d++) {
-                        var profession = professions_2[_d];
+                    for (var _i = 0, professions_2 = professions; _i < professions_2.length; _i++) {
+                        var profession = professions_2[_i];
                         if (!sidebar.selectedProfessions.hasOwnProperty(profession)
                             || sidebar.selectedProfessions[profession]) {
                             totalSupply += _this.currentYearData[county]['supply'][profession];
@@ -51443,6 +51431,7 @@ var Map = /** @class */ (function () {
                     _this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
                 }
                 _this.updateMapType(mapData, 1000);
+                _this.linechart.initLineChart(_this.results, Array.from(_this.controller.selectedCounties));
             });
         });
         return Promise.all([promise1, promise2]);
@@ -51466,6 +51455,44 @@ var Map = /** @class */ (function () {
         d3.selectAll('svg .counties').selectAll('path')
             .filter(function (d) { return d.properties.NAME == name; })
             .classed('selected', false);
+    };
+    Map.prototype.removeProfessionsFromData = function (results, replacementJson) {
+        var _this = this;
+        for (var a in results) {
+            for (var year in results[a]) {
+                for (var local in results[a][year]) {
+                    var newDemand = results[a][year][local].demand;
+                    var newSupply = results[a][year][local].supply;
+                    for (var _i = 0, _a = Array.from(this.controller.removedProfessions); _i < _a.length; _i++) {
+                        var i = _a[_i];
+                        var redistributeNum = newDemand[i];
+                        var redistributeList = replacementJson[i].Replacements;
+                        redistributeList = redistributeList.filter(function (d) {
+                            return !_this.controller.removedProfessions.has(d);
+                        });
+                        redistributeNum /= redistributeList.length;
+                        for (var _b = 0, redistributeList_1 = redistributeList; _b < redistributeList_1.length; _b++) {
+                            var newProfDist = redistributeList_1[_b];
+                            newDemand[newProfDist] += redistributeNum;
+                        }
+                        newDemand[i] = 0;
+                        // let redistributeNumSup = newSupply[i];
+                        //
+                        // redistributeNumSup /= redistributeList.length;
+                        //
+                        // for (let newProfDist of redistributeList)
+                        // {
+                        // 	newSupply[newProfDist] += redistributeNumSup;
+                        // }
+                        //
+                        newDemand[i] = 0;
+                        newSupply[i] = 0;
+                    }
+                    results[a][year][local].demand = newDemand;
+                    // results[a][year][local].supply = newSupply
+                }
+            }
+        }
     };
     Map.prototype.removeSpaces = function (s) {
         return s.replace(/\s/g, '');
@@ -51596,7 +51623,7 @@ var MapController = /** @class */ (function () {
         promise = this.originalMap.drawMap(this.mapData, this.modelsUsed[0], this.selectedProfessions, this.yearSelected, this.selectedCounties, this.mapType, customModel, initSidebar);
         if (this.comparisonMode) {
             promise = promise.then(function () { return _this.secondMap.drawMap(_this.mapData, _this.modelsUsed[1], _this.selectedProfessions, _this.yearSelected, _this.selectedCounties, _this.mapType, customModel, initSidebar); });
-            promise = promise.then(function () { return _this.modelComparison.drawComparison(_this.originalMap.results, _this.secondMap.results, _this.comparisonType); });
+            // promise = promise.then(() => this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType));
             d3.select("#comparisonView")
                 .style("display", "block");
             d3.select("#map")
@@ -51633,23 +51660,46 @@ var MapController = /** @class */ (function () {
      */
     MapController.prototype.updateMapYear = function (year) {
         var _this = this;
-        var promise = this.originalMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar);
-        if (this.comparisonMode) {
-            promise = promise.then(function () { return _this.secondMap.updateMapYear(year, _this.mapData, _this.mapType, _this.sidebar); });
+        if (this.removedProfessions.size > 0) {
+            this.comparisonMode = true;
         }
-        return promise;
+        var promise = this.originalMap.updateMapYear(year, this.mapData, this.mapType, this.sidebar)
+            .then(function () {
+            return _this.secondMap.updateMapYear(year, _this.mapData, _this.mapType, _this.sidebar);
+        });
+        return Promise.all([promise]);
     };
     MapController.prototype.updateSelections = function (selectedProfessions) {
         var _this = this;
-        console.log(this.removedProfessions);
         this.updateMapYear(this.yearSelected).then(function () {
-            console.log("NOW");
             _this.drawSidebar();
             _this.setAllHighlights();
             if (_this.comparisonMode) {
-                _this.modelComparison.drawComparison(_this.originalMap.results, _this.secondMap.results, _this.comparisonType);
+                // this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
             }
         });
+    };
+    MapController.prototype.createDuplicateMap = function () {
+        if (!this.modelRemovedComparison) {
+            d3.select("#comparisonView")
+                .style("display", "block");
+            d3.select("#map")
+                .attr("width", 1200);
+            this.modelRemovedComparison = true;
+            this.comparisonMode = true;
+            this.secondMap.drawMap(this.mapData, this.modelsUsed[0], this.selectedProfessions, this.yearSelected, this.selectedCounties, this.mapType, false, true);
+        }
+    };
+    MapController.prototype.removeDuplicateMap = function () {
+        if (this.modelRemovedComparison) {
+            d3.select("#comparisonView")
+                .style("display", "none");
+            d3.select("#map")
+                .attr("width", 600);
+            this.modelRemovedComparison = false;
+            this.comparisonMode = false;
+            this.secondMap.destroy();
+        }
     };
     MapController.prototype.mouseOut = function () {
         d3.select("#tooltip").transition().duration(500).style("opacity", 0);
@@ -51667,7 +51717,7 @@ var MapController = /** @class */ (function () {
         }
         this.setAllHighlights();
         if (this.comparisonMode) {
-            this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+            // this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
         }
         this.sidebar.highlightBar(name);
     };
@@ -51710,7 +51760,7 @@ var MapController = /** @class */ (function () {
             this.drawSidebar();
         }
         if (this.comparisonMode) {
-            this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+            // this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
         }
         this.updateSelections(this.selectedProfessions);
     };
@@ -51720,7 +51770,7 @@ var MapController = /** @class */ (function () {
     MapController.prototype.changeComparisonType = function (s) {
         this.comparisonType = s;
         if (this.comparisonMode) {
-            this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
+            // this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
         }
     };
     return MapController;
@@ -51816,6 +51866,8 @@ var MapEvents = /** @class */ (function () {
             }
         });
         document.getElementById("modelData").addEventListener('change', function () {
+            _this.map.removedProfessions.clear();
+            _this.map.modelRemovedComparison = false;
             _this.map.mapType = document.getElementById('mapType').value;
             var selectedOptions = document.getElementById('modelData').selectedOptions;
             console.log(document.getElementById('modelData').options);
@@ -52286,7 +52338,6 @@ var Sidebar = /** @class */ (function () {
             this.currentlySelected = new Set(selectedCounties);
         }
         this.selectedProfessions = selectedProfessions;
-        console.log(selectedProfessions);
         //
         // console.log(countiesData)
         this.updateTable(selectedProfessions, currentYear, selectedCounties, otherCurrentYearData);
@@ -52335,6 +52386,7 @@ var Sidebar = /** @class */ (function () {
     };
     Sidebar.prototype.highlightRect = function (id) {
         var _this = this;
+        console.log(id);
         if (id == "State of Utah") {
             this.currentlySelected.forEach(function (id) {
                 if (id == "State of Utah")
@@ -52342,14 +52394,19 @@ var Sidebar = /** @class */ (function () {
                 _this.map.unHighlightPath(id);
             });
             this.currentlySelected = new Set().add("State of Utah");
+            this.map.highlightPath("State of Utah");
             return;
+        }
+        if (this.currentlySelected.has("State of Utah")) {
+            this.map.unHighlightPath("State of Utah");
         }
         if (this.currentlySelected.has(id)) {
             this.currentlySelected.delete(id);
-            this.map.unHighlightPath(id);
             if (this.currentlySelected.size == 0) {
                 this.currentlySelected = new Set().add("State of Utah");
+                this.map.highlightPath("State of Utah");
             }
+            this.map.unHighlightPath(id);
             return;
         }
         this.currentlySelected.add(id);
@@ -52357,7 +52414,6 @@ var Sidebar = /** @class */ (function () {
     };
     Sidebar.prototype.highlightBar = function (id) {
         id = this.removeSpaces(id);
-        console.log(id);
         this.updateProfessions();
         d3.select("#" + id + "_checkBox")
             .property('checked', true);
@@ -52378,14 +52434,14 @@ var Sidebar = /** @class */ (function () {
             return d.vis == 'text';
         })
             .text(function (d) { return d.value; });
-        var checkbox = td.filter(function (d) {
-            return d.vis == 'check';
+        var allCheckbox = td.filter(function (d) {
+            return d.vis == 'allCheck' && d.type == 'selectedCheck';
         })
             .append("input")
             .property("checked", function (d) {
             return d.value;
         })
-            .attr("class", "styled")
+            // .attr("class", "styled")
             .attr("type", "checkbox")
             .attr("id", function (d, i) { return _this.removeSpaces(d.name + "_checkBox"); })
             .on("click", function (d) {
@@ -52398,7 +52454,32 @@ var Sidebar = /** @class */ (function () {
             else if (d.type == "profIncluded") {
                 _this.changeIncludedProfession(d.name);
             }
-        });
+        })
+            .append("label")
+            .attr("for", function (d, i) { return _this.removeSpaces(d.name + "_checkBox"); });
+        var checkbox = td.filter(function (d) {
+            return d.vis == 'check';
+        })
+            .append("input")
+            .property("checked", function (d) {
+            return d.value;
+        })
+            // .attr("class", "styled")
+            .attr("type", "checkbox")
+            .attr("id", function (d, i) { return _this.removeSpaces(d.name + "_checkBox"); })
+            .on("click", function (d) {
+            if (d.type == "selectedCheck") {
+                _this.highlightRect(d.name);
+            }
+            else if (d.type == "profSelected") {
+                _this.changeProfession(d.name);
+            }
+            else if (d.type == "profIncluded") {
+                _this.changeIncludedProfession(d.name);
+            }
+        })
+            .append("label")
+            .attr("for", function (d, i) { return _this.removeSpaces(d.name + "_checkBox"); });
         var barSVGs = td.filter(function (d) {
             return d.vis == 'bar';
         })
@@ -52471,6 +52552,45 @@ var Sidebar = /** @class */ (function () {
             return d.vis == 'text';
         })
             .text(function (d) { return d.value; });
+        var doubleLabels = td.filter(function (d) {
+            return d.vis == 'textDouble';
+        })
+            .attr("rowspan", 2)
+            .text(function (d) { return d.value; });
+        var circlesSvg = td.filter(function (d) {
+            return d.vis == 'svg';
+        })
+            .append("svg")
+            .attr("width", 10)
+            .attr("height", this.cell.height);
+        circlesSvg.append("circle")
+            .attr("cx", 5)
+            .attr("cy", 15)
+            .style("fill", function (d) { return d.value ? "#1B9E77" : "#7570B3"; })
+            .attr("r", 5)
+            .on("mouseover", function () {
+            d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
+            d3.select("#modelNameTooltip").html("<h5>" + _this.map.serverModels[_this.map.modelsUsed[0]].name + "</h5>")
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+        })
+            .on("mouseout", function () {
+            d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
+        });
+        // circlesSvg.append("circle")
+        // 	.attr("cx", 10)
+        // 	.attr("cy", 30)
+        // 	.style("fill", "#7570B3")
+        // 	.attr("r", 5)
+        // 	.on("mouseover", () => {
+        // 		d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
+        // 		d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.modelsUsed[0]].name + "</h5>")
+        // 			.style("left", (d3.event.pageX) + "px")
+        // 			.style("top", (d3.event.pageY - 28) + "px");
+        // 	})
+        // 	.on("mouseout", () => {
+        // 		d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
+        // 	});
         var checkbox = td.filter(function (d) {
             return d.vis == 'check';
         })
@@ -52488,6 +52608,9 @@ var Sidebar = /** @class */ (function () {
             }
             else if (d.type == "profSelected") {
                 _this.changeProfession(d.name);
+            }
+            else if (d.type == "profIncluded") {
+                _this.changeIncludedProfession(d.name);
             }
         });
         var barSVGs = td.filter(function (d) {
@@ -52509,6 +52632,7 @@ var Sidebar = /** @class */ (function () {
         var lines = barCircleGroups
             .append("line")
             .attr("x1", function (d) {
+            console.log(xScale(0));
             return xScale(0);
         })
             .attr("x2", function (d) {
@@ -52579,8 +52703,8 @@ var Sidebar = /** @class */ (function () {
     };
     Sidebar.prototype.updateCounties = function () {
         var _this = this;
-        d3.select("#countiesTable").select("tbody").selectAll('tr .notState').remove();
-        d3.select("#countiesTable").attr("class", this.map.comparisonMode ? "doubleShade" : "singleShade");
+        d3.select("#countiesTable").select("tbody").selectAll('.notState').remove();
+        d3.select("#countiesTable").attr("class", this.map.comparisonMode ? "doubleShade svgTable" : "singleShade svgTable");
         var countiesData = this.calculateCountiesData(this.currentYearData, this.otherCurrentYearData, false);
         var stateData = countiesData.filter(function (d) {
             return d[0].includes("State of");
@@ -52597,22 +52721,50 @@ var Sidebar = /** @class */ (function () {
             domainMax = d3.max(Object.keys(this.currentYearData), function (d) { return Math.max(_this.currentYearData[d]['totalSupplyPer100K'], _this.currentYearData[d]['totalDemandPer100K']); });
         }
         else {
-            domainMax = d3.max(Object.keys(this.currentYearData), function (d) { return Math.max(_this.currentYearData[d]['totalSupply'], _this.currentYearData[d]['totalDemand']); });
+            if (this.map.comparisonMode) {
+                domainMax = d3.max([
+                    d3.max(Object.keys(this.currentYearData), function (d) { return Math.max(_this.currentYearData[d]['totalSupply'], _this.currentYearData[d]['totalDemand']); }),
+                    d3.max(Object.keys(this.otherCurrentYearData), function (d) { return Math.max(_this.otherCurrentYearData[d]['totalSupply'], _this.otherCurrentYearData[d]['totalDemand']); })
+                ]);
+            }
+            else {
+                domainMax = d3.max(Object.keys(this.currentYearData), function (d) { return Math.max(_this.currentYearData[d]['totalSupply'], _this.currentYearData[d]['totalDemand']); });
+            }
         }
         this.currentYearData[stateData[0]] = temp;
         var xScale = d3.scaleLinear()
             .domain([0, domainMax])
             .range([0, this.cell.width - this.cell.margin * 2]);
+        console.log(this.currentlySelected);
         var check = { type: "selectedCheck", vis: "allCheck", value: this.currentlySelected.has(stateData[0]), name: stateData[0] };
         var name = { type: "name", vis: "text", value: stateData[0] };
         var supply = { type: "supply", vis: "text", value: stateData[1] };
         var need = { type: "need", vis: "text", value: stateData[2] };
         var gap = { type: "axis", vis: "axis", value: [stateData[1], stateData[2]] };
+        var check2 = { type: "selectedCheck", vis: "allCheck", value: this.currentlySelected.has(stateData[0]), name: stateData[0] };
+        var name2 = { type: "name", vis: "text", value: stateData[0] };
+        var supply2 = { type: "supply", vis: "text", value: stateData[4] };
+        var need2 = { type: "need", vis: "text", value: stateData[5] };
+        var gap2 = { type: "axis", vis: "axis", value: [stateData[4], stateData[5]] };
+        d3.select("#utahRow").selectAll("td").remove();
         var stateRow = d3.select("#utahRow").selectAll("td")
             .data([check, name, supply, need, gap])
             .enter()
             .append("td");
+        var stateRow2 = d3.select("#utahSecondRow").selectAll("td")
+            .data([name2, supply2, need2, gap2])
+            .enter()
+            .append("td");
+        // if(!this.map.comparisonMode)
+        // {
+        console.log("DRAWING SINGLE ROW");
         this.singleMapRows(stateRow, xScale, domainMax);
+        // }
+        // else
+        // {
+        // 	this.doubleMapRows(stateRow2, xScale, domainMax)
+        // 	this.doubleMapRows(stateRow, xScale, domainMax)
+        // }
         var doubleCountyData = [];
         if (this.map.comparisonMode) {
             for (var i = 0; i < countiesData.length; i++) {
@@ -52632,27 +52784,28 @@ var Sidebar = /** @class */ (function () {
             if (_this.map.comparisonMode) {
                 if (i % 2 == 0) {
                     var check_1 = { type: "selectedCheck", vis: "check", value: _this.currentlySelected.has(d[0]), name: d[0] };
-                    var name_1 = { type: "name", vis: "text", value: d[0] };
+                    var name_1 = { type: "name", vis: "textDouble", value: d[0] };
+                    // let circle = {type:"circle", vis:"svg", value:true}
                     var supply_1 = { type: "supply", vis: "text", value: Math.round(d[1]) };
                     var need_1 = { type: "need", vis: "text", value: Math.round(d[2]) };
                     var gap_1 = { type: "gap", vis: "bar", value: [Math.round(d[1]), Math.round(d[2])] };
                     return [check_1, name_1, supply_1, need_1, gap_1];
                 }
                 else {
-                    var name_2 = { type: "name", vis: "text", value: d[0] };
+                    // let circle = {type:"circle", vis:"svg", value:false}
                     var supply_2 = { type: "supply", vis: "text", value: Math.round(d[4]) };
                     var need_2 = { type: "need", vis: "text", value: Math.round(d[5]) };
                     var gap_2 = { type: "gap", vis: "bar", value: [Math.round(d[4]), Math.round(d[5])] };
-                    return [name_2, supply_2, need_2, gap_2];
+                    return [supply_2, need_2, gap_2];
                 }
             }
             else {
                 var check_2 = { type: "selectedCheck", vis: "check", value: _this.currentlySelected.has(d[0]), name: d[0] };
-                var name_3 = { type: "name", vis: "text", value: d[0] };
+                var name_2 = { type: "name", vis: "text", value: d[0] };
                 var supply_3 = { type: "supply", vis: "text", value: Math.round(d[1]) };
                 var need_3 = { type: "need", vis: "text", value: Math.round(d[2]) };
                 var gap_3 = { type: "gap", vis: "bar", value: [Math.round(d[1]), Math.round(d[2])] };
-                return [check_2, name_3, supply_3, need_3, gap_3];
+                return [check_2, name_2, supply_3, need_3, gap_3];
             }
         }).enter().append("td");
         if (this.map.comparisonMode) {
@@ -52664,25 +52817,41 @@ var Sidebar = /** @class */ (function () {
     };
     Sidebar.prototype.updateProfessions = function () {
         var _this = this;
-        d3.select("#professionsTable").select("tbody").selectAll('tr').remove();
-        d3.select("#professionsTable").attr("class", this.map.comparisonMode ? "doubleShade" : "singleShade");
+        d3.select("#professionsTable").select("tbody").selectAll('.notState').remove();
+        d3.select("#professionsTable").attr("class", this.map.comparisonMode ? "doubleShade svgTable" : "singleShade svgTable");
         if (this.currentlySelected.size > 1 && this.currentlySelected.has("State of Utah")) {
             this.currentlySelected.delete("State of Utah");
         }
         if (this.currentlySelected.size == 0) {
             this.currentlySelected.add("State of Utah");
         }
-        console.log(this.currentYearData);
         var profData = this.getProfessionsData(this.currentYearData, this.otherCurrentYearData, this.mapData);
         var doubleProfData = [];
+        var allProfData = ["All", 0, 0, 0, 0, 0, 0];
+        for (var k in profData) {
+            for (var j = 1; j < 7; j++) {
+                allProfData[j] += profData[k][j];
+            }
+        }
         for (var i = 0; i < profData.length; i++) {
             doubleProfData.push(profData[i]);
             doubleProfData.push(profData[i]);
         }
-        console.log(profData);
         var profScale = d3.scaleLinear()
-            .domain([0, d3.max(profData, function (d) { return d3.max([d[1], d[2]]); })])
+            .domain([0, d3.max(profData, function (d) { return d3.max([d[1], d[2], d[4], d[5]]); })])
             .range([0, this.cell.width - this.cell.margin * 2]);
+        var check1 = { type: "profSelectedCheck", vis: "allCheck", value: this.currentlySelected.has(allProfData[0]), name: allProfData[0] };
+        var check2 = { type: "infoCheck", vis: "allCheck", value: this.currentlySelected.has(allProfData[0]), name: allProfData[0] };
+        var name = { type: "name", vis: "text", value: allProfData[0] };
+        var supply = { type: "supply", vis: "text", value: allProfData[1] };
+        var need = { type: "need", vis: "text", value: allProfData[2] };
+        var gap = { type: "axis", vis: "axis", value: [allProfData[1], allProfData[2]] };
+        d3.select("#allProfRow").selectAll("td").remove();
+        var allProfRow = d3.select("#allProfRow").selectAll("td")
+            .data((this.map.comparisonMode && !this.map.modelRemovedComparison) ? [check1, name, supply, need, gap] : [check1, check2, name, supply, need, gap])
+            .enter()
+            .append("td");
+        this.singleMapRows(allProfRow, profScale, d3.max(profData, function (d) { return d3.max([d[1], d[2], d[4], d[5]]); }));
         var profTr = d3.select("#professionsTable").select("tbody")
             .selectAll("tr .notState")
             .data(this.map.comparisonMode ? doubleProfData : profData)
@@ -52694,36 +52863,39 @@ var Sidebar = /** @class */ (function () {
         var profTd = profTr.selectAll("td").data(function (d, i) {
             if (_this.map.comparisonMode) {
                 if (i % 2 == 0) {
-                    var check1 = { type: "profSelected", vis: "check", value: _this.selectedProfessions[d[0]], name: d[0] };
-                    var check2 = { type: "profIncluded", vis: "check", value: !_this.map.removedProfessions.has(d[0]), name: d[0] };
-                    var name_4 = { type: "name", vis: "text", value: d[0] };
+                    var check1_1 = { type: "profSelected", vis: "check", value: _this.selectedProfessions[d[0]], name: d[0] };
+                    var check2_1 = { type: "profIncluded", vis: "check", value: !_this.map.removedProfessions.has(d[0]), name: d[0] };
+                    var name_3 = { type: "name", vis: "textDouble", value: d[0] };
                     var supply_4 = { type: "supply", vis: "text", value: Math.round(d[1]) };
                     var need_4 = { type: "need", vis: "text", value: Math.round(d[2]) };
                     var gap_4 = { type: "gap", vis: "bar", value: [Math.round(d[1]), Math.round(d[2])] };
-                    return [check1, check2, name_4, supply_4, need_4, gap_4];
+                    if (_this.map.modelRemovedComparison) {
+                        return [check1_1, check2_1, name_3, supply_4, need_4, gap_4];
+                    }
+                    else {
+                        return [check1_1, name_3, supply_4, need_4, gap_4];
+                    }
                 }
-                var name_5 = { type: "name", vis: "text", value: d[0] };
-                var supply = { type: "supply", vis: "text", value: Math.round(d[4]) };
-                var need = { type: "need", vis: "text", value: Math.round(d[5]) };
-                var gap = { type: "gap", vis: "bar", value: [Math.round(d[4]), Math.round(d[5])] };
-                return [name_5, supply, need, gap];
+                var supply_5 = { type: "supply", vis: "text", value: Math.round(d[4]) };
+                var need_5 = { type: "need", vis: "text", value: Math.round(d[5]) };
+                var gap_5 = { type: "gap", vis: "bar", value: [Math.round(d[4]), Math.round(d[5])] };
+                return [supply_5, need_5, gap_5];
             }
             else {
-                var check1 = { type: "profSelected", vis: "check", value: _this.selectedProfessions[d[0]], name: d[0] };
-                var check2 = { type: "profIncluded", vis: "check", value: !_this.map.removedProfessions.has(d[0]), name: d[0] };
-                var name_6 = { type: "name", vis: "text", value: d[0] };
-                var supply = { type: "supply", vis: "text", value: Math.round(d[1]) };
-                var need = { type: "need", vis: "text", value: Math.round(d[2]) };
-                var gap = { type: "gap", vis: "bar", value: [Math.round(d[1]), Math.round(d[2])] };
-                return [check1, check2, name_6, supply, need, gap];
+                var check1_2 = { type: "profSelected", vis: "check", value: _this.selectedProfessions[d[0]], name: d[0] };
+                var check2_2 = { type: "profIncluded", vis: "check", value: !_this.map.removedProfessions.has(d[0]), name: d[0] };
+                var name_4 = { type: "name", vis: "text", value: d[0] };
+                var supply_6 = { type: "supply", vis: "text", value: Math.round(d[1]) };
+                var need_6 = { type: "need", vis: "text", value: Math.round(d[2]) };
+                var gap_6 = { type: "gap", vis: "bar", value: [Math.round(d[1]), Math.round(d[2])] };
+                return [check1_2, check2_2, name_4, supply_6, need_6, gap_6];
             }
         }).enter().append("td");
-        console.log(profTd);
         if (this.map.comparisonMode) {
-            this.doubleMapRows(profTd, profScale, d3.max(profData, function (d) { return d3.max([d[1], d[2]]); }));
+            this.doubleMapRows(profTd, profScale, d3.max(profData, function (d) { return d3.max([d[1], d[2], d[4], d[5]]); }));
         }
         else {
-            this.singleMapRows(profTd, profScale, d3.max(profData, function (d) { return d3.max([d[1], d[2]]); }));
+            this.singleMapRows(profTd, profScale, d3.max(profData, function (d) { return d3.max([d[1], d[2], d[4], d[5]]); }));
         }
     };
     Sidebar.prototype.changeIncludedProfession = function (id) {
@@ -52737,7 +52909,6 @@ var Sidebar = /** @class */ (function () {
     };
     Sidebar.prototype.getProfessionsData = function (currentYear, otherCurrentYearData, mapData) {
         var tempSelectedList = Array.from(this.currentlySelected);
-        console.log(tempSelectedList);
         var professions = Object.keys(currentYear[tempSelectedList[0]]['supply']);
         var population = currentYear[tempSelectedList[0]]['population'];
         var stats = {};
