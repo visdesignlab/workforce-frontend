@@ -22,6 +22,7 @@ class MapController{
 	modelsUsed:any[];
 	sidebar:Sidebar;
 	removedProfessions:Set<string>;
+	removedMap:any;
 	modelComparison:ModelComparison;
 	comparisonType:string;
 	modelRemovedComparison:boolean;
@@ -31,6 +32,7 @@ class MapController{
 	 */
 	constructor()
 	{
+		this.removedMap = {}
 		this.removedProfessions = new Set<string>();
 		this.serverModels = {};
 		this.originalMap = new Map(this, true);

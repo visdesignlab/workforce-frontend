@@ -402,6 +402,11 @@ tbody td {
 	background: #E8E8E8;
 }
 
+.my-size{
+	max-height: 25px;
+	max-width: 100px;
+}
+
 
 table.svgTable {
     border-collapse: collapse;

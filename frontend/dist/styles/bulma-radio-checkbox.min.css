@@ -17,7 +17,7 @@
 }
 
 .b-checkbox label::before {
-  content: "hh";
+  content: "";
   position: absolute;
   width: 17px;
   height: 17px;

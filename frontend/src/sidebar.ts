@@ -877,7 +877,6 @@ class Sidebar {
 		}
 		else
 		{
-
 			groups.append("circle")
 				.attr("cx", barWidth - 5)
 				.attr("cy", barHeight / 4)

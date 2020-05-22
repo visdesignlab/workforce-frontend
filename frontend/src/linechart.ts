@@ -36,7 +36,6 @@ class Linechart{
 	}
 
 	public initLineChart(results, selectedCounties:string[]) {
-		console.log(results);
 		if(selectedCounties.length == 0)
 		{
 			this.initLineChart(results, ['State of Utah']);
@@ -94,9 +93,6 @@ class Linechart{
 			max = d3.max([d3.max(demand), d3.max(supply), max])
 
 		}
-
-		console.log(supply_demand)
-
 
 		for (let i in supply_demand) {
 			this.createAreaChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));

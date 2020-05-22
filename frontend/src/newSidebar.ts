@@ -139,7 +139,6 @@ class Sidebar {
   }
 
   highlightRect(id) {
-		console.log(id);
     if(id == "State of Utah")
     {
       this.currentlySelected.forEach(id => {
@@ -206,7 +205,7 @@ class Sidebar {
   singleMapRows(td, xScale, domainMax)
   {
     let labels = td.filter((d) => {
-       return d.vis == 'text';
+       return d.vis == 'text' && d.type !== 'needChangeable';
       })
       .text(function(d){return d.value;});
 
@@ -342,10 +341,24 @@ class Sidebar {
 
   doubleMapRows(td, xScale, domainMax)
   {
+		let that = this;
     let labels = td.filter((d) => {
-       return d.vis == 'text';
+       return d.vis == 'text' && d.type !== "needChangeable";
       })
       .text(function(d){return d.value;});
+
+		let inputLabels = td.filter((d) => {
+			 return d.vis == 'text' && d.type === 'needChangeable';
+			})
+			.append('input')
+			.classed("input", true)
+			.classed("my-size", true)
+			.attr("type", "text")
+			.attr('value', d => d.value)
+			.on("change", function(d){
+				that.map.removedMap[d.name] = d3.select(this).node().value;
+				that.map.updateSelections(that.selectedProfessions);
+			})
 
 		let doubleLabels = td.filter((d) => {
 			 return d.vis == 'textDouble';
@@ -439,7 +452,6 @@ class Sidebar {
     let lines = barCircleGroups
       .append("line")
       .attr("x1", function(d){
-				console.log(xScale(0));
         return xScale(0);
       })
       .attr("x2", function(d){
@@ -575,7 +587,6 @@ class Sidebar {
       .range([0, this.cell.width - this.cell.margin * 2]);
 
 
-		console.log(this.currentlySelected);
 
     let check = {type:"selectedCheck", vis:"allCheck", value:this.currentlySelected.has(stateData[0]), name:stateData[0]}
     let name = {type:"name", vis:"text", value:stateData[0]}
@@ -603,8 +614,6 @@ class Sidebar {
 
 		// if(!this.map.comparisonMode)
 		// {
-
-		console.log("DRAWING SINGLE ROW")
 		this.singleMapRows(stateRow, xScale, domainMax)
 		// }
 		// else
@@ -768,7 +777,7 @@ class Sidebar {
 					}
         }
         let supply = {type:"supply", vis:"text", value:Math.round(d[4])}
-        let need = {type:"need", vis:"text", value:Math.round(d[5])}
+        let need = {type:"needChangeable", vis:"text", value:Math.round(d[5]), name:d[0]}
         let gap = {type:"gap", vis:"bar", value:[Math.round(d[4]), Math.round(d[5])]}
         return [supply, need, gap];
       }

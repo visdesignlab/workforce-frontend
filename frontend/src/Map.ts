@@ -432,7 +432,10 @@ class Map{
 				else{
 					if(this.controller.modelRemovedComparison)
 					{
+						console.log(results);
 						this.removeProfessionsFromData(results, replacementJson);
+						console.log(results);
+
 					}
 				}
 
@@ -494,6 +497,21 @@ class Map{
 	removeProfessionsFromData(results, replacementJson)
 	{
 
+		let profTotal = {}
+
+		for(let county in results["counties"]["2019"])
+		{
+			if(county == "State of Utah")
+			{
+				continue;
+			}
+			for(let prof in results["counties"]["2019"][county].demand)
+			{
+
+				profTotal[prof] = profTotal[prof] === undefined ? results["counties"]["2019"][county].demand[prof] : profTotal[prof] + results["counties"]["2019"][county].demand[prof];
+			}
+		}
+		console.log(profTotal)
 
 		for(let a in results)
 		{
@@ -506,21 +524,33 @@ class Map{
 
 					for(let i of Array.from(this.controller.removedProfessions))
 					{
+
 						let redistributeNum = newDemand[i];
+
+						if(this.controller.removedMap[i] !== undefined)
+						{
+							console.log(redistributeNum)
+							console.log((this.controller.removedMap[i]))
+							console.log(profTotal[i])
+							redistributeNum *= (1 - (this.controller.removedMap[i] / profTotal[i])) ;
+							console.log(redistributeNum)
+
+						}
+
 						let redistributeList = replacementJson[i].Replacements;
 
 						redistributeList = redistributeList.filter(d => {
 							return !this.controller.removedProfessions.has(d)
 						});
 
-						redistributeNum /= redistributeList.length;
+						newDemand[i] = this.controller.removedMap[i] ? newDemand[i] - redistributeNum : 0;
 
+
+						redistributeNum /= redistributeList.length;
 						for (let newProfDist of redistributeList)
 						{
 							newDemand[newProfDist] += redistributeNum;
 						}
-
-						newDemand[i] = 0
 
 						// let redistributeNumSup = newSupply[i];
 						//
@@ -531,12 +561,12 @@ class Map{
 						// 	newSupply[newProfDist] += redistributeNumSup;
 						// }
 						//
-						newDemand[i] = 0;
+
 						newSupply[i] = 0;
 					}
 
 					results[a][year][local].demand = newDemand
-					// results[a][year][local].supply = newSupply
+					results[a][year][local].supply = newSupply
 
 				}
 			}
