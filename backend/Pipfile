@@ -1,0 +1,48 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+alembic = "*"
+click = "*"
+cvxopt = "*"
+cycler = "*"
+flask = "*"
+flask-migrate = "*"
+flask-sqlalchemy = "*"
+flask-wtf = "*"
+itsdangerous = "*"
+jinja2 = "*"
+kiwisolver = "*"
+mako = "*"
+markupsafe = "*"
+matplotlib = "*"
+numpy = "*"
+pandas = "*"
+pulp = "*"
+pyparsing = "*"
+python-dateutil = "*"
+python-editor = "*"
+pytz = "*"
+six = "*"
+sqlalchemy = "*"
+werkzeug = "*"
+wtforms = "*"
+flask-cors = "*"
+gunicorn = "*"
+pytest = "*"
+coverage = "*"
+xlrd = "*"
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+coverage-report = "coverage report"
+coverage-test = "coverage run --source='./server' -m pytest"
+serve = "python -c 'import os; os.system(\"cd server ; python main.py\")'"
+"serve:prod" = "python -c 'import os; os.system(f\"cp .env.prod .env ; cd server ; gunicorn wsgi -b 0.0.0.0:80 -w 4\")'"
+test = "python -c 'import os; os.system(\"pipenv run coverage-test ; pipenv run coverage-report\")'"
