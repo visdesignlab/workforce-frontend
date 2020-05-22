@@ -1,7 +1,6 @@
 const path = require('path');
 // const webpack = require('webpack');
 
-
 module.exports = {
   entry: ["./src/main.ts"],
   output: {
@@ -9,7 +8,6 @@ module.exports = {
       path: path.resolve(__dirname, 'dist'),
       publicPath: '/',
   },
-
 
   // Enable sourcemaps for debugging webpack's output.
   devtool: "source-map",
