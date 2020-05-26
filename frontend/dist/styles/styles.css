@@ -390,16 +390,16 @@ tbody td {
 }
 
 .doubleShade tbody tr:nth-child(4n){
-    background: #E8E8E8;
+    background: #F5F5F5;
 }
 
 .doubleShade tbody tr:nth-child(4n + 1){
-    background: #E8E8E8;
+    background: #F5F5F5;
 }
 
 .singleShade tbody tr:nth-child(odd)
 {
-	background: #E8E8E8;
+	background: #F5F5F5;
 }
 
 .my-size{
@@ -434,6 +434,15 @@ tbody th{
     cursor:pointer;
     font-weight: bold;
 }
+
+.editIcon {
+	font-size:12px;
+}
+
+/* .editButton{
+	width:18px;
+	height:18px;
+} */
 /*
 .styled{
 	max-width: 30px;

@@ -204,11 +204,29 @@ class Sidebar {
 
   singleMapRows(td, xScale, domainMax)
   {
+		let that = this;
+
     let labels = td.filter((d) => {
-       return d.vis == 'text' && d.type !== 'needChangeable';
+       return d.vis == 'text' && d.type !== 'needChangeable' && d.type !== "supplyChangeable";
       })
       .text(function(d){return d.value;});
 
+		let button = td.filter(d => {
+			return d.vis == "button";
+		})
+			.append("button")
+			.classed("button", true)
+			.classed("editButton", true)
+			.classed("is-link", true)
+			.classed("is-light", d => !this.map.removedProfessions.has(d.name))
+			.classed("is-small", true)
+			.on("click", function(d){
+				that.changeIncludedProfession(d.name)
+			})
+			.append("span")
+			.attr("class", "icon")
+			.append("i")
+			.attr("class", "far fa-edit editIcon")
 
 		let allCheckbox = td.filter((d) => {
 			 return d.vis == 'allCheck' && d.type == 'selectedCheck';
@@ -343,12 +361,12 @@ class Sidebar {
   {
 		let that = this;
     let labels = td.filter((d) => {
-       return d.vis == 'text' && d.type !== "needChangeable";
+       return d.vis == 'text' && ((d.type !== "supplyChangeable" && d.type !== "needChangeable") || !this.map.removedProfessions.has(d.name));
       })
       .text(function(d){return d.value;});
 
 		let inputLabels = td.filter((d) => {
-			 return d.vis == 'text' && d.type === 'needChangeable';
+			 return d.vis == 'text' && (d.type === 'needChangeable' || d.type === "supplyChangeable") && this.map.removedProfessions.has(d.name);
 			})
 			.append('input')
 			.classed("input", true)
@@ -356,7 +374,13 @@ class Sidebar {
 			.attr("type", "text")
 			.attr('value', d => d.value)
 			.on("change", function(d){
-				that.map.removedMap[d.name] = d3.select(this).node().value;
+				if(d.type === "needChangeable")
+				{
+					that.map.removedMapDemand[d.name] = d3.select(this).node().value;
+				}
+				else{
+					that.map.removedMapSupply[d.name] = d3.select(this).node().value;
+				}
 				that.map.updateSelections(that.selectedProfessions);
 			})
 
@@ -402,7 +426,23 @@ class Sidebar {
 	// 	.on("mouseout", () => {
 	// 		d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
 	// 	});
-
+		let button = td.filter(d => {
+			return d.vis == "button";
+		})
+			.attr("rowspan", 2)
+			.append("button")
+			.classed("button", true)
+			.classed("editButton", true)
+			.classed("is-small", true)
+			.classed("is-link", true)
+			.classed("is-light", d => !this.map.removedProfessions.has(d.name))
+			.on("click", function(d){
+				that.changeIncludedProfession(d.name)
+			})
+			.append("span")
+			.attr("class", "icon is-small")
+			.append("i")
+			.attr("class", "far fa-edit editIcon")
 
     let checkbox = td.filter((d) => {
        return d.vis == 'check';
@@ -741,7 +781,7 @@ class Sidebar {
 		d3.select("#allProfRow").selectAll("td").remove()
 
     let allProfRow = d3.select("#allProfRow").selectAll("td")
-      .data((this.map.comparisonMode && !this.map.modelRemovedComparison) ? [check1, name, supply, need, gap] : [check1, check2, name, supply, need, gap])
+      .data((this.map.comparisonMode && !this.map.modelRemovedComparison) ? [check1, name, supply, need, gap] : [check1, name, supply, need, gap, check2])
       .enter()
       .append("td");
 
@@ -762,7 +802,7 @@ class Sidebar {
         if(i % 2 == 0)
         {
           let check1 = {type:"profSelected", vis:"check", value:this.selectedProfessions[d[0]], name:d[0]}
-          let check2 = {type:"profIncluded", vis:"check", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
+          let check2 = {type:"profIncluded", vis:"button", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
           let name = {type:"name", vis:"textDouble", value:d[0]}
           let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
           let need = {type:"need", vis:"text", value:Math.round(d[2])}
@@ -770,25 +810,26 @@ class Sidebar {
 
 					if(this.map.modelRemovedComparison)
 					{
-						return [check1, check2, name, supply, need, gap];
+						return [check1, name, supply, need, gap, check2];
 					}
 					else{
 						return [check1, name, supply, need, gap];
 					}
         }
-        let supply = {type:"supply", vis:"text", value:Math.round(d[4])}
+
+        let supply = {type:"supplyChangeable", vis:"text", value:Math.round(d[4]), name:d[0]}
         let need = {type:"needChangeable", vis:"text", value:Math.round(d[5]), name:d[0]}
         let gap = {type:"gap", vis:"bar", value:[Math.round(d[4]), Math.round(d[5])]}
         return [supply, need, gap];
       }
       else{
         let check1 = {type:"profSelected", vis:"check", value:this.selectedProfessions[d[0]], name:d[0]}
-        let check2 = {type:"profIncluded", vis:"check", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
+        let check2 = {type:"profIncluded", vis:"button", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
         let name = {type:"name", vis:"text", value:d[0]}
         let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
         let need = {type:"need", vis:"text", value:Math.round(d[2])}
         let gap = {type:"gap", vis:"bar", value:[Math.round(d[1]), Math.round(d[2])]}
-        return [check1, check2, name, supply, need, gap];
+        return [check1, name, supply, need, gap, check2];
       }
     }).enter().append("td");
 

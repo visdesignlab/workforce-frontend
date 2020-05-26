@@ -403,7 +403,7 @@ class Map{
 		const map = mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
-		let replacementJson = undefined
+		let replacementJson = undefined;
 
 		let promise1 = d3.json('../data/profReplacements.json').then((res) => {
 			replacementJson = res;
@@ -432,10 +432,7 @@ class Map{
 				else{
 					if(this.controller.modelRemovedComparison)
 					{
-						console.log(results);
 						this.removeProfessionsFromData(results, replacementJson);
-						console.log(results);
-
 					}
 				}
 
@@ -497,7 +494,9 @@ class Map{
 	removeProfessionsFromData(results, replacementJson)
 	{
 
-		let profTotal = {}
+		let profTotalDemand = {}
+		let profTotalSupply = {}
+
 
 		for(let county in results["counties"]["2019"])
 		{
@@ -507,11 +506,11 @@ class Map{
 			}
 			for(let prof in results["counties"]["2019"][county].demand)
 			{
+				profTotalSupply[prof] = profTotalSupply[prof] === undefined ? results["counties"]["2019"][county].supply[prof] : profTotalSupply[prof] + results["counties"]["2019"][county].supply[prof];
 
-				profTotal[prof] = profTotal[prof] === undefined ? results["counties"]["2019"][county].demand[prof] : profTotal[prof] + results["counties"]["2019"][county].demand[prof];
+				profTotalDemand[prof] = profTotalDemand[prof] === undefined ? results["counties"]["2019"][county].demand[prof] : profTotalDemand[prof] + results["counties"]["2019"][county].demand[prof];
 			}
 		}
-		console.log(profTotal)
 
 		for(let a in results)
 		{
@@ -525,16 +524,23 @@ class Map{
 					for(let i of Array.from(this.controller.removedProfessions))
 					{
 
-						let redistributeNum = newDemand[i];
+						let redistributeDemand = newDemand[i];
+						let redistributeSupply = newSupply[i];
 
-						if(this.controller.removedMap[i] !== undefined)
+						if(this.controller.removedMapDemand[i] !== undefined)
 						{
-							console.log(redistributeNum)
-							console.log((this.controller.removedMap[i]))
-							console.log(profTotal[i])
-							redistributeNum *= (1 - (this.controller.removedMap[i] / profTotal[i])) ;
-							console.log(redistributeNum)
+							redistributeDemand *= (1 - (this.controller.removedMapDemand[i] / profTotalDemand[i])) ;
+						}
+						else{
+							redistributeDemand = 0;
+						}
 
+						if(this.controller.removedMapSupply[i] !== undefined)
+						{
+							redistributeSupply *= (1 - (this.controller.removedMapSupply[i] / profTotalSupply[i])) ;
+						}
+						else{
+							redistributeSupply = 0;
 						}
 
 						let redistributeList = replacementJson[i].Replacements;
@@ -543,26 +549,26 @@ class Map{
 							return !this.controller.removedProfessions.has(d)
 						});
 
-						newDemand[i] = this.controller.removedMap[i] ? newDemand[i] - redistributeNum : 0;
+						newDemand[i] = this.controller.removedMapDemand[i] ? newDemand[i] - redistributeDemand : newDemand[i];
 
-
-						redistributeNum /= redistributeList.length;
+						redistributeDemand /= redistributeList.length;
 						for (let newProfDist of redistributeList)
 						{
-							newDemand[newProfDist] += redistributeNum;
+							newDemand[newProfDist] += redistributeDemand;
 						}
 
-						// let redistributeNumSup = newSupply[i];
+						// let redistributeSupply = newSupply[i];
 						//
-						// redistributeNumSup /= redistributeList.length;
+						// redistributeSupply /= redistributeList.length;
 						//
 						// for (let newProfDist of redistributeList)
 						// {
-						// 	newSupply[newProfDist] += redistributeNumSup;
+						// 	newSupply[newProfDist] += redistributeSupply;
 						// }
 						//
+						newSupply[i] = this.controller.removedMapSupply[i] ? newSupply[i] - redistributeSupply : newSupply[i];
 
-						newSupply[i] = 0;
+						// newSupply[i] = 0;
 					}
 
 					results[a][year][local].demand = newDemand

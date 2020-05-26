@@ -22,7 +22,8 @@ class MapController{
 	modelsUsed:any[];
 	sidebar:Sidebar;
 	removedProfessions:Set<string>;
-	removedMap:any;
+	removedMapSupply:any;
+	removedMapDemand:any;
 	modelComparison:ModelComparison;
 	comparisonType:string;
 	modelRemovedComparison:boolean;
@@ -32,7 +33,9 @@ class MapController{
 	 */
 	constructor()
 	{
-		this.removedMap = {}
+		this.removedMapSupply = {}
+
+		this.removedMapDemand = {}
 		this.removedProfessions = new Set<string>();
 		this.serverModels = {};
 		this.originalMap = new Map(this, true);
@@ -134,7 +137,6 @@ class MapController{
 
 	updateSelections(selectedProfessions:any){
 		this.updateMapYear(this.yearSelected).then(() => {
-
 			this.drawSidebar();
 			this.setAllHighlights();
 			if(this.comparisonMode)

@@ -51403,9 +51403,7 @@ var Map = /** @class */ (function () {
                 }
                 else {
                     if (_this.controller.modelRemovedComparison) {
-                        console.log(results);
                         _this.removeProfessionsFromData(results, replacementJson);
-                        console.log(results);
                     }
                 }
                 results = results[map];
@@ -51458,16 +51456,17 @@ var Map = /** @class */ (function () {
     };
     Map.prototype.removeProfessionsFromData = function (results, replacementJson) {
         var _this = this;
-        var profTotal = {};
+        var profTotalDemand = {};
+        var profTotalSupply = {};
         for (var county in results["counties"]["2019"]) {
             if (county == "State of Utah") {
                 continue;
             }
             for (var prof in results["counties"]["2019"][county].demand) {
-                profTotal[prof] = profTotal[prof] === undefined ? results["counties"]["2019"][county].demand[prof] : profTotal[prof] + results["counties"]["2019"][county].demand[prof];
+                profTotalSupply[prof] = profTotalSupply[prof] === undefined ? results["counties"]["2019"][county].supply[prof] : profTotalSupply[prof] + results["counties"]["2019"][county].supply[prof];
+                profTotalDemand[prof] = profTotalDemand[prof] === undefined ? results["counties"]["2019"][county].demand[prof] : profTotalDemand[prof] + results["counties"]["2019"][county].demand[prof];
             }
         }
-        console.log(profTotal);
         for (var a in results) {
             for (var year in results[a]) {
                 for (var local in results[a][year]) {
@@ -51475,34 +51474,41 @@ var Map = /** @class */ (function () {
                     var newSupply = results[a][year][local].supply;
                     for (var _i = 0, _a = Array.from(this.controller.removedProfessions); _i < _a.length; _i++) {
                         var i = _a[_i];
-                        var redistributeNum = newDemand[i];
-                        if (this.controller.removedMap[i] !== undefined) {
-                            console.log(redistributeNum);
-                            console.log((this.controller.removedMap[i]));
-                            console.log(profTotal[i]);
-                            redistributeNum *= (1 - (this.controller.removedMap[i] / profTotal[i]));
-                            console.log(redistributeNum);
+                        var redistributeDemand = newDemand[i];
+                        var redistributeSupply = newSupply[i];
+                        if (this.controller.removedMapDemand[i] !== undefined) {
+                            redistributeDemand *= (1 - (this.controller.removedMapDemand[i] / profTotalDemand[i]));
+                        }
+                        else {
+                            redistributeDemand = 0;
+                        }
+                        if (this.controller.removedMapSupply[i] !== undefined) {
+                            redistributeSupply *= (1 - (this.controller.removedMapSupply[i] / profTotalSupply[i]));
+                        }
+                        else {
+                            redistributeSupply = 0;
                         }
                         var redistributeList = replacementJson[i].Replacements;
                         redistributeList = redistributeList.filter(function (d) {
                             return !_this.controller.removedProfessions.has(d);
                         });
-                        newDemand[i] = this.controller.removedMap[i] ? newDemand[i] - redistributeNum : 0;
-                        redistributeNum /= redistributeList.length;
+                        newDemand[i] = this.controller.removedMapDemand[i] ? newDemand[i] - redistributeDemand : newDemand[i];
+                        redistributeDemand /= redistributeList.length;
                         for (var _b = 0, redistributeList_1 = redistributeList; _b < redistributeList_1.length; _b++) {
                             var newProfDist = redistributeList_1[_b];
-                            newDemand[newProfDist] += redistributeNum;
+                            newDemand[newProfDist] += redistributeDemand;
                         }
-                        // let redistributeNumSup = newSupply[i];
+                        // let redistributeSupply = newSupply[i];
                         //
-                        // redistributeNumSup /= redistributeList.length;
+                        // redistributeSupply /= redistributeList.length;
                         //
                         // for (let newProfDist of redistributeList)
                         // {
-                        // 	newSupply[newProfDist] += redistributeNumSup;
+                        // 	newSupply[newProfDist] += redistributeSupply;
                         // }
                         //
-                        newSupply[i] = 0;
+                        newSupply[i] = this.controller.removedMapSupply[i] ? newSupply[i] - redistributeSupply : newSupply[i];
+                        // newSupply[i] = 0;
                     }
                     results[a][year][local].demand = newDemand;
                     results[a][year][local].supply = newSupply;
@@ -51604,7 +51610,8 @@ var MapController = /** @class */ (function () {
      *
      */
     function MapController() {
-        this.removedMap = {};
+        this.removedMapSupply = {};
+        this.removedMapDemand = {};
         this.removedProfessions = new Set();
         this.serverModels = {};
         this.originalMap = new map_1.Map(this, true);
@@ -52446,10 +52453,27 @@ var Sidebar = /** @class */ (function () {
     };
     Sidebar.prototype.singleMapRows = function (td, xScale, domainMax) {
         var _this = this;
+        var that = this;
         var labels = td.filter(function (d) {
-            return d.vis == 'text' && d.type !== 'needChangeable';
+            return d.vis == 'text' && d.type !== 'needChangeable' && d.type !== "supplyChangeable";
         })
             .text(function (d) { return d.value; });
+        var button = td.filter(function (d) {
+            return d.vis == "button";
+        })
+            .append("button")
+            .classed("button", true)
+            .classed("editButton", true)
+            .classed("is-link", true)
+            .classed("is-light", function (d) { return !_this.map.removedProfessions.has(d.name); })
+            .classed("is-small", true)
+            .on("click", function (d) {
+            that.changeIncludedProfession(d.name);
+        })
+            .append("span")
+            .attr("class", "icon")
+            .append("i")
+            .attr("class", "far fa-edit editIcon");
         var allCheckbox = td.filter(function (d) {
             return d.vis == 'allCheck' && d.type == 'selectedCheck';
         })
@@ -52566,11 +52590,11 @@ var Sidebar = /** @class */ (function () {
         var _this = this;
         var that = this;
         var labels = td.filter(function (d) {
-            return d.vis == 'text' && d.type !== "needChangeable";
+            return d.vis == 'text' && ((d.type !== "supplyChangeable" && d.type !== "needChangeable") || !_this.map.removedProfessions.has(d.name));
         })
             .text(function (d) { return d.value; });
         var inputLabels = td.filter(function (d) {
-            return d.vis == 'text' && d.type === 'needChangeable';
+            return d.vis == 'text' && (d.type === 'needChangeable' || d.type === "supplyChangeable") && _this.map.removedProfessions.has(d.name);
         })
             .append('input')
             .classed("input", true)
@@ -52578,7 +52602,12 @@ var Sidebar = /** @class */ (function () {
             .attr("type", "text")
             .attr('value', function (d) { return d.value; })
             .on("change", function (d) {
-            that.map.removedMap[d.name] = d3.select(this).node().value;
+            if (d.type === "needChangeable") {
+                that.map.removedMapDemand[d.name] = d3.select(this).node().value;
+            }
+            else {
+                that.map.removedMapSupply[d.name] = d3.select(this).node().value;
+            }
             that.map.updateSelections(that.selectedProfessions);
         });
         var doubleLabels = td.filter(function (d) {
@@ -52620,6 +52649,23 @@ var Sidebar = /** @class */ (function () {
         // 	.on("mouseout", () => {
         // 		d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
         // 	});
+        var button = td.filter(function (d) {
+            return d.vis == "button";
+        })
+            .attr("rowspan", 2)
+            .append("button")
+            .classed("button", true)
+            .classed("editButton", true)
+            .classed("is-small", true)
+            .classed("is-link", true)
+            .classed("is-light", function (d) { return !_this.map.removedProfessions.has(d.name); })
+            .on("click", function (d) {
+            that.changeIncludedProfession(d.name);
+        })
+            .append("span")
+            .attr("class", "icon is-small")
+            .append("i")
+            .attr("class", "far fa-edit editIcon");
         var checkbox = td.filter(function (d) {
             return d.vis == 'check';
         })
@@ -52874,7 +52920,7 @@ var Sidebar = /** @class */ (function () {
         var gap = { type: "axis", vis: "axis", value: [allProfData[1], allProfData[2]] };
         d3.select("#allProfRow").selectAll("td").remove();
         var allProfRow = d3.select("#allProfRow").selectAll("td")
-            .data((this.map.comparisonMode && !this.map.modelRemovedComparison) ? [check1, name, supply, need, gap] : [check1, check2, name, supply, need, gap])
+            .data((this.map.comparisonMode && !this.map.modelRemovedComparison) ? [check1, name, supply, need, gap] : [check1, name, supply, need, gap, check2])
             .enter()
             .append("td");
         this.singleMapRows(allProfRow, profScale, d3.max(profData, function (d) { return d3.max([d[1], d[2], d[4], d[5]]); }));
@@ -52890,31 +52936,31 @@ var Sidebar = /** @class */ (function () {
             if (_this.map.comparisonMode) {
                 if (i % 2 == 0) {
                     var check1_1 = { type: "profSelected", vis: "check", value: _this.selectedProfessions[d[0]], name: d[0] };
-                    var check2_1 = { type: "profIncluded", vis: "check", value: !_this.map.removedProfessions.has(d[0]), name: d[0] };
+                    var check2_1 = { type: "profIncluded", vis: "button", value: !_this.map.removedProfessions.has(d[0]), name: d[0] };
                     var name_3 = { type: "name", vis: "textDouble", value: d[0] };
                     var supply_4 = { type: "supply", vis: "text", value: Math.round(d[1]) };
                     var need_4 = { type: "need", vis: "text", value: Math.round(d[2]) };
                     var gap_4 = { type: "gap", vis: "bar", value: [Math.round(d[1]), Math.round(d[2])] };
                     if (_this.map.modelRemovedComparison) {
-                        return [check1_1, check2_1, name_3, supply_4, need_4, gap_4];
+                        return [check1_1, name_3, supply_4, need_4, gap_4, check2_1];
                     }
                     else {
                         return [check1_1, name_3, supply_4, need_4, gap_4];
                     }
                 }
-                var supply_5 = { type: "supply", vis: "text", value: Math.round(d[4]) };
+                var supply_5 = { type: "supplyChangeable", vis: "text", value: Math.round(d[4]), name: d[0] };
                 var need_5 = { type: "needChangeable", vis: "text", value: Math.round(d[5]), name: d[0] };
                 var gap_5 = { type: "gap", vis: "bar", value: [Math.round(d[4]), Math.round(d[5])] };
                 return [supply_5, need_5, gap_5];
             }
             else {
                 var check1_2 = { type: "profSelected", vis: "check", value: _this.selectedProfessions[d[0]], name: d[0] };
-                var check2_2 = { type: "profIncluded", vis: "check", value: !_this.map.removedProfessions.has(d[0]), name: d[0] };
+                var check2_2 = { type: "profIncluded", vis: "button", value: !_this.map.removedProfessions.has(d[0]), name: d[0] };
                 var name_4 = { type: "name", vis: "text", value: d[0] };
                 var supply_6 = { type: "supply", vis: "text", value: Math.round(d[1]) };
                 var need_6 = { type: "need", vis: "text", value: Math.round(d[2]) };
                 var gap_6 = { type: "gap", vis: "bar", value: [Math.round(d[1]), Math.round(d[2])] };
-                return [check1_2, check2_2, name_4, supply_6, need_6, gap_6];
+                return [check1_2, name_4, supply_6, need_6, gap_6, check2_2];
             }
         }).enter().append("td");
         if (this.map.comparisonMode) {
