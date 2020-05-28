@@ -1,13 +1,11 @@
 # Workforce Project API And Frontend
 
 ## Documentation For Frontend And Backend
----
 
 1. [Frontend](/frontend/README.md)
 1. [Backend](/backend/README.md)
 
 ## Deploying The Whole Application In Production
----
 
 We use docker to deploy in production. The specific container that we extend is 
 [here](https://github.com/tiangolo/uwsgi-nginx-flask-docker) and the tag is `python3.8`.

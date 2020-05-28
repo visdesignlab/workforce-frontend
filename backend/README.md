@@ -2,7 +2,7 @@
 
 An API server for the Healthcare Workforce Needs application.
 
-# Table of Contents
+## Table of Contents
 
 1. [Development Environment Quick Start](#development-environment-quick-start)
 1. [Deploying In Production](#deploying-in-production)
@@ -11,7 +11,6 @@ An API server for the Healthcare Workforce Needs application.
 1. [Testing](#testing)
 
 ## Development Environment Quick Start
----
 
 This project uses `pipenv` for python package version management, so make sure you have that installed. If you need instructions for setting it up, check [here](https://pipenv.pypa.io/en/latest/install/#installing-pipenv). Once  `pipenv` is installed, you can set up a virtual environment and install all python dependencies with `pipenv install`.
 
@@ -22,14 +21,11 @@ Now, copy the .env.default to .env using `cp .env.default .env`.
 Once `pipenv` is set up and the .env file is set correctly, run `pipenv serve` to run a local development server at http://127.0.0.1:5000/.
 
 ## Deploying In Production
----
 
 See [top level README](../README.md).
 
-## Documentation
----
+## Routes 
 
-### Routes 
 There are several routes set up for accessing the model data. Here are the names, allowed methods, parameters, and descriptions:
 
 - Name: `/api`
@@ -76,6 +72,5 @@ There are several routes set up for accessing the model data. Here are the names
     ```
 
 ## Testing
----
 
 We supply tests for all of the endpoints we provide using coverage.py. If you are updating the code and want to maintain the same functionality, our tests should help you do that. You can run the tests with `pipenv run test`.
