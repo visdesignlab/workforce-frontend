@@ -1,15 +1,11 @@
 import os
 import pickle
 import json
-from flask import Flask, request, jsonify
+from flask import request, jsonify
 from werkzeug.utils import secure_filename
-from flask_cors import CORS
 
-from route_utils import allowed_file, add_model_metadata, run_model
-
-
-app = Flask(__name__, static_folder="static", static_url_path="")
-CORS(app)
+from server import app
+from server.route_utils import allowed_file, add_model_metadata, run_model
 
 
 @app.route("/api")
@@ -44,7 +40,7 @@ def upload_file():
     return "Filename is missing", 400
 
   # Check if the file has the right extension
-  if allowed_file(file.filename, ALLOWED_EXTENSIONS):
+  if allowed_file(file.filename, app.config["ALLOWED_EXTENSIONS"]):
     # Save the file to the uploads folder
     filename = secure_filename(file.filename)
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
@@ -69,16 +65,7 @@ def upload_file():
 @app.route("/api/models", methods=["GET"])
 def get_models():
   # Read in the model metadata
-  with open("models.pkl", "rb") as f:
+  with open("server/models.pkl", "rb") as f:
     metadata = pickle.load(f)
 
   return jsonify(metadata)
-
-
-if __name__ == "__main__":
-  UPLOAD_FOLDER = "./uploads"
-  app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-  app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
-  ALLOWED_EXTENSIONS = set(["txt", "csv", "xlsx"])
-  app.debug = True
-  app.run(host = os.getenv("FLASK_HOST"), port = os.getenv("FLASK_PORT"))

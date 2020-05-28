@@ -2,10 +2,10 @@ import pickle
 import json
 
 def process_results(path):
-    with open("results.pkl", "rb") as f:
+    with open("server/results.pkl", "rb") as f:
         results = pickle.load(f)
 
-    with open("population.pkl", "rb") as f:
+    with open("server/population.pkl", "rb") as f:
         population = pickle.load(f)
 
     pd = {}

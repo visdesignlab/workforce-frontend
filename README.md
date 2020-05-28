@@ -1,17 +1,31 @@
-# workforce-frontend
+# Workforce Project API And Frontend
 
-The purpose of this project is to model the healthcare workforce trends in Utah. This model shows the healthcare industries trends by profession. The model also shows what the supply/need are in each county in Utah. The project uses an API(https://github.com/visdesignlab/workforce-server) to calculate the trend data.
+## Documentation For Frontend And Backend
+---
 
-# Developers
+1. [Frontend](/frontend/README.md)
+1. [Backend](/backend/README.md)
 
-## Required Tools
-* npm
-* Node
+## Deploying The Whole Application In Production
+---
 
-## Installation
-To install neccesary packages, run the command `npm install`. This will use webpack to bundle the typescript files into a single minified javascript file.
+We use docker to deploy in production. The specific container that we extend is [here](https://github.com/tiangolo/uwsgi-nginx-flask-docker).
 
-## Building
-To build this project, run the command `npm run-script build`. This will use webpack to bundle the typescript files into a single minified javascript file.
-## Running
-To run this project, run the command `npm start`. The project will be served on localhost:8000.
+To build and run the containers, do the following:
+
+```
+cd backend
+pipenv install
+pipenv run pip freeze > requirements.txt
+cd ..
+docker build --no-cache -t workforce .
+docker stop workforce_container
+docker rm workforce_container
+docker run --name workforce_container -p 80:80 workforce
+```
+
+To debug the running container run:
+
+```
+docker exec -it workforce_container bash
+```

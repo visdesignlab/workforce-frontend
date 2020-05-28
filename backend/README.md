@@ -24,7 +24,7 @@ Once `pipenv` is set up and the .env file is set correctly, run `pipenv serve` t
 ## Deploying In Production
 ---
 
-TODO: Write this section
+See [top level README](../README.md).
 
 ## Documentation
 ---

@@ -64,13 +64,13 @@
 
 import pickle
 import datetime
-import workforce_pandas as wfpd
+import server.workforce_pandas as wfpd
 import json
 import sys
 import pickle
 import os
 import pandas as pd
-from my_allocation import main
+from server.my_allocation import main
 command="null"
 provider_type="null"
 
@@ -683,14 +683,13 @@ geo_area = wfpd.dataframes['geo_area_list'].geo_area.tolist()
 
 
 def run_model_for_range(model, start, end, step, removedProfessions):
-    import workforce_pandas as wfpd
     year_range = list(range(int(start), int(end)+1, int(step)))
     df = wfpd.dataframes["provider_list"]
     wfpd.dataframes["provider_list"] = df.loc[~df["provider_abbr"].isin(removedProfessions)]
 
     results = {}
     for i in year_range:
-        file = open("results.pkl", "wb")
+        file = open("server/results.pkl", "wb")
         results[i] = {}
         for j in geo_area:
             out  = run_model(j, str(i), model, "all_combination", 0, 0)

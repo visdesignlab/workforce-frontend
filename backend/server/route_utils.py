@@ -2,8 +2,8 @@ import pandas as pd
 import pickle
 import uuid
 
-from process_results import process_results
-from results import run_model_for_range
+from server.process_results import process_results
+from server.results import run_model_for_range
 
 
 def allowed_file(filename, ALLOWED_EXTENSIONS):
@@ -23,11 +23,11 @@ def add_model_metadata(metadata):
   model_id = str(uuid.uuid4())
 
   # Read in the current model objects
-  with open("models.pkl", "rb") as f:
+  with open("server/models.pkl", "rb") as f:
     models = pickle.load(f)
 
   # Write the new model to the pkl file
-  with open("models.pkl", "wb") as f:
+  with open("server/models.pkl", "wb") as f:
     models[model_id] = new_model
     pickle.dump(models, f)
 
@@ -36,13 +36,13 @@ def add_model_metadata(metadata):
 
 def update_model_status(model_id, status):
   # Load in the models
-  with open("models.pkl", "rb") as f:
+  with open("server/models.pkl", "rb") as f:
     models = pickle.load(f)
 
   # Update the currently running model with status passed in
   models[model_id]["status"] = status
   models[model_id]["path"] = f"models/{model_id}.json"
-  with open("models.pkl", "wb") as f:
+  with open("server/models.pkl", "wb") as f:
     pickle.dump(models, f)
 
 
