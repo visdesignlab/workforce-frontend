@@ -689,7 +689,7 @@ def run_model_for_range(model, start, end, step, removedProfessions):
 
     results = {}
     for i in year_range:
-        file = open("server/results.pkl", "wb")
+        file = open(os.path.join(app.root_path, "results.pkl"), "wb")
         results[i] = {}
         for j in geo_area:
             out  = run_model(j, str(i), model, "all_combination", 0, 0)
