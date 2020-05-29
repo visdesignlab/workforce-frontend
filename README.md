@@ -31,7 +31,12 @@ cd ..
 docker build --no-cache -t workforce .
 docker stop workforce_container
 docker rm workforce_container
-docker run -d --name workforce_container -p 80:80 workforce
+docker run \
+  -d \
+  -p 80:80 \
+  -v `pwd`/backend/server:/app/server/ \
+  --name workforce_container \
+  workforce
 ```
 
 The container redirects the nginx error logs to stderr and stdout, not to a file, so you 
