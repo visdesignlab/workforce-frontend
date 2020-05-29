@@ -9,6 +9,8 @@
 
 We use docker to deploy in production. The specific container that we extend is 
 [here](https://github.com/tiangolo/uwsgi-nginx-flask-docker) and the tag is `python3.8`.
+The container is set up to use uwsgi and nginx to host a flask app and has been extended
+to also serve the static frontend.
 
 To build and run the containers, do the following:
 
@@ -32,7 +34,9 @@ docker rm workforce_container
 docker run -d --name workforce_container -p 80:80 workforce
 ```
 
-To debug the running container run:
+The container redirects the nginx error logs to stderr and stdout, not to a file, so you 
+can attach to the container to debug. However, if you want to poke around the file system
+you can with the following command:
 
 ```
 docker exec -it workforce_container bash

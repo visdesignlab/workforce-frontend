@@ -70,6 +70,7 @@ import sys
 import pickle
 import os
 import pandas as pd
+from server import app
 from server.my_allocation import main
 command="null"
 provider_type="null"
