@@ -160,7 +160,7 @@ class Map{
 					return d3.interpolateRdBu(this.supplyScore[county]);
 				}
 				let that:any = this
-				d3.json("../dist/data/UT-49-utah-counties.json").then((us)=> {
+				d3.json("data/UT-49-utah-counties.json").then((us)=> {
 					var topojsonFeatures = topojson.feature(us, us.objects[map]);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
 					var projection = d3.geoAlbersUsa()
@@ -405,7 +405,7 @@ class Map{
 
 		let replacementJson = undefined
 
-		let promise1 = d3.json('../dist/data/profReplacements.json').then((res) => {
+		let promise1 = d3.json('data/profReplacements.json').then((res) => {
 			replacementJson = res;
 		})
 
