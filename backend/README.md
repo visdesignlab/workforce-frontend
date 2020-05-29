@@ -56,7 +56,7 @@ There are several routes set up for accessing the model data. Here are the names
     ```
     curl \
       -X POST \
-      -F 'metadata={"model_name": "new_model", "author": "me", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2024, "step_size": 1, "removed_professions": []}' \
+      -F 'metadata={"model_name": "new_model", "author": "me", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2020, "step_size": 1, "removed_professions": []}' \
       -F 'file=@server/uploads/Workforce_Optimization_Tool_-_Input_Data.xlsx' \
       '127.0.0.1:5000/api/file-upload'
     ```
