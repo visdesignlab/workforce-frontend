@@ -65,7 +65,7 @@ def upload_file():
 @app.route("/api/models", methods=["GET"])
 def get_models():
   # Read in the model metadata
-  with open("server/models.pkl", "rb") as f:
+  with open(os.path.join(app.root_path, "models.pkl"), "rb") as f:
     metadata = pickle.load(f)
 
   return jsonify(metadata)
