@@ -1,4 +1,4 @@
-import {Map} from './map';
+import {Map} from './Map';
 import {MapController} from './mapController';
 import {MapEvents} from './mapEvents'
 import {Sidebar} from './sidebar'
