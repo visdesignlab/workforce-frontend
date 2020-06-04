@@ -5,6 +5,8 @@ import {MapController} from './MapController'
 class MapEvents{
 	map: MapController;
 	selectAll : boolean;
+	
+	private API_URL: string = '/api/';
 
 	constructor(map:MapController){
 		this.map = map;
@@ -58,14 +60,8 @@ class MapEvents{
 	}
 
 	changeModelData():Promise<void> {
-
-		const serverUrl = 'http://3.20.123.182/';
-
-		let promise = d3.json(serverUrl+"models");
-
+		let promise = d3.json(this.API_URL + "models");
 		let counter = 0;
-
-
 
 		promise = promise.then((results)=> {
 			this.map.serverModels = results;

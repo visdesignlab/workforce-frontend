@@ -1,5 +1,8 @@
 # Workforce Project API And Frontend
 
+## Description
+The purpose of this project is to model the healthcare workforce trends in Utah by profession. The model also outputs the supply/need for each county in Utah.
+
 ## Documentation For Frontend And Backend
 
 1. [Frontend](/frontend/README.md)

@@ -21,6 +21,8 @@ class Map{
 	totalResults:any;
 	firstMap:boolean;
 
+	private API_URL: string = '/api/';
+
 	/**
 	 *
 	 */
@@ -51,13 +53,12 @@ class Map{
 		this.modelData = modelUsed;
 		const map = mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
-		const serverUrl = 'http://3.20.123.182/';
 
 		// const option = (document.getElementById('customModel') as HTMLInputElement).value;
 
 		let promise;
 		// if (!customModel) {
-		promise = d3.json(`${serverUrl}/${modelFile}`);
+		promise = d3.json(`${this.API_URL}/${modelFile}`);
 		// }
 		// else {
 
@@ -409,7 +410,7 @@ class Map{
 			replacementJson = res;
 		})
 
-		let promise2 = d3.json(`http://3.20.123.182/${modelFile}`).then((results)=> {
+		let promise2 = d3.json(`${this.API_URL}${modelFile}`).then((results)=> {
 
 			promise1.then(() => {
 
