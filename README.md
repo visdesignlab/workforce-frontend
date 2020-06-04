@@ -18,6 +18,23 @@ to also serve the static frontend.
 To build and run the containers, do the following:
 
 ```
+# On a fresh ubuntu system
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo apt-key fingerprint 0EBFCD88
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io
+sudo usermod -aG docker ubuntu
+
+cd ~
+curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+sudo apt-get install -y nodejs
+git clone https://github.com/visdesignlab/workforce-frontend.git
+cd workforce-frontend
+
 # Assemble necessary backend resources
 cd backend
 pipenv install
@@ -30,7 +47,8 @@ npm install
 npm run build
 cd ..
 
-# Build the docker container and start it
+# Build the docker container and start it (If on a new system and you get a permissions error, log out and in)
+docker image prune -f
 docker build --no-cache -t workforce .
 docker stop workforce_container
 docker rm workforce_container
