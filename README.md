@@ -48,7 +48,7 @@ npm run build
 cd ..
 
 # Build the docker container and start it (If on a new system and you get a permissions error, log out and in)
-docker image prune -f
+docker image prune -af
 docker build --no-cache -t workforce .
 docker stop workforce_container
 docker rm workforce_container
