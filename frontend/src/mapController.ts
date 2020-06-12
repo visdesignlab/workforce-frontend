@@ -181,6 +181,21 @@ class MapController{
 
 	highlightPath(name:string) {
 
+		console.log(this.selectedCounties)
+
+		if(!this.selectedCounties.has(name) && this.selectedCounties.has("State of Utah"))
+		{
+			this.sidebar.currentlySelected.delete("State of Utah")
+			this.sidebar.currentlySelected.add(name)
+
+		}
+
+		else if(this.selectedCounties.has(name) && this.selectedCounties.size == 1)
+		{
+			this.sidebar.currentlySelected = new Set<string>();
+			this.sidebar.currentlySelected.add("State of Utah");
+		}
+
 		if(this.selectedCounties.has(name))
 		{
 			this.unHighlightPath(name);

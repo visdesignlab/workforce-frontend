@@ -120,8 +120,6 @@ class ModelComparison
       }
     }
 
-
-
     this.svg.selectAll("*").remove();
 
     let selectedMapOne = undefined;
@@ -167,8 +165,6 @@ class ModelComparison
       {
         continue;
       }
-
-
 
       let currObj1 = {"prof":undefined, "dataset":undefined};
       currObj1.prof = i;

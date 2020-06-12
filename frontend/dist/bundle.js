@@ -51213,7 +51213,7 @@ var Map = /** @class */ (function () {
                     .attr("d", path)
                     .attr('fill', colorScale)
                     .attr('stroke', 'black')
-                    .on('click', function (d) { return _this.controller.highlightPath(d.properties.NAME); })
+                    .on('click', function (d) { return _this.controller.sidebar.highlightRect(d.properties.NAME); })
                     .on("mouseover", function (d) {
                     var f = d3.format(".2f");
                     var supplyDemandRatio = f(2 * _this.supplyScore[d.properties.NAME]);
@@ -51380,6 +51380,7 @@ var Map = /** @class */ (function () {
      */
     Map.prototype.updateMapYear = function (year, mapData, mapType, sidebar) {
         var _this = this;
+        console.log("map updating");
         if (!this.firstMap && !this.controller.comparisonMode) {
             return Promise.resolve();
         }
@@ -51403,12 +51404,13 @@ var Map = /** @class */ (function () {
                 }
                 else {
                     if (_this.controller.modelRemovedComparison) {
-                        _this.removeProfessionsFromData(results, replacementJson);
+                        _this.removeProfessionsFromData(_this.results, replacementJson);
+                        console.log(_this.results);
                     }
                 }
-                results = results[map];
-                _this.results = results;
-                _this.currentYearData = results[year];
+                // results = results[map];
+                // this.results = results;
+                // this.currentYearData = results[year]
                 var professions = Object.keys(_this.currentYearData['State of Utah']['supply']);
                 for (var county in _this.currentYearData) {
                     var totalSupply = 0;
@@ -51456,70 +51458,87 @@ var Map = /** @class */ (function () {
     };
     Map.prototype.removeProfessionsFromData = function (results, replacementJson) {
         var _this = this;
+        console.log(this.results);
         var profTotalDemand = {};
         var profTotalSupply = {};
-        for (var county in results["counties"]["2019"]) {
+        var allCounties = this.controller.sidebar.currentlySelected.has("State of Utah");
+        console.log(allCounties);
+        for (var county in this.results["2019"]) {
             if (county == "State of Utah") {
                 continue;
             }
-            for (var prof in results["counties"]["2019"][county].demand) {
-                profTotalSupply[prof] = profTotalSupply[prof] === undefined ? results["counties"]["2019"][county].supply[prof] : profTotalSupply[prof] + results["counties"]["2019"][county].supply[prof];
-                profTotalDemand[prof] = profTotalDemand[prof] === undefined ? results["counties"]["2019"][county].demand[prof] : profTotalDemand[prof] + results["counties"]["2019"][county].demand[prof];
-            }
-        }
-        for (var a in results) {
-            for (var year in results[a]) {
-                for (var local in results[a][year]) {
-                    var newDemand = results[a][year][local].demand;
-                    var newSupply = results[a][year][local].supply;
-                    for (var _i = 0, _a = Array.from(this.controller.removedProfessions); _i < _a.length; _i++) {
-                        var i = _a[_i];
-                        var redistributeDemand = newDemand[i];
-                        var redistributeSupply = newSupply[i];
-                        if (this.controller.removedMapDemand[i] !== undefined) {
-                            redistributeDemand *= (1 - (this.controller.removedMapDemand[i] / profTotalDemand[i]));
-                        }
-                        else {
-                            redistributeDemand = 0;
-                        }
-                        if (this.controller.removedMapSupply[i] !== undefined) {
-                            redistributeSupply *= (1 - (this.controller.removedMapSupply[i] / profTotalSupply[i]));
-                        }
-                        else {
-                            redistributeSupply = 0;
-                        }
-                        var redistributeList = replacementJson[i].Replacements;
-                        redistributeList = redistributeList.filter(function (d) {
-                            return !_this.controller.removedProfessions.has(d);
-                        });
-                        newDemand[i] = this.controller.removedMapDemand[i] ? newDemand[i] - redistributeDemand : newDemand[i];
-                        redistributeDemand /= redistributeList.length;
-                        for (var _b = 0, redistributeList_1 = redistributeList; _b < redistributeList_1.length; _b++) {
-                            var newProfDist = redistributeList_1[_b];
-                            newDemand[newProfDist] += redistributeDemand;
-                        }
-                        // let redistributeSupply = newSupply[i];
-                        //
-                        // redistributeSupply /= redistributeList.length;
-                        //
-                        // for (let newProfDist of redistributeList)
-                        // {
-                        // 	newSupply[newProfDist] += redistributeSupply;
-                        // }
-                        //
-                        newSupply[i] = this.controller.removedMapSupply[i] ? newSupply[i] - redistributeSupply : newSupply[i];
-                        // newSupply[i] = 0;
-                    }
-                    results[a][year][local].demand = newDemand;
-                    results[a][year][local].supply = newSupply;
+            if (allCounties || this.controller.sidebar.currentlySelected.has(county)) {
+                for (var prof in this.results["2019"][county].demand) {
+                    profTotalSupply[prof] = profTotalSupply[prof] === undefined ? this.results["2019"][county].supply[prof] : profTotalSupply[prof] + this.results["2019"][county].supply[prof];
+                    profTotalDemand[prof] = profTotalDemand[prof] === undefined ? this.results["2019"][county].demand[prof] : profTotalDemand[prof] + this.results["2019"][county].demand[prof];
                 }
             }
         }
+        console.log(profTotalDemand);
+        for (var year in this.results) {
+            for (var local in this.results[year]) {
+                if (!(allCounties || this.controller.selectedCounties.has(local))) {
+                    continue;
+                }
+                var newDemand = this.results[year][local].demand;
+                var newSupply = this.results[year][local].supply;
+                for (var _i = 0, _a = Array.from(this.controller.removedProfessions); _i < _a.length; _i++) {
+                    var i = _a[_i];
+                    var redistributeDemand = newDemand[i];
+                    var redistributeSupply = newSupply[i];
+                    if (this.controller.removedMapDemand[i] !== undefined) {
+                        redistributeDemand *= (1 - (this.controller.removedMapDemand[i] / profTotalDemand[i]));
+                    }
+                    else {
+                        redistributeDemand = 0;
+                    }
+                    if (this.controller.removedMapSupply[i] !== undefined) {
+                        redistributeSupply *= (1 - (this.controller.removedMapSupply[i] / profTotalSupply[i]));
+                    }
+                    else {
+                        redistributeSupply = 0;
+                    }
+                    var redistributeList = replacementJson[i].Replacements;
+                    redistributeList = redistributeList.filter(function (d) {
+                        return !_this.controller.removedProfessions.has(d);
+                    });
+                    newDemand[i] = this.controller.removedMapDemand[i] ? newDemand[i] - redistributeDemand : newDemand[i];
+                    if (!allCounties) {
+                        this.results[year]["State of Utah"].demand[i] -= redistributeDemand;
+                    }
+                    redistributeDemand /= redistributeList.length;
+                    for (var _b = 0, redistributeList_1 = redistributeList; _b < redistributeList_1.length; _b++) {
+                        var newProfDist = redistributeList_1[_b];
+                        newDemand[newProfDist] += redistributeDemand;
+                        if (!allCounties) {
+                            this.results[year]["State of Utah"].demand[newProfDist] += redistributeDemand;
+                        }
+                    }
+                    // let redistributeSupply = newSupply[i];
+                    //
+                    // redistributeSupply /= redistributeList.length;
+                    //
+                    // for (let newProfDist of redistributeList)
+                    // {
+                    // 	newSupply[newProfDist] += redistributeSupply;
+                    // }
+                    //
+                    newSupply[i] = this.controller.removedMapSupply[i] ? newSupply[i] - redistributeSupply : newSupply[i];
+                    if (!allCounties) {
+                        this.results[year]["State of Utah"].supply[i] -= redistributeSupply;
+                    }
+                    // newSupply[i] = 0;
+                }
+                this.results[year][local].demand = newDemand;
+                this.results[year][local].supply = newSupply;
+            }
+        }
+        this.controller.removedMapDemand = {};
+        this.controller.removedMapSupply = {};
     };
     Map.prototype.removeSpaces = function (s) {
         return s.replace(/\s/g, '');
     };
-    //function found here : http://bl.ocks.org/syntagmatic/e8ccca52559796be775553b467593a9f
     Map.prototype.continuous = function (selector_id, colorscale, label, domain) {
         var legendheight = 200, legendwidth = 76, margin = { top: 10, right: 60, bottom: 10, left: 2 };
         d3.select(selector_id)
@@ -51558,21 +51577,12 @@ var Map = /** @class */ (function () {
             image.data[4 * i + 3] = 255;
         });
         ctx.putImageData(image, 0, 0);
-        // A simpler way to do the above, but possibly slower. keep in mind the legend width is stretched because the width attr of the canvas is 1
-        // See http://stackoverflow.com/questions/4899799/whats-the-best-way-to-set-a-single-pixel-in-an-html5-canvas
-        /*
-        d3.range(legendheight).forEach(function(i) {
-          ctx.fillStyle = colorscale(legendscale.invert(i));
-          ctx.fillRect(0,i,1,1);
-        });
-        */
         var legendaxis = d3.axisBottom()
             .scale(legendscale)
             .tickSize(3)
             .ticks(3);
         if (label == "Population")
             legendaxis = legendaxis.tickFormat(d3.formatPrefix(",.1", 1e6));
-        // .tickFormat(d3.format(".1f"))
         this.svg.select(".legendAxis").remove();
         this.svg
             .append("g")
@@ -51729,6 +51739,15 @@ var MapController = /** @class */ (function () {
         d3.select("#tooltip").transition().duration(500).style("opacity", 0);
     };
     MapController.prototype.highlightPath = function (name) {
+        console.log(this.selectedCounties);
+        if (!this.selectedCounties.has(name) && this.selectedCounties.has("State of Utah")) {
+            this.sidebar.currentlySelected.delete("State of Utah");
+            this.sidebar.currentlySelected.add(name);
+        }
+        else if (this.selectedCounties.has(name) && this.selectedCounties.size == 1) {
+            this.sidebar.currentlySelected = new Set();
+            this.sidebar.currentlySelected.add("State of Utah");
+        }
         if (this.selectedCounties.has(name)) {
             this.unHighlightPath(name);
             this.setAllHighlights();
@@ -52410,6 +52429,7 @@ var Sidebar = /** @class */ (function () {
     };
     Sidebar.prototype.highlightRect = function (id) {
         var _this = this;
+        console.log(id);
         if (id == "State of Utah") {
             this.currentlySelected.forEach(function (id) {
                 if (id == "State of Utah")
@@ -52828,15 +52848,13 @@ var Sidebar = /** @class */ (function () {
             .data([name2, supply2, need2, gap2])
             .enter()
             .append("td");
-        // if(!this.map.comparisonMode)
-        // {
-        this.singleMapRows(stateRow, xScale, domainMax);
-        // }
-        // else
-        // {
-        // 	this.doubleMapRows(stateRow2, xScale, domainMax)
-        // 	this.doubleMapRows(stateRow, xScale, domainMax)
-        // }
+        if (!this.map.comparisonMode) {
+            this.singleMapRows(stateRow, xScale, domainMax);
+        }
+        else {
+            this.doubleMapRows(stateRow2, xScale, domainMax);
+            this.doubleMapRows(stateRow, xScale, domainMax);
+        }
         var doubleCountyData = [];
         if (this.map.comparisonMode) {
             for (var i = 0; i < countiesData.length; i++) {

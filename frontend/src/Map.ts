@@ -179,7 +179,7 @@ class Map{
 						.attr("d", path)
 						.attr('fill', colorScale)
 						.attr('stroke', 'black')
-						.on('click', d => this.controller.highlightPath(d.properties.NAME))
+						.on('click', d => this.controller.sidebar.highlightRect(d.properties.NAME))
 						.on("mouseover", (d)=>{
 							var f = d3.format(".2f");
 							const supplyDemandRatio = f(2 *this.supplyScore[d.properties.NAME]);
@@ -389,11 +389,14 @@ class Map{
 			d3.select(this).transition().duration(duration).attr('fill',colorScale(d,that,mapData));
 		});
 	}
+
 	/**
 	 * This handles when the user selects a new year
 	 * @param year this is the new year selected by the user
 	 */
 	updateMapYear(year:string, mapData:string, mapType:string, sidebar:any):Promise<any>{
+
+		console.log("map updating")
 
 		if(!this.firstMap && !this.controller.comparisonMode)
 		{
@@ -420,26 +423,25 @@ class Map{
 						this.controller.createDuplicateMap()
 						d3.select("#onlyTitle")
 							.style("fill", "#1B9E77")
-
 					}
-
 					else if(this.controller.removedProfessions.size == 0 && this.controller.modelRemovedComparison)
 					{
-
 						this.controller.removeDuplicateMap();
 					}
 				}
 				else{
 					if(this.controller.modelRemovedComparison)
 					{
-						this.removeProfessionsFromData(results, replacementJson);
+						this.removeProfessionsFromData(this.results, replacementJson);
+						console.log(this.results);
 					}
 				}
 
-				results = results[map];
-				this.results = results;
 
-				this.currentYearData = results[year]
+				// results = results[map];
+				// this.results = results;
+
+				// this.currentYearData = results[year]
 					var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
 					for (let county in this.currentYearData) {
 						let totalSupply = 0;
@@ -493,98 +495,122 @@ class Map{
 
 	removeProfessionsFromData(results, replacementJson)
 	{
-
+		console.log(this.results)
 		let profTotalDemand = {}
 		let profTotalSupply = {}
 
+		let allCounties = this.controller.sidebar.currentlySelected.has("State of Utah");
+		console.log(allCounties)
 
-		for(let county in results["counties"]["2019"])
+		for(let county in this.results["2019"])
 		{
 			if(county == "State of Utah")
 			{
 				continue;
 			}
-			for(let prof in results["counties"]["2019"][county].demand)
+			if(allCounties || this.controller.sidebar.currentlySelected.has(county))
 			{
-				profTotalSupply[prof] = profTotalSupply[prof] === undefined ? results["counties"]["2019"][county].supply[prof] : profTotalSupply[prof] + results["counties"]["2019"][county].supply[prof];
-
-				profTotalDemand[prof] = profTotalDemand[prof] === undefined ? results["counties"]["2019"][county].demand[prof] : profTotalDemand[prof] + results["counties"]["2019"][county].demand[prof];
-			}
-		}
-
-		for(let a in results)
-		{
-			for(let year in results[a])
-			{
-				for(let local in results[a][year])
+				for(let prof in this.results["2019"][county].demand)
 				{
-					let newDemand = results[a][year][local].demand;
-					let newSupply = results[a][year][local].supply;
+					profTotalSupply[prof] = profTotalSupply[prof] === undefined ? this.results["2019"][county].supply[prof] : profTotalSupply[prof] + this.results["2019"][county].supply[prof];
 
-					for(let i of Array.from(this.controller.removedProfessions))
-					{
-
-						let redistributeDemand = newDemand[i];
-						let redistributeSupply = newSupply[i];
-
-						if(this.controller.removedMapDemand[i] !== undefined)
-						{
-							redistributeDemand *= (1 - (this.controller.removedMapDemand[i] / profTotalDemand[i])) ;
-						}
-						else{
-							redistributeDemand = 0;
-						}
-
-						if(this.controller.removedMapSupply[i] !== undefined)
-						{
-							redistributeSupply *= (1 - (this.controller.removedMapSupply[i] / profTotalSupply[i])) ;
-						}
-						else{
-							redistributeSupply = 0;
-						}
-
-						let redistributeList = replacementJson[i].Replacements;
-
-						redistributeList = redistributeList.filter(d => {
-							return !this.controller.removedProfessions.has(d)
-						});
-
-						newDemand[i] = this.controller.removedMapDemand[i] ? newDemand[i] - redistributeDemand : newDemand[i];
-
-						redistributeDemand /= redistributeList.length;
-						for (let newProfDist of redistributeList)
-						{
-							newDemand[newProfDist] += redistributeDemand;
-						}
-
-						// let redistributeSupply = newSupply[i];
-						//
-						// redistributeSupply /= redistributeList.length;
-						//
-						// for (let newProfDist of redistributeList)
-						// {
-						// 	newSupply[newProfDist] += redistributeSupply;
-						// }
-						//
-						newSupply[i] = this.controller.removedMapSupply[i] ? newSupply[i] - redistributeSupply : newSupply[i];
-
-						// newSupply[i] = 0;
-					}
-
-					results[a][year][local].demand = newDemand
-					results[a][year][local].supply = newSupply
-
+					profTotalDemand[prof] = profTotalDemand[prof] === undefined ? this.results["2019"][county].demand[prof] : profTotalDemand[prof] + this.results["2019"][county].demand[prof];
 				}
 			}
 		}
+
+		console.log(profTotalDemand)
+
+
+		for(let year in this.results)
+		{
+			for(let local in this.results[year])
+			{
+				if(!(allCounties || this.controller.selectedCounties.has(local)))
+				{
+					continue;
+				}
+
+				let newDemand = this.results[year][local].demand;
+				let newSupply = this.results[year][local].supply;
+
+				for(let i of Array.from(this.controller.removedProfessions))
+				{
+
+					let redistributeDemand = newDemand[i];
+					let redistributeSupply = newSupply[i];
+
+					if(this.controller.removedMapDemand[i] !== undefined)
+					{
+						redistributeDemand *= (1 - (this.controller.removedMapDemand[i] / profTotalDemand[i])) ;
+					}
+					else{
+						redistributeDemand = 0;
+					}
+
+					if(this.controller.removedMapSupply[i] !== undefined)
+					{
+						redistributeSupply *= (1 - (this.controller.removedMapSupply[i] / profTotalSupply[i])) ;
+					}
+					else{
+						redistributeSupply = 0;
+					}
+
+					let redistributeList = replacementJson[i].Replacements;
+
+					redistributeList = redistributeList.filter(d => {
+						return !this.controller.removedProfessions.has(d)
+					});
+
+					newDemand[i] = this.controller.removedMapDemand[i] ? newDemand[i] - redistributeDemand : newDemand[i];
+
+					if(!allCounties)
+					{
+						this.results[year]["State of Utah"].demand[i] -= redistributeDemand;
+					}
+
+					redistributeDemand /= redistributeList.length;
+					for (let newProfDist of redistributeList)
+					{
+						newDemand[newProfDist] += redistributeDemand;
+						if(!allCounties)
+						{
+							this.results[year]["State of Utah"].demand[newProfDist] += redistributeDemand;
+
+						}
+					}
+
+					// let redistributeSupply = newSupply[i];
+					//
+					// redistributeSupply /= redistributeList.length;
+					//
+					// for (let newProfDist of redistributeList)
+					// {
+					// 	newSupply[newProfDist] += redistributeSupply;
+					// }
+					//
+					newSupply[i] = this.controller.removedMapSupply[i] ? newSupply[i] - redistributeSupply : newSupply[i];
+
+					if(!allCounties)
+					{
+						this.results[year]["State of Utah"].supply[i] -= redistributeSupply;
+					}
+					// newSupply[i] = 0;
+				}
+
+				this.results[year][local].demand = newDemand
+				this.results[year][local].supply = newSupply
+			}
+		}
+
+		this.controller.removedMapDemand = {};
+		this.controller.removedMapSupply = {};
 	}
 
 
 	removeSpaces(s) : string{
 		return s.replace(/\s/g, '');
 	}
-
-	//function found here : http://bl.ocks.org/syntagmatic/e8ccca52559796be775553b467593a9f
 
 	continuous(selector_id, colorscale, label, domain) {
 
@@ -634,14 +660,6 @@ class Map{
 
 	  ctx.putImageData(image, 0, 0);
 
-	  // A simpler way to do the above, but possibly slower. keep in mind the legend width is stretched because the width attr of the canvas is 1
-	  // See http://stackoverflow.com/questions/4899799/whats-the-best-way-to-set-a-single-pixel-in-an-html5-canvas
-	  /*
-	  d3.range(legendheight).forEach(function(i) {
-	    ctx.fillStyle = colorscale(legendscale.invert(i));
-	    ctx.fillRect(0,i,1,1);
-	  });
-	  */
 
 	  var legendaxis = d3.axisBottom()
 	    .scale(legendscale)
@@ -650,8 +668,6 @@ class Map{
 
 		if(label == "Population")
 			legendaxis = legendaxis.tickFormat(d3.formatPrefix(",.1", 1e6))
-			// .tickFormat(d3.format(".1f"))
-
 
 		this.svg.select(".legendAxis").remove();
 

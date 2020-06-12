@@ -34,7 +34,6 @@ class Sidebar {
     // this.countiesSortingFunction = this.getSortingOptions(0, true);
     // this.professionsSortingFunction = this.getSortingOptions(0, true);
 
-
     this.countiesSvg = d3.select('#counties').select('svg');
 
     if (!this.countiesSvg.node()) {
@@ -71,7 +70,6 @@ class Sidebar {
 
   initSideBar(selectedProfessions, currentYear, selectedCounties:Set<string>, otherCurrentYearData = [])
   {
-
     this.currentYearData = currentYear;
     this.otherCurrentYearData = otherCurrentYearData;
 
@@ -139,6 +137,7 @@ class Sidebar {
   }
 
   highlightRect(id) {
+		console.log(id);
     if(id == "State of Utah")
     {
       this.currentlySelected.forEach(id => {
@@ -180,7 +179,6 @@ class Sidebar {
 
   highlightBar(id){
     id = this.removeSpaces(id);
-
 
     this.updateProfessions();
 
@@ -652,15 +650,15 @@ class Sidebar {
 			.enter()
 			.append("td");
 
-		// if(!this.map.comparisonMode)
-		// {
-		this.singleMapRows(stateRow, xScale, domainMax)
-		// }
-		// else
-		// {
-		// 	this.doubleMapRows(stateRow2, xScale, domainMax)
-		// 	this.doubleMapRows(stateRow, xScale, domainMax)
-		// }
+		if(!this.map.comparisonMode)
+		{
+			this.singleMapRows(stateRow, xScale, domainMax)
+		}
+		else
+		{
+			this.doubleMapRows(stateRow2, xScale, domainMax)
+			this.doubleMapRows(stateRow, xScale, domainMax)
+		}
 
     let doubleCountyData = []
 
