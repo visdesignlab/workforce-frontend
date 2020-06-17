@@ -6,8 +6,7 @@ An API server for the Healthcare Workforce Needs application.
 
 1. [Development Environment Quick Start](#development-environment-quick-start)
 1. [Deploying In Production](#deploying-in-production)
-1. [Documentation](#documentation)
-    - [Routes](#routes)
+1. [Route Documentation](#route-documentation)
 1. [Testing](#testing)
 
 ## Development Environment Quick Start
@@ -24,7 +23,7 @@ Once `pipenv` is set up and the .env file is set correctly, run `pipenv serve` t
 
 See [top level README](../README.md).
 
-## Routes 
+## Route Documentation 
 
 There are several routes set up for accessing the model data. Here are the names, allowed methods, parameters, and descriptions:
 
