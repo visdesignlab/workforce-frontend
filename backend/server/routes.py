@@ -41,13 +41,13 @@ def upload_file():
 
   # Check if the file has the right extension
   if allowed_file(file.filename, app.config["ALLOWED_EXTENSIONS"]):
-    # Save the file to the uploads folder
-    filename = secure_filename(file.filename)
-    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(path)
-
     # Add our model to the model metadata objects
     model_id = add_model_metadata(metadata)
+    
+    # Save the file to the uploads folder
+    filename = secure_filename(f"{model_id}_{file.filename}")
+    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(path)
 
     # Run the model (assigns Completed or Failed to model metadata)
     success, error = run_model(path, model_id, metadata)

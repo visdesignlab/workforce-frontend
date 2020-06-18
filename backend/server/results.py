@@ -550,12 +550,14 @@ def load_model(filename):
 # In[20]:
 
 
-def run_model(geo,year,option,sub_option,wage_max,wage_weight):
+def run_model(model_id,geo,year,option,sub_option,wage_max,wage_weight):
     """Runs the model optimizers based on a series of UI deltas overlaid on
         the dictionary of pandas dataframes (which represent the Excel model input) 
 
         Parameters
         ----------
+        model_id: str, mandatory
+            The internal model id.
         geo : str, mandatory
             The area on which to conduct the analysis
         year : str, mandatory
@@ -583,18 +585,19 @@ def run_model(geo,year,option,sub_option,wage_max,wage_weight):
     # gets the latest version of the dictionary dataframes to pass into the 
     # optimizer model.  This ensures that any deltas processed from the UI are taken
     # into account
-    pop_chronic_trend = wfpd.dataframes['pop_chronic_trend']
-    pop_chronic_prev = wfpd.dataframes['pop_chronic_prev']
-    chron_care_freq = wfpd.dataframes['chron_care_freq']
-    geo_area = wfpd.dataframes['geo_area_list']
-    service_characteristics = wfpd.dataframes['service_characteristics']
-    pop_acute_need = wfpd.dataframes['pop_acute_need']
-    population = wfpd.dataframes['population']
-    provider_supply = wfpd.dataframes['provider_supply']
-    pop_prev_need = wfpd.dataframes['pop_prev_need']
-    provider_list = wfpd.dataframes['provider_list']
-    encounter_detail = wfpd.dataframes['encounter_detail']
-    overhead_work = wfpd.dataframes['overhead_work']
+    dataframes, sheets = wfpd.get_dataframes_sheets()
+    pop_chronic_trend = dataframes[f'{model_id}_pop_chronic_trend']
+    pop_chronic_prev = dataframes[f'{model_id}_pop_chronic_prev']
+    chron_care_freq = dataframes[f'{model_id}_chron_care_freq']
+    geo_area = dataframes[f'{model_id}_geo_area_list']
+    service_characteristics = dataframes[f'{model_id}_service_characteristics']
+    pop_acute_need = dataframes[f'{model_id}_pop_acute_need']
+    population = dataframes[f'{model_id}_population']
+    provider_supply = dataframes[f'{model_id}_provider_supply']
+    pop_prev_need = dataframes[f'{model_id}_pop_prev_need']
+    provider_list = dataframes[f'{model_id}_provider_list']
+    encounter_detail = dataframes[f'{model_id}_encounter_detail']
+    overhead_work = dataframes[f'{model_id}_overhead_work']
 
     
     # additional parameters used to call the model but not currently
@@ -683,17 +686,18 @@ geo_area = wfpd.dataframes['geo_area_list'].geo_area.tolist()
 
 
 
-def run_model_for_range(model, start, end, step, removedProfessions):
+def run_model_for_range(model_id, model_type, start, end, step, removedProfessions):
     year_range = list(range(int(start), int(end)+1, int(step)))
-    df = wfpd.dataframes["provider_list"]
-    wfpd.dataframes["provider_list"] = df.loc[~df["provider_abbr"].isin(removedProfessions)]
+    dataframes, sheets = wfpd.get_dataframes_sheets()
+    df = dataframes[f"{model_id}_provider_list"]
+    dataframes[f"{model_id}_provider_list"] = df.loc[~df["provider_abbr"].isin(removedProfessions)]
 
     results = {}
     for i in year_range:
         file = open(os.path.join(app.root_path, "results.pkl"), "wb")
         results[i] = {}
         for j in geo_area:
-            out  = run_model(j, str(i), model, "all_combination", 0, 0)
+            out  = run_model(model_id, j, str(i), model_type, "all_combination", 0, 0)
             results[i][j] = out;
         pickle.dump(results, file)
         file.close()

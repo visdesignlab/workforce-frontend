@@ -17,7 +17,7 @@ There is one final dependency that you'll need to run the application, GLPK. On 
 
 Now, copy the .env.default to .env using `cp .env.default .env`.
 
-Once `pipenv` is set up and the .env file is set correctly, run `pipenv serve` to run a local development server at http://127.0.0.1:5000/.
+Once `pipenv` is set up and the .env file is set correctly, run `pipenv run serve` to run a local development server at http://127.0.0.1:5000/.
 
 ## Deploying In Production
 
