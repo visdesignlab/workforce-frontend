@@ -45,7 +45,7 @@ def upload_file():
     model_id = add_model_metadata(metadata)
     
     # Save the file to the uploads folder
-    filename = secure_filename(f"{model_id}_file.filename")
+    filename = secure_filename(f"{model_id}_{file.filename}")
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(path)
 
