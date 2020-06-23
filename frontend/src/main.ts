@@ -6,6 +6,10 @@ import 'bootstrap';
 import 'bootstrap-select';
 import * as d3 from 'd3';
 
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { SimpleTableCreator } from './modelInterface/SimpleCreator';
+
 d3.select('#visualization').on('click', () => {
   d3.select('#visualization').node().className = 'is-active';
   d3.select('#modelCreate').node().className = '';
@@ -30,3 +34,16 @@ promise.then(()=>{
     mapController.drawSidebar();
   });
 });
+
+const MODELS_URL = 'http://3.135.81.128/api/models'; //
+fetch(MODELS_URL)
+	.then((response) => {
+		return response.json();
+	})
+	.then((myJson) => {
+		const rows = Object.values(myJson);
+
+    console.log(rows);
+
+		SimpleTableCreator(document.getElementById('modelPage'), rows);
+	})

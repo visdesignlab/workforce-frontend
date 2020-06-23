@@ -1,15 +1,17 @@
 
 {
-"compilerOptions": {
-        "outDir": "./built",
-        "allowJs": true,
-        "target": "es5",
-        "lib": [
-            "dom",
-            "es7"
-         ]  
+  "compilerOptions": {
+      "outDir": "./built",
+      "allowJs": true,
+      "target": "es5",
+      "esModuleInterop": true,
+      "jsx": "react",
+      "lib": [
+          "dom",
+          "es7"
+       ]
     },
-    "include": [
-        "./src/**/*"
-    ]
+  "include": [
+      "./src/**/*"
+  ]
 }

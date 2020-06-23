@@ -5,8 +5,8 @@ import {MapController} from './mapController'
 class MapEvents{
 	map: MapController;
 	selectAll : boolean;
-	
-	private API_URL: string = '/api/';
+
+	private API_URL: string = 'http://3.135.81.128/api/';
 
 	constructor(map:MapController){
 		this.map = map;

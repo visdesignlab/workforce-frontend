@@ -21,7 +21,7 @@ class Map{
 	totalResults:any;
 	firstMap:boolean;
 
-	private API_URL: string = '/api/';
+	private API_URL: string = 'http://3.135.81.128/api/';
 
 	/**
 	 *
