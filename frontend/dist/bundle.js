@@ -51195,7 +51195,7 @@ var Map = /** @class */ (function () {
                 return d3.interpolateRdBu(_this.supplyScore[county]);
             };
             var that = _this;
-            d3.json("../data/UT-49-utah-counties.json").then(function (us) {
+            d3.json("data/UT-49-utah-counties.json").then(function (us) {
                 var topojsonFeatures = topojson.feature(us, us.objects[map]);
                 var mapCenter = d3.geoCentroid(topojsonFeatures);
                 var projection = d3.geoAlbersUsa()
@@ -51387,7 +51387,7 @@ var Map = /** @class */ (function () {
         var map = mapType;
         var modelFile = this.controller.serverModels[this.modelData].path;
         var replacementJson = undefined;
-        var promise1 = d3.json('../data/profReplacements.json').then(function (res) {
+        var promise1 = d3.json('data/profReplacements.json').then(function (res) {
             replacementJson = res;
         });
         var promise2 = d3.json("http://3.20.123.182/" + modelFile).then(function (results) {

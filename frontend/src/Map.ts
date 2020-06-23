@@ -21,6 +21,8 @@ class Map{
 	totalResults:any;
 	firstMap:boolean;
 
+	private API_URL: string = '/api/';
+
 	/**
 	 *
 	 */
@@ -51,13 +53,12 @@ class Map{
 		this.modelData = modelUsed;
 		const map = mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
-		const serverUrl = 'http://3.20.123.182/';
 
 		// const option = (document.getElementById('customModel') as HTMLInputElement).value;
 
 		let promise;
 		// if (!customModel) {
-		promise = d3.json(`${serverUrl}/${modelFile}`);
+		promise = d3.json(`${this.API_URL}/${modelFile}`);
 		// }
 		// else {
 
@@ -160,7 +161,7 @@ class Map{
 					return d3.interpolateRdBu(this.supplyScore[county]);
 				}
 				let that:any = this
-				d3.json("../data/UT-49-utah-counties.json").then((us)=> {
+				d3.json("data/UT-49-utah-counties.json").then((us)=> {
 					var topojsonFeatures = topojson.feature(us, us.objects[map]);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
 					var projection = d3.geoAlbersUsa()
@@ -408,11 +409,11 @@ class Map{
 
 		let replacementJson = undefined;
 
-		let promise1 = d3.json('../data/profReplacements.json').then((res) => {
+		let promise1 = d3.json('data/profReplacements.json').then((res) => {
 			replacementJson = res;
 		})
 
-		let promise2 = d3.json(`http://3.20.123.182/${modelFile}`).then((results)=> {
+		let promise2 = d3.json(`${this.API_URL}${modelFile}`).then((results)=> {
 
 			promise1.then(() => {
 

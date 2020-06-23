@@ -2,16 +2,14 @@
 
 An API server for the Healthcare Workforce Needs application.
 
-# Table of Contents
+## Table of Contents
 
 1. [Development Environment Quick Start](#development-environment-quick-start)
 1. [Deploying In Production](#deploying-in-production)
-1. [Documentation](#documentation)
-    - [Routes](#routes)
+1. [Route Documentation](#route-documentation)
 1. [Testing](#testing)
 
 ## Development Environment Quick Start
----
 
 This project uses `pipenv` for python package version management, so make sure you have that installed. If you need instructions for setting it up, check [here](https://pipenv.pypa.io/en/latest/install/#installing-pipenv). Once  `pipenv` is installed, you can set up a virtual environment and install all python dependencies with `pipenv install`.
 
@@ -19,17 +17,14 @@ There is one final dependency that you'll need to run the application, GLPK. On 
 
 Now, copy the .env.default to .env using `cp .env.default .env`.
 
-Once `pipenv` is set up and the .env file is set correctly, run `pipenv serve` to run a local development server at http://127.0.0.1:5000/.
+Once `pipenv` is set up and the .env file is set correctly, run `pipenv run serve` to run a local development server at http://127.0.0.1:5000/.
 
 ## Deploying In Production
----
 
-TODO: Write this section
+See [top level README](../README.md).
 
-## Documentation
----
+## Route Documentation 
 
-### Routes 
 There are several routes set up for accessing the model data. Here are the names, allowed methods, parameters, and descriptions:
 
 - Name: `/api`
@@ -60,7 +55,7 @@ There are several routes set up for accessing the model data. Here are the names
     ```
     curl \
       -X POST \
-      -F 'metadata={"model_name": "new_model", "author": "me", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2024, "step_size": 1, "removed_professions": []}' \
+      -F 'metadata={"model_name": "new_model", "author": "me", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2020, "step_size": 1, "removed_professions": []}' \
       -F 'file=@server/uploads/Workforce_Optimization_Tool_-_Input_Data.xlsx' \
       '127.0.0.1:5000/api/file-upload'
     ```
@@ -76,6 +71,5 @@ There are several routes set up for accessing the model data. Here are the names
     ```
 
 ## Testing
----
 
 We supply tests for all of the endpoints we provide using coverage.py. If you are updating the code and want to maintain the same functionality, our tests should help you do that. You can run the tests with `pipenv run test`.

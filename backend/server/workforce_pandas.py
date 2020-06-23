@@ -73,6 +73,20 @@ else:
 
 # In[13]:
 
+def get_dataframes_sheets():
+    dataframes = {}
+    sheets = []
+    for f in os.listdir(directory):
+        if f.endswith(".csv"):
+            sheet = os.path.splitext(f)[0]
+            sheets.append(sheet)
+            dataframes[sheet] = pd.read_csv(directory + "/" + f)
+            for j in range(len(dataframes[sheet])):
+                if dataframes[sheet].iloc[j,0] =="<<end>>":
+                    break
+            dataframes[sheet] = dataframes[sheet].head(j)
+            dataframes[sheet]=dataframes[sheet].dropna(axis=1,how='all')
+    return dataframes, sheets
 
 dataframes = {}
 sheets = []
@@ -87,7 +101,7 @@ for f in os.listdir(directory):
         dataframes[sheet] = dataframes[sheet].head(j)
         dataframes[sheet]=dataframes[sheet].dropna(axis=1,how='all')
 
-
+        
 # In[14]:
 
 
