@@ -5,7 +5,7 @@ from flask import request, jsonify
 from werkzeug.utils import secure_filename
 
 from server import app
-from server.route_utils import allowed_file, add_model_metadata, run_model
+from server.route_utils import allowed_file, add_model_metadata, run_model, get_model_from_id
 
 
 @app.route("/api")
@@ -41,13 +41,20 @@ def upload_file():
 
   # Check if the file has the right extension
   if allowed_file(file.filename, app.config["ALLOWED_EXTENSIONS"]):
-    # Add our model to the model metadata objects
-    model_id = add_model_metadata(metadata)
-    
+    # Generate a unique ID for the model
+    model_id = str(uuid.uuid4())
+
     # Save the file to the uploads folder
     filename = secure_filename(f"{model_id}_{file.filename}")
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(path)
+
+    # Add filename and model_id to metadata
+    metadata.filename = filename
+    metadata.model_id = model_id
+
+    # Add our model to the model metadata objects
+    add_model_metadata(metadata)
 
     # Run the model (assigns Completed or Failed to model metadata)
     success, error = run_model(path, model_id, metadata)
@@ -69,3 +76,51 @@ def get_models():
     metadata = pickle.load(f)
 
   return jsonify(metadata)
+
+@app.route("/api/rerun-model", methods=["POST"])
+def get_models():
+    model_id = request.form.get("model_id", None)
+    author = request.form.get("author", None)
+    name = request.form.get("name", None)
+    description = request.form.get("description", None)
+    model_type = request.form.get("model_type", None)
+    start_year = request.form.get("start_year", None)
+    end_year = request.form.get("end_year", None)
+    step_size = request.form.get("step_size", None)
+    removed_professions = request.form.get("removed_professions", None)
+
+    # Check required param
+    if not model_id:
+      return "model_id is missing from the request", 400
+
+    new_model_id = str(uuid.uuid4())
+
+    # Get the old model metadata for the path and update everything else
+    metadata = get_model_from_id(model_id)
+    metadata["model_id"] = new_model_id
+
+    # Update optional params if they've changed
+    metadata["author"] = author if author else metadata["author"]
+    metadata["name"] = name if name else metadata["name"]
+    metadata["description"] = description if description else metadata["description"]
+    metadata["model_type"] = model_type if model_type else metadata["model_type"]
+    metadata["start_year"] = start_year if start_year else metadata["start_year"]
+    metadata["end_year"] = end_year if end_year else metadata["end_year"]
+    metadata["step_size"] = step_size if step_size else metadata["step_size"]
+    metadata["removed_professions"] = removed_professions if removed_professions else metadata["removed_professions"]
+
+    del metadata["status"]
+
+    # Add the model data to the models.pkl
+    add_model_metadata(metadata)
+
+    # Get the old file path
+    path = os.path.join(app.config["UPLOAD_FOLDER"], metadata["filename"])
+
+    # Run the model (assigns Completed or Failed to model metadata)
+    success, error = run_model(path, model_id, metadata)
+
+    if success:
+      return "File successfully uploaded", 201
+    else:
+      return str(error), 500
