@@ -1,6 +1,7 @@
 import os
 import pickle
 import json
+import uuid
 from flask import request, jsonify
 from werkzeug.utils import secure_filename
 
@@ -50,8 +51,8 @@ def upload_file():
     file.save(path)
 
     # Add filename and model_id to metadata
-    metadata.filename = filename
-    metadata.model_id = model_id
+    metadata["filename"] = filename
+    metadata["model_id"] = model_id
 
     # Add our model to the model metadata objects
     add_model_metadata(metadata)
@@ -78,7 +79,7 @@ def get_models():
   return jsonify(metadata)
 
 @app.route("/api/rerun-model", methods=["POST"])
-def get_models():
+def rerun_model():
     model_id = request.form.get("model_id", None)
     author = request.form.get("author", None)
     name = request.form.get("name", None)

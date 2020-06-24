@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import pickle
-import uuid
 
 from server import app
 from server.process_results import process_results
@@ -23,23 +22,26 @@ def add_model_metadata(metadata):
   }
 
   # Read in the current model objects and write the new model metadata to it
-  with open(os.path.join(app.root_path, "models.pkl"), "wb") as f:
+  with open(os.path.join(app.root_path, "models.pkl"), "rb") as f:
     models = pickle.load(f)
+
+  with open(os.path.join(app.root_path, "models.pkl"), "wb") as f:
     models[metadata["model_id"]] = new_model
     pickle.dump(models, f)
 
 
 def update_model_status(model_id, status):
-  with open(os.path.join(app.root_path, "models.pkl"), "wb") as f:
+  with open(os.path.join(app.root_path, "models.pkl"), "rb") as f:
     # Load in the models
     models = pickle.load(f)
 
-    # Update the currently running model with status passed in
-    models[model_id]["status"] = status
+  # Update the currently running model with status passed in
+  models[model_id]["status"] = status
 
-    # If success, note the path to the model
-    models[model_id]["path"] = f"models/{model_id}.json" if status == "Completed" else "NA"
+  # If success, note the path to the model
+  models[model_id]["path"] = f"models/{model_id}.json" if status == "Completed" else "NA"
     
+  with open(os.path.join(app.root_path, "models.pkl"), "wb") as f:
     # Write out the results
     pickle.dump(models, f)
 
