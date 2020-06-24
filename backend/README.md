@@ -90,7 +90,10 @@ There are several routes set up for accessing the model data. Here are the names
     ```
     curl \
       -X POST \
-      -F 'model_id=123&removed_professions=["NP"]'
+      -F 'model_id=f5cff71b-b869-423d-937f-01df7bfba48e' \
+      -F 'removed_professions=NP' \
+      -F 'model_name=updated model' \
+      '127.0.0.1:5000/api/rerun-model'
     ```
 
 ## Testing

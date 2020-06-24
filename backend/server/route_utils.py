@@ -14,10 +14,15 @@ def allowed_file(filename, ALLOWED_EXTENSIONS):
 def add_model_metadata(metadata):
   # Reformat the metadata and add status
   new_model = {
-    "name": metadata["model_name"], 
+    "model_name": metadata["model_name"], 
     "author": metadata["author"], 
     "description": metadata["description"], 
     "filename": metadata["filename"],
+    "model_type": metadata["model_type"], 
+    "start_year": metadata["start_year"], 
+    "end_year": metadata["end_year"], 
+    "step_size": metadata["step_size"], 
+    "removed_professions": metadata["removed_professions"],
     "status": "Running"
   }
 

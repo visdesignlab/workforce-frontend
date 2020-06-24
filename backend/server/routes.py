@@ -82,13 +82,13 @@ def get_models():
 def rerun_model():
     model_id = request.form.get("model_id", None)
     author = request.form.get("author", None)
-    name = request.form.get("name", None)
+    model_name = request.form.get("model_name", None)
     description = request.form.get("description", None)
     model_type = request.form.get("model_type", None)
     start_year = request.form.get("start_year", None)
     end_year = request.form.get("end_year", None)
     step_size = request.form.get("step_size", None)
-    removed_professions = request.form.get("removed_professions", None)
+    removed_professions = request.form.get("removed_professions", "").split(",")
 
     # Check required param
     if not model_id:
@@ -99,18 +99,17 @@ def rerun_model():
     # Get the old model metadata for the path and update everything else
     metadata = get_model_from_id(model_id)
     metadata["model_id"] = new_model_id
+    del metadata["status"]
 
     # Update optional params if they've changed
     metadata["author"] = author if author else metadata["author"]
-    metadata["name"] = name if name else metadata["name"]
+    metadata["model_name"] = model_name if model_name else metadata["model_name"]
     metadata["description"] = description if description else metadata["description"]
     metadata["model_type"] = model_type if model_type else metadata["model_type"]
     metadata["start_year"] = start_year if start_year else metadata["start_year"]
     metadata["end_year"] = end_year if end_year else metadata["end_year"]
     metadata["step_size"] = step_size if step_size else metadata["step_size"]
-    metadata["removed_professions"] = removed_professions if removed_professions else metadata["removed_professions"]
-
-    del metadata["status"]
+    metadata["removed_professions"] = removed_professions if removed_professions != [""] else metadata["removed_professions"]
 
     # Add the model data to the models.pkl
     add_model_metadata(metadata)
@@ -119,7 +118,7 @@ def rerun_model():
     path = os.path.join(app.config["UPLOAD_FOLDER"], metadata["filename"])
 
     # Run the model (assigns Completed or Failed to model metadata)
-    success, error = run_model(path, model_id, metadata)
+    success, error = run_model(path, new_model_id, metadata)
 
     if success:
       return "File successfully uploaded", 201
