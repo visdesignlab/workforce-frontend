@@ -70,6 +70,32 @@ There are several routes set up for accessing the model data. Here are the names
     curl '127.0.0.1:5000/api/models'
     ```
 
+- Name:`/api/rerun-model`
+  - Allowed Methods: `POST`
+  - Parameters:
+      - Required:  
+           `model_id`: A model id for the model that will be re-run.  
+      - Optional:  
+          `model_name`: Model name, used in visualization.  
+          `author`  
+          `description`  
+          `model_type`: One of: "ideal_staffing", "ideal_staffing_current", or "service_allocation".  
+          `start_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
+          `end_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
+          `step_size`: The step size for the model in years.  
+          `removed_professions`: Comma separated list of professions to remove.
+  - Description:
+  - Return: Either "File uploaded successfully" and 201 if the model runs successfully. 400 for a bad request (missing model_id) or 500 for a failure in running the model.
+  - Example:
+    ```
+    curl \
+      -X POST \
+      -F 'model_id=f5cff71b-b869-423d-937f-01df7bfba48e' \
+      -F 'removed_professions=NP' \
+      -F 'model_name=updated model' \
+      '127.0.0.1:5000/api/rerun-model'
+    ```
+
 ## Testing
 
 We supply tests for all of the endpoints we provide using coverage.py. If you are updating the code and want to maintain the same functionality, our tests should help you do that. You can run the tests with `pipenv run test`.

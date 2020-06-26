@@ -2,11 +2,14 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
 import {MapController} from './mapController'
+
+import axios from 'axios'
+
 class MapEvents{
 	map: MapController;
 	selectAll : boolean;
 
-	private API_URL: string = 'http://3.135.81.128/api/';
+	private API_URL: string = 'http://127.0.0.1:5000/api/';
 
 	constructor(map:MapController){
 		this.map = map;
@@ -14,11 +17,46 @@ class MapEvents{
 		this.updateYear();
 		this.updateType();
 		this.changeMapType();
-		this.changeComparisonType();
+
+		d3.select("#runModelButton")
+			.on('click', () => {
+
+				let bodyFormData = new FormData();
+
+				bodyFormData.set('model_id', this.map.prov.current().state.modelsSelected[0]);
+
+				let removedString = "";
+				for(let j in this.map.prov.current().state.professionsSelected)
+				{
+					if(!this.map.prov.current().state.professionsSelected[j])
+					{
+						removedString += j + ','
+					}
+				}
+
+				bodyFormData.set('removed_professions', removedString.slice(0, removedString.length - 2));
+
+				console.log(removedString.slice(0, removedString.length - 2));
+
+
+				axios({
+			    method: 'post',
+			    url: this.API_URL + 'rerun-model',
+			    data: bodyFormData,
+			    headers: {'Content-Type': 'multipart/form-data', 'Access-Control-Allow-Origin': '*' }
+			    })
+			    .then(function (response) {
+			        //handle success
+			        console.log(response);
+			    })
+			    .catch(function (response) {
+			        //handle error
+			        console.log(response);
+			    });
+			})
 
 		d3.selectAll(".plusClass")
 			.on("click", function(){
-				console.log("clicked", this);
 				if(d3.select(this).classed("plusClass"))
 				{
 					d3.select(this).classed("minusClass", true)
@@ -41,21 +79,13 @@ class MapEvents{
 	updateType():void{
 		document.getElementById("mapData").addEventListener('change',()=>{
 			let mapData:string = (document.getElementById('mapData') as HTMLInputElement).value;
-			this.map.updateMapType(mapData);
+			this.map.updateComparisonType(mapData);
 		})
 	}
 
 	changeMapType() {
 		document.getElementById("mapType").addEventListener('change',()=>{
-			this.map.selectedCounties = new Set<string>();
-			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
-			this.map.drawMap().then(() => this.map.drawSidebar());
-		})
-	}
-
-	changeComparisonType() {
-		document.getElementById("supplyDemandGap").addEventListener('change',()=>{
-			this.map.changeComparisonType((document.getElementById('supplyDemandGap') as HTMLInputElement).value);
+			this.map.updateMapType((document.getElementById('mapType') as HTMLInputElement).value);
 		})
 	}
 
@@ -68,9 +98,9 @@ class MapEvents{
 			for(let mod in results)
 			{
 
-				if(counter == 0)
+				if(counter == 2)
 				{
-					this.map.modelsUsed = [mod];
+					this.map.updateModelsSelected([mod]);
 					d3.select('#modelData')
 						.append('option')
 						.attr("value", mod)
@@ -97,54 +127,14 @@ class MapEvents{
 			this.map.mapType = (document.getElementById('mapType') as HTMLInputElement).value;
 			let selectedOptions = (document.getElementById('modelData')as HTMLSelectElement).selectedOptions;
 
-			console.log((document.getElementById('modelData')as HTMLSelectElement).options);
-			let ele = (document.getElementById('modelData')as HTMLSelectElement)
-
-			if(selectedOptions.length > 2)
-			{
-				counter = 0;
-				for(let i; i < ele.options.length; i++)
-				{
-					if(ele.options[i].selected)
-					{
-						counter++;
-						if(counter > 2)
-						{
-							ele.options[i].selected = false;
-						}
-					}
-				}
-			}
-
-			if(selectedOptions.length == 0)
-			{
-				this.map.selectedCounties = new Set<string>();
-				this.map.selectedProfessions = {};
-				this.map.destroy();
-				return;
-			}
-			else if (selectedOptions.length == 1) {
-				this.map.comparisonMode = false;
-			}
-			else{
-				this.map.comparisonMode = true;
-			}
-
-			this.map.modelsUsed = [];
+			let newList = []
 			for(let i= 0; i < selectedOptions.length; i++)
 			{
-				if(this.map.modelsUsed.length > 2)
-				{
-					selectedOptions[i].selected = false;
-					continue;
-					// this.map.modelsUsed.shift();
-				}
-				this.map.modelsUsed.push(selectedOptions[i].value)
-
+				newList.push(selectedOptions[i].value)
 			}
-			this.map.drawMap().then(() => this.map.drawSidebar());
-		})
 
+			this.map.updateModelsSelected(newList);
+		})
 		return promise;
 	}
 }

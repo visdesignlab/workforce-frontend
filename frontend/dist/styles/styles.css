@@ -2,11 +2,6 @@
 	opacity: 0.7;
 }
 
-.selected {
-	stroke: #00ffcc;
-	stroke-width: 4px;
-	opacity: 0.8;
-}
 .professions, .pointerCursor {
 	cursor: pointer;
 }
@@ -32,10 +27,6 @@
 
 .hoverProfession {
 	fill: #D3D3D3;
-}
-
-.selectedCounty {
-	fill: #A9A9A9;
 }
 
 .highlightProfRect{
@@ -158,7 +149,7 @@ body {
 	pointer-events: none;
 }
 
-.selected {
+.selectedCounty {
 	stroke: #00ffcc;
 	stroke-width: 4px;
 	opacity: 0.8;
@@ -275,7 +266,8 @@ body {
 }
 
 #legendDiv h2{
-	font-size: 22px;
+	text-align: center;
+	font-size: 18px;
 	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";;
 }
 
@@ -306,10 +298,10 @@ body {
   pointer-events: all;
 }
 
-.collapsible {
+/* .collapsible {
 	outline: none !important;
 	box-shadow: none;
-  background-color: #A9A9A9;
+  background-color: #91B4BA;
   color: #333333;
   cursor: pointer;
   padding: 5px;
@@ -319,7 +311,7 @@ body {
   border: none;
   text-align: left;
   font-size: 28px;
-}
+} */
 
 /* Style the dots by assigning a fill and stroke */
 .dot1 {

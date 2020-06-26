@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import pickle
-import uuid
 
 from server import app
 from server.process_results import process_results
@@ -15,36 +14,40 @@ def allowed_file(filename, ALLOWED_EXTENSIONS):
 def add_model_metadata(metadata):
   # Reformat the metadata and add status
   new_model = {
-    "name": metadata["model_name"], 
+    "model_name": metadata["model_name"], 
     "author": metadata["author"], 
     "description": metadata["description"], 
+    "filename": metadata["filename"],
+    "model_type": metadata["model_type"], 
+    "start_year": metadata["start_year"], 
+    "end_year": metadata["end_year"], 
+    "step_size": metadata["step_size"], 
+    "removed_professions": metadata["removed_professions"],
     "status": "Running"
   }
 
-  # Generate a unique ID for the model
-  model_id = str(uuid.uuid4())
-
-  # Read in the current model objects
+  # Read in the current model objects and write the new model metadata to it
   with open(os.path.join(app.root_path, "models.pkl"), "rb") as f:
     models = pickle.load(f)
 
-  # Write the new model to the pkl file
   with open(os.path.join(app.root_path, "models.pkl"), "wb") as f:
-    models[model_id] = new_model
+    models[metadata["model_id"]] = new_model
     pickle.dump(models, f)
-
-  return model_id
 
 
 def update_model_status(model_id, status):
-  # Load in the models
   with open(os.path.join(app.root_path, "models.pkl"), "rb") as f:
+    # Load in the models
     models = pickle.load(f)
 
   # Update the currently running model with status passed in
   models[model_id]["status"] = status
-  models[model_id]["path"] = f"models/{model_id}.json"
+
+  # If success, note the path to the model
+  models[model_id]["path"] = f"models/{model_id}.json" if status == "Completed" else "NA"
+    
   with open(os.path.join(app.root_path, "models.pkl"), "wb") as f:
+    # Write out the results
     pickle.dump(models, f)
 
 
@@ -69,3 +72,9 @@ def run_model(path, model_id, metadata):
 
   update_model_status(model_id, "Completed")
   return True, None
+
+def get_model_from_id(model_id):
+  with open(os.path.join(app.root_path, "models.pkl"), "rb") as f:
+    models = pickle.load(f)
+
+  return models[model_id]

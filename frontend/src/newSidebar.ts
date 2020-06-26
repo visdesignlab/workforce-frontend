@@ -6,17 +6,11 @@ class Sidebar {
 	countiesSvg: any;
 	stateSvg: any;
 	professionsSvg: any;
-	selectedProfessions: any;
 	countiesHeaderSvg: any;
 	margin:any;
-	lastSelected:string;
-	countiesAscending:boolean;
-	professionsLastSelected:string;
-	professionsAscending:boolean;
 	map:MapController;
 	countiesSortingFunction:any;
 	professionsSortingFunction:any;
-	currentlySelected:Set<string>;
   cell:any;
   currentYearData:any;
   otherCurrentYearData:any;
@@ -25,12 +19,6 @@ class Sidebar {
   constructor(map:MapController) {
     this.cell = {height: 30, width: 150, margin:10}
     this.map = map;
-    this.selectedProfessions = {};
-    this.currentlySelected = new Set<string>();
-    this.lastSelected = "County";
-    this.countiesAscending = true;
-    this.professionsLastSelected = "Profession";
-    this.professionsAscending = true;
     // this.countiesSortingFunction = this.getSortingOptions(0, true);
     // this.professionsSortingFunction = this.getSortingOptions(0, true);
 
@@ -68,34 +56,21 @@ class Sidebar {
     this.stateSvg.selectAll("*").remove();
   }
 
-  initSideBar(selectedProfessions, currentYear, selectedCounties:Set<string>, otherCurrentYearData = [])
+  initSideBar(currentYear, otherCurrentYearData = [])
   {
     this.currentYearData = currentYear;
     this.otherCurrentYearData = otherCurrentYearData;
 
-    if(selectedCounties.size == 0)
-    {
-      this.currentlySelected = new Set<string>();
-      this.currentlySelected.add("State of Utah");
-    }
-    else{
-      this.currentlySelected = new Set<string>(selectedCounties);
-    }
-
-    this.selectedProfessions = selectedProfessions;
-    //
-    // console.log(countiesData)
-    this.updateTable(selectedProfessions, currentYear, selectedCounties, otherCurrentYearData);
+    this.updateTable();
   }
 
-  updateTable(electedProfessions, currentYear, selectedCounties:Set<string>, otherCurrentYearData = [])
+  updateTable()
   {
     this.updateCounties();
 
     //NOW ADDING THE PROFESSIONS TABLE
 
     this.updateProfessions();
-
   }
 
   calculateCountiesData(currentYear, otherCurrentYearData, mapData){
@@ -135,66 +110,66 @@ class Sidebar {
       return sortingFunction;
     }
   }
-
-  highlightRect(id) {
-		console.log(id);
-    if(id == "State of Utah")
-    {
-      this.currentlySelected.forEach(id => {
-        if(id == "State of Utah")
-          return;
-        this.map.unHighlightPath(id);
-      })
-
-      this.currentlySelected = new Set<string>().add("State of Utah");
-			this.map.highlightPath("State of Utah");
-      return;
-    }
-
-		if(this.currentlySelected.has("State of Utah"))
-		{
-			this.map.unHighlightPath("State of Utah");
-		}
-
-
-    if(this.currentlySelected.has(id))
-    {
-      this.currentlySelected.delete(id);
-
-      if(this.currentlySelected.size == 0)
-      {
-        this.currentlySelected = new Set<string>().add("State of Utah");
-				this.map.highlightPath("State of Utah")
-      }
-
-			this.map.unHighlightPath(id);
-
-      return;
-    }
-
-
-    this.currentlySelected.add(id);
-    this.map.highlightPath(id);
-  }
-
-  highlightBar(id){
-    id = this.removeSpaces(id);
-
-    this.updateProfessions();
-
-    d3.select(`#${id}_checkBox`)
-      .property('checked', true);
-  }
-
-  unHighlightBar(id){
-    id = this.removeSpaces(id);
-
-    this.updateProfessions();
-
-    //
-    d3.select(`#${id}_checkBox`)
-      .property('checked', false);
-  }
+	//
+  // highlightRect(id) {
+	// 	console.log(id);
+  //   if(id == "State of Utah")
+  //   {
+  //     this.currentlySelected.forEach(id => {
+  //       if(id == "State of Utah")
+  //         return;
+  //       this.map.unHighlightPath(id);
+  //     })
+	//
+  //     this.currentlySelected = new Set<string>().add("State of Utah");
+	// 		this.map.highlightPath("State of Utah");
+  //     return;
+  //   }
+	//
+	// 	if(this.currentlySelected.has("State of Utah"))
+	// 	{
+	// 		this.map.unHighlightPath("State of Utah");
+	// 	}
+	//
+	//
+  //   if(this.currentlySelected.has(id))
+  //   {
+  //     this.currentlySelected.delete(id);
+	//
+  //     if(this.currentlySelected.size == 0)
+  //     {
+  //       this.currentlySelected = new Set<string>().add("State of Utah");
+	// 			this.map.highlightPath("State of Utah")
+  //     }
+	//
+	// 		this.map.unHighlightPath(id);
+	//
+  //     return;
+  //   }
+	//
+	//
+  //   this.currentlySelected.add(id);
+  //   this.map.highlightPath(id);
+  // }
+	//
+  // highlightBar(id){
+    // id = this.removeSpaces(id);
+		//
+    // this.updateProfessions();
+		//
+    // d3.select(`#${id}_checkBox`)
+    //   .property('checked', true);
+  // }
+	//
+  // unHighlightBar(id){
+  //   id = this.removeSpaces(id);
+	//
+  //   this.updateProfessions();
+	//
+  //   //
+  //   d3.select(`#${id}_checkBox`)
+  //     .property('checked', false);
+  // }
 
   removeSpaces(s) : string{
     return s.replace(/\s/g, '');
@@ -219,7 +194,7 @@ class Sidebar {
 			.classed("is-light", d => !this.map.removedProfessions.has(d.name))
 			.classed("is-small", true)
 			.on("click", function(d){
-				that.changeIncludedProfession(d.name)
+				that.changeProfession(d.name)
 			})
 			.append("span")
 			.attr("class", "icon")
@@ -233,13 +208,14 @@ class Sidebar {
 			.property("checked", d => {
 				return d.value
 			})
+			.classed("selectedBox", d => d.value)
 			// .attr("class", "styled")
 			.attr("type", "checkbox")
 			.attr("id", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
 			.on("click", d => {
 				if(d.type == "selectedCheck")
 				{
-					this.highlightRect(d.name)
+					this.map.updateSelectedCounty(d.name);
 				}
 				else if (d.type == "profSelected")
 				{
@@ -247,7 +223,7 @@ class Sidebar {
 				}
 				else if(d.type == "profIncluded")
 				{
-					this.changeIncludedProfession(d.name)
+					this.changeProfession(d.name)
 				}
 			})
 			.append("label")
@@ -266,7 +242,7 @@ class Sidebar {
       .on("click", d => {
         if(d.type == "selectedCheck")
         {
-          this.highlightRect(d.name)
+          this.map.updateSelectedCounty(d.name)
         }
         else if (d.type == "profSelected")
         {
@@ -274,7 +250,7 @@ class Sidebar {
         }
         else if(d.type == "profIncluded")
         {
-          this.changeIncludedProfession(d.name)
+          this.changeProfession(d.name)
         }
       })
 			.append("label")
@@ -379,7 +355,7 @@ class Sidebar {
 				else{
 					that.map.removedMapSupply[d.name] = d3.select(this).node().value;
 				}
-				that.map.updateSelections(that.selectedProfessions);
+				// that.map.updateSelections(that.selectedProfessions);
 			})
 
 		let doubleLabels = td.filter((d) => {
@@ -402,7 +378,7 @@ class Sidebar {
 			.attr("r", 5)
 			.on("mouseover", () => {
 				d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
-				d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.modelsUsed[0]].name + "</h5>")
+				d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.prov.current().state.modelsSelected[0]].name + "</h5>")
 					.style("left", (d3.event.pageX) + "px")
 					.style("top", (d3.event.pageY - 28) + "px");
 			})
@@ -435,7 +411,7 @@ class Sidebar {
 			.classed("is-link", true)
 			.classed("is-light", d => !this.map.removedProfessions.has(d.name))
 			.on("click", function(d){
-				that.changeIncludedProfession(d.name)
+				that.changeProfession(d.name)
 			})
 			.append("span")
 			.attr("class", "icon is-small")
@@ -456,7 +432,7 @@ class Sidebar {
       .on("click", d => {
         if(d.type == "selectedCheck")
         {
-          this.highlightRect(d.name)
+          this.map.updateSelectedCounty(d.name)
         }
         else if (d.type == "profSelected")
         {
@@ -464,7 +440,7 @@ class Sidebar {
         }
 				else if(d.type == "profIncluded")
 				{
-					this.changeIncludedProfession(d.name)
+					this.changeProfession(d.name)
 				}
       })
 
@@ -554,29 +530,32 @@ class Sidebar {
     //   }
     // }
 
-    if(false)
-    {
+		this.map.updateSelectedProf(profName);
 
-      for( let k in this.selectedProfessions)
-      {
-        this.selectedProfessions[k] = false;
-      }
 
-      this.selectedProfessions[profName] = true;
-
-      this.map.updateSelections(this.selectedProfessions);
-    }
-    else if (!this.selectedProfessions.hasOwnProperty(profName)
-        || this.selectedProfessions[profName]) {
-
-          this.selectedProfessions[profName] = false;
-          this.map.updateSelections(this.selectedProfessions);
-
-    }
-    else {
-      this.selectedProfessions[profName] = true;
-      this.map.updateSelections(this.selectedProfessions);
-    }
+    // if(false)
+    // {
+		//
+    //   for( let k in this.selectedProfessions)
+    //   {
+    //     this.selectedProfessions[k] = false;
+    //   }
+		//
+    //   this.selectedProfessions[profName] = true;
+		//
+    //   this.map.updateSelections(this.selectedProfessions);
+    // }
+    // else if (!this.selectedProfessions.hasOwnProperty(profName)
+    //     || this.selectedProfessions[profName]) {
+		//
+    //       this.selectedProfessions[profName] = false;
+    //       this.map.updateSelections(this.selectedProfessions);
+		//
+    // }
+    // else {
+    //   this.selectedProfessions[profName] = true;
+    //   this.map.updateSelections(this.selectedProfessions);
+    // }
   }
 
   updateCounties()
@@ -626,13 +605,13 @@ class Sidebar {
 
 
 
-    let check = {type:"selectedCheck", vis:"allCheck", value:this.currentlySelected.has(stateData[0]), name:stateData[0]}
+    let check = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(stateData[0]), name:stateData[0]}
     let name = {type:"name", vis:"text", value:stateData[0]}
     let supply = {type:"supply", vis:"text", value:stateData[1]}
     let need = {type:"need", vis:"text", value:stateData[2]}
     let gap = {type:"axis", vis:"axis", value:[stateData[1], stateData[2]]}
 
-		let check2 = {type:"selectedCheck", vis:"allCheck", value:this.currentlySelected.has(stateData[0]), name:stateData[0]}
+		let check2 = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(stateData[0]), name:stateData[0]}
 		let name2 = {type:"name", vis:"text", value:stateData[0]}
 		let supply2 = {type:"supply", vis:"text", value:stateData[4]}
 		let need2 = {type:"need", vis:"text", value:stateData[5]}
@@ -688,7 +667,7 @@ class Sidebar {
       {
         if(i % 2 == 0)
         {
-          let check = {type:"selectedCheck", vis:"check", value:this.currentlySelected.has(d[0]), name:d[0]}
+          let check = {type:"selectedCheck", vis:"check", value:this.map.prov.current().state.countiesSelected.includes(d[0]), name:d[0]}
           let name = {type:"name", vis:"textDouble", value:d[0]}
 					// let circle = {type:"circle", vis:"svg", value:true}
           let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
@@ -708,7 +687,7 @@ class Sidebar {
       }
       else
       {
-        let check = {type:"selectedCheck", vis:"check", value:this.currentlySelected.has(d[0]), name:d[0]}
+        let check = {type:"selectedCheck", vis:"check", value:this.map.prov.current().state.countiesSelected.includes(d[0]), name:d[0]}
         let name = {type:"name", vis:"text", value:d[0]}
         let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
         let need = {type:"need", vis:"text", value:Math.round(d[2])}
@@ -727,22 +706,26 @@ class Sidebar {
     }
   }
 
+	highlightAllCounties(selectedCounties: string[])
+	{
+		for(let j of selectedCounties)
+		{
+			d3.select(`#${this.removeSpaces(j)}_checkBox`)
+				.classed("selectedBox", true)
+				.property('checked', true);
+
+			d3.selectAll('.selectedBox').filter(d => {
+				return !selectedCounties.includes((d as any).name)
+			})
+				.classed("selectedBox", false)
+				.property('checked', false);
+		}
+	}
+
   updateProfessions()
   {
     d3.select("#professionsTable").select("tbody").selectAll('.notState').remove();
     d3.select("#professionsTable").attr("class", this.map.comparisonMode ? "doubleShade svgTable" : "singleShade svgTable")
-
-
-    if(this.currentlySelected.size > 1 && this.currentlySelected.has("State of Utah"))
-    {
-      this.currentlySelected.delete("State of Utah")
-    }
-
-    if(this.currentlySelected.size == 0)
-    {
-      this.currentlySelected.add("State of Utah")
-    }
-
 
     let profData = this.getProfessionsData(this.currentYearData, this.otherCurrentYearData, this.mapData);
     let doubleProfData = [];
@@ -768,8 +751,8 @@ class Sidebar {
     		.domain([0, d3.max(profData, (d) => d3.max([d[1], d[2], d[4], d[5]]))])
     		.range([0, this.cell.width - this.cell.margin * 2 ])
 
-    let check1 = {type:"profSelectedCheck", vis:"allCheck", value:this.currentlySelected.has(allProfData[0] as string), name:allProfData[0]}
-    let check2 = {type:"infoCheck", vis:"allCheck", value:this.currentlySelected.has(allProfData[0] as string), name:allProfData[0]}
+    let check1 = {type:"profSelectedCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(allProfData[0] as string), name:allProfData[0]}
+    let check2 = {type:"infoCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(allProfData[0] as string), name:allProfData[0]}
 
     let name = {type:"name", vis:"text", value:allProfData[0]}
     let supply = {type:"supply", vis:"text", value:allProfData[1]}
@@ -799,7 +782,7 @@ class Sidebar {
       {
         if(i % 2 == 0)
         {
-          let check1 = {type:"profSelected", vis:"check", value:this.selectedProfessions[d[0]], name:d[0]}
+          let check1 = {type:"profSelected", vis:"check", value:this.map.prov.current().state.professionsSelected[d[0]], name:d[0]}
           let check2 = {type:"profIncluded", vis:"button", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
           let name = {type:"name", vis:"textDouble", value:d[0]}
           let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
@@ -821,7 +804,7 @@ class Sidebar {
         return [supply, need, gap];
       }
       else{
-        let check1 = {type:"profSelected", vis:"check", value:this.selectedProfessions[d[0]], name:d[0]}
+        let check1 = {type:"profSelected", vis:"check", value:this.map.prov.current().state.professionsSelected[d[0]], name:d[0]}
         let check2 = {type:"profIncluded", vis:"button", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
         let name = {type:"name", vis:"text", value:d[0]}
         let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
@@ -841,23 +824,9 @@ class Sidebar {
     }
   }
 
-  changeIncludedProfession(id:string)
-  {
-
-    if(this.map.removedProfessions.has(id))
-    {
-      this.map.removedProfessions.delete(id);
-    }
-    else{
-      this.map.removedProfessions.add(id)
-    }
-
-    this.map.updateSelections(this.selectedProfessions);
-  }
-
   getProfessionsData(currentYear, otherCurrentYearData, mapData)
   {
-      let tempSelectedList = Array.from(this.currentlySelected);
+      let tempSelectedList = this.map.prov.current().state.countiesSelected;
 
       var professions = Object.keys(currentYear[tempSelectedList[0]]['supply']);
       var population = currentYear[tempSelectedList[0]]['population'];

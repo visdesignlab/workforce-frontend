@@ -23,11 +23,6 @@ class Linechart{
 	}
 
 	public updateLineChart(selectedCounties:string[]) {
-		if(selectedCounties.length == 0)
-		{
-			this.initLineChart(this.results, ['State of Utah']);
-			return;
-		}
 		this.initLineChart(this.results, selectedCounties);
 	}
 
@@ -36,12 +31,6 @@ class Linechart{
 	}
 
 	public initLineChart(results, selectedCounties:string[]) {
-		if(selectedCounties.length == 0)
-		{
-			this.initLineChart(results, ['State of Utah']);
-			return;
-		}
-
 
 		this.lineChartSvg.selectAll('*').remove();
 		// this.lineChartSvg.append('line')
@@ -104,11 +93,11 @@ class Linechart{
 		this.data.series = demand;
 
 		var x = d3.scaleLinear()
-			.domain(d3.extent(this.data.dates))
+			.domain([+d3.min(this.data.dates), +d3.max(this.data.dates)])
 			.range([this.margin.left, this.width - this.margin.right])
 
 		var y = d3.scaleLinear()
-			.domain([0, d3.max([max, d3.max(demand), d3.max(supply)])]).nice()
+			.domain([0, d3.max([max, d3.max(demand), d3.max(supply)])])
 			.range([this.height - this.margin.bottom, this.margin.top])
 
 		var xAxis = g => g
@@ -121,7 +110,7 @@ class Linechart{
 
 		var line = d3.line()
 			.x((d, i) => x(this.data.dates[i]))
-			.y(d => y(d))
+			.y(d => y(d as any))
 
 
 
@@ -188,7 +177,7 @@ class Linechart{
 
 		var line = d3.line()
 			.x((d, i) => x(this.data.dates[i]))
-			.y(d => y(d))
+			.y(d => y(d as any))
 
 
 
@@ -227,7 +216,7 @@ class Linechart{
 		// })
 
 		lineChartGroup.on('click', d=>{
-			this.controller.profClicked(profession);
+			this.controller.updateSelectedProf(profession);
 		})
 
 		var aboveUid = 'above' + this.clipPathID;;
@@ -254,7 +243,7 @@ class Linechart{
 			.attr("d", d3.area()
 				.x((d, i) => x(this.data.dates[i]))
 				.y0(this.height)
-				.y1(d => y(d)));
+				.y1(d => y(d as any)));
 
 		chartgroup.append("clipPath")
 			.datum(this.data.series)
@@ -263,7 +252,9 @@ class Linechart{
 			.attr("d", d3.area()
 				.x((d, i) => x(this.data.dates[i]))
 				.y0(0)
-				.y1(d => y(d)));
+				.y1(d => {
+					return y(d as any);
+				}));
 
 		chartgroup.append("path")
 			.datum(demand)
@@ -272,7 +263,7 @@ class Linechart{
 			.attr("d", d3.area()
 				.x((d, i) => x(this.data.dates[i]))
 				.y0(this.height)
-				.y1(d => y(d)));
+				.y1(d => y(d as any)));
 
 		chartgroup.append("path")
 			.datum(demand)
@@ -281,7 +272,7 @@ class Linechart{
 			.attr("d", d3.area()
 				.x((d, i) => x(this.data.dates[i]))
 				.y0(0)
-				.y1(d => y(d)));
+				.y1(d => y(d as any)));
 
 		this.data.series = demand;
 		chartgroup

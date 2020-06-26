@@ -1,7 +1,7 @@
 import {Map} from './Map';
 import {MapController} from './mapController';
 import {MapEvents} from './mapEvents'
-import {Sidebar} from './sidebar'
+import {Sidebar} from './newSidebar'
 import 'bootstrap';
 import 'bootstrap-select';
 import * as d3 from 'd3';
@@ -11,14 +11,14 @@ import ReactDOM from 'react-dom';
 import { SimpleTableCreator } from './modelInterface/SimpleCreator';
 
 d3.select('#visualization').on('click', () => {
-  d3.select('#visualization').node().className = 'is-active';
-  d3.select('#modelCreate').node().className = '';
+  (d3.select('#visualization').node() as HTMLElement).className = 'is-active';
+  (d3.select('#modelCreate').node() as HTMLElement).className = '';
   d3.select('#mainPage').style('display', 'block');
   d3.select('#modelPage').style('display', 'none');
 });
 d3.select('#modelCreate').on('click', () => {
-  d3.select('#visualization').node().className = '';
-  d3.select('#modelCreate').node().className = 'is-active';
+  (d3.select('#visualization').node() as HTMLElement).className = '';
+  (d3.select('#modelCreate').node() as HTMLElement).className = 'is-active';
   d3.select('#mainPage').style('display', 'none');
   d3.select('#modelPage').style('display', 'block');
 });
