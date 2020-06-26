@@ -35,6 +35,7 @@ export interface AppState
 	scaleType: string;
 	countiesSelected: string[];
  	professionsSelected: any;
+  editedData:any;
 }
 
 const initialState: AppState = {
@@ -55,7 +56,8 @@ const initialState: AppState = {
 		'LCSW': true,
 		'CMHC': true,
 		'MFT': true
-	}
+	},
+  editedData:{}
 }
 
 type EventTypes = "Change Quartet" | "Select Node" | "Hover Node"
@@ -265,6 +267,22 @@ class MapController{
 		 })
 	 }
 
+   editSupply(newMapType: string)
+   {
+     this.prov.applyAction("Map Type Changed", (state: AppState) => {
+       state.mapType = newMapType;
+       return state;
+     })
+   }
+
+   editNeed(newMapType: string)
+   {
+     this.prov.applyAction("Map Type Changed", (state: AppState) => {
+       state.mapType = newMapType;
+       return state;
+     })
+   }
+
 	 updateComparisonType(newCompType: string)
 	 {
 		 this.prov.applyAction("Comparison Type Changed", (state: AppState) => {
@@ -304,6 +322,8 @@ class MapController{
 		{
 			this.comparisonMode = true;
 		}
+
+    console.log(this.comparisonMode);
 
 		let promise = this.originalMap.updateMapYear(year)
 		.then(() => {
@@ -459,6 +479,11 @@ class MapController{
 			}
 		}
 	}
+
+  editSupplyNeed(name:string)
+  {
+
+  }
 
 	highlightProfession(name:string){
 		d3.selectAll(`.${name}rect`)

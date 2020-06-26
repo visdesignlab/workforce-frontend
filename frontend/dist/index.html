@@ -60,11 +60,12 @@
 
 						</select>
 
-						<button id='runModelButton' class="button is-primary">Primary</button>
 
 					</div>
 
+
 					<ul class="navbar-nav ml-auto">
+
 						<li class="nav-item">
 							<a class="nav-link"  href="about.html">About</a>
 						</li>
@@ -99,7 +100,8 @@
 					<div id="sidebar" class='flex-row' style='min-width:540px;'>
 						<div height="630px" style="padding-bottom:10px;" style='width:540px;'>
 							<!-- <button class="collapsible goodFont plusClass" type="button" data-toggle="collapse" data-target="#collapseCounty" aria-expanded="false" aria-controls="collapseCounty">Counties</button> -->
-							<div id="collapseCounty" >
+							<div id="collapseCounty" style='margin-top: 10px'>
+								<h3>Counties</h3>
 								<table id="countiesTable" class="svgTable">
 										<thead>
 										<tr>
@@ -109,6 +111,7 @@
 												<th style="max-width: 90px; min-width:90px;"> Supply <span class="glyphicon glyphicon-sort"></span><br/></th>
 												<th style="max-width: 90px; min-width:90px;">Need</th>
 												<th>Gap</th>
+												<th style="max-width: 30px; min-width:45px;"></th>
 
 										</tr>
 										</thead>
@@ -123,7 +126,8 @@
 
 
 						<!-- <button class="collapsible goodFont plusClass" type="button" data-toggle="collapse" data-target="#collapseProf" aria-expanded="false" aria-controls="collapseProf">Professions</button> -->
-						<div id="collapseProf" style='width:540px;'>
+						<div id="collapseProf" style='width:540px; margin-top: 15px'>
+							<h3>Professions</h3>
 							<table id="professionsTable" class="svgTable">
 									<thead>
 									<tr>
@@ -145,6 +149,8 @@
 										<tr id="allProfRow">
 									</tbody>
 							</table>
+							<button id='runModelButton' class="button is-info is-light">Rerun Model</button>
+
 						</div>
 					</div>
 

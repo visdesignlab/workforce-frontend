@@ -53,6 +53,8 @@ class MapEvents{
 			        //handle error
 			        console.log(response);
 			    });
+
+				alert("Your model is being rerun! This may take some time.")
 			})
 
 		d3.selectAll(".plusClass")

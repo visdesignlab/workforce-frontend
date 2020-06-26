@@ -194,7 +194,7 @@ class Sidebar {
 			.classed("is-light", d => !this.map.removedProfessions.has(d.name))
 			.classed("is-small", true)
 			.on("click", function(d){
-				that.changeProfession(d.name)
+				that.changeIncludedProfession(d.name)
 			})
 			.append("span")
 			.attr("class", "icon")
@@ -333,6 +333,7 @@ class Sidebar {
 
   doubleMapRows(td, xScale, domainMax)
   {
+		console.log("double map row!");
 		let that = this;
     let labels = td.filter((d) => {
        return d.vis == 'text' && ((d.type !== "supplyChangeable" && d.type !== "needChangeable") || !this.map.removedProfessions.has(d.name));
@@ -610,6 +611,8 @@ class Sidebar {
     let supply = {type:"supply", vis:"text", value:stateData[1]}
     let need = {type:"need", vis:"text", value:stateData[2]}
     let gap = {type:"axis", vis:"axis", value:[stateData[1], stateData[2]]}
+		let fakeSpot = {type:"name", vis:"text", value:''}
+
 
 		let check2 = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(stateData[0]), name:stateData[0]}
 		let name2 = {type:"name", vis:"text", value:stateData[0]}
@@ -620,12 +623,12 @@ class Sidebar {
 		d3.select("#utahRow").selectAll("td").remove();
 
     let stateRow = d3.select("#utahRow").selectAll("td")
-      .data([check, name, supply, need, gap])
+      .data([check, name, supply, need, gap, fakeSpot])
       .enter()
       .append("td");
 
 		let stateRow2 = d3.select("#utahSecondRow").selectAll("td")
-			.data([name2, supply2, need2, gap2])
+			.data([name2, supply2, need2, gap2, fakeSpot])
 			.enter()
 			.append("td");
 
@@ -674,7 +677,7 @@ class Sidebar {
           let need = {type:"need", vis:"text", value:Math.round(d[2])}
           let gap = {type:"gap", vis:"bar", value:[Math.round(d[1]), Math.round(d[2])]}
 
-          return [check, name, supply, need, gap];
+          return [check, name, supply, need, gap, fakeSpot];
         }
         else{
 					// let circle = {type:"circle", vis:"svg", value:false}
@@ -682,7 +685,7 @@ class Sidebar {
           let need = {type:"need", vis:"text", value:Math.round(d[5])}
           let gap = {type:"gap", vis:"bar", value:[Math.round(d[4]), Math.round(d[5])]}
 
-          return [supply, need, gap];
+          return [supply, need, gap, fakeSpot];
         }
       }
       else
@@ -693,7 +696,7 @@ class Sidebar {
         let need = {type:"need", vis:"text", value:Math.round(d[2])}
         let gap = {type:"gap", vis:"bar", value:[Math.round(d[1]), Math.round(d[2])]}
 
-        return [check, name, supply, need, gap];
+        return [check, name, supply, need, gap, fakeSpot];
       }
     }).enter().append("td");
 
@@ -720,6 +723,20 @@ class Sidebar {
 				.classed("selectedBox", false)
 				.property('checked', false);
 		}
+	}
+
+	changeIncludedProfession(id: string)
+	{
+		if(this.map.removedProfessions.has(id))
+		{
+			this.map.removedProfessions.delete(id);
+		}
+		else{
+			this.map.removedProfessions.add(id);
+		}
+
+		this.map.recalcData(this.map.prov.current().state.year).then(() => this.updateTable());
+
 	}
 
   updateProfessions()

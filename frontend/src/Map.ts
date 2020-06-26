@@ -403,7 +403,7 @@ class Map{
 
 		console.log(year);
 
-		const map = this.controller.prov.current().state.scaleType;
+		const map = this.controller.prov.current().state.mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
 		let replacementJson = undefined;
@@ -415,6 +415,9 @@ class Map{
 		let promise2 = d3.json(`${this.API_URL}${modelFile}`).then((results)=> {
 
 			promise1.then(() => {
+
+				results = results[map];
+				this.results = results;
 
 				if(this.firstMap)
 				{
@@ -432,15 +435,12 @@ class Map{
 				else{
 					if(this.controller.modelRemovedComparison)
 					{
+						console.log(this.results);
 						this.removeProfessionsFromData(this.results, replacementJson);
 					}
 				}
 
-
-				// results = results[map];
-				// this.results = results;
-
-				// this.currentYearData = results[year]
+				this.currentYearData = results[year]
 					var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
 					for (let county in this.currentYearData) {
 						let totalSupply = 0;
@@ -512,6 +512,8 @@ class Map{
 		let profTotalSupply = {}
 
 		let allCounties = this.controller.prov.current().state.countiesSelected.includes("State of Utah");
+
+		console.log(this.results);
 
 		for(let county in this.results["2019"])
 		{

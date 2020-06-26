@@ -28,11 +28,14 @@ class Linechart{
 
 	public destroy() {
 		this.lineChartSvg.selectAll('*').remove();
+		this.lineChartSvg.attr('height', 0)
 	}
 
 	public initLineChart(results, selectedCounties:string[]) {
 
 		this.lineChartSvg.selectAll('*').remove();
+		this.lineChartSvg.attr('height', 800)
+
 		// this.lineChartSvg.append('line')
 		// 	.attr('stroke', 'black')
 		// 	.attr('stroke-width', 2)
