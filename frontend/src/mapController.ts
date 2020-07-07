@@ -261,42 +261,52 @@ class MapController{
 
 	 updateMapType(newMapType: string)
 	 {
-		 this.prov.applyAction("Map Type Changed", (state: AppState) => {
+     let action = this.prov.addAction("Map Type Changed", (state: AppState) => {
 			 state.mapType = newMapType;
 			 return state;
 		 })
+
+     action.applyAction();
 	 }
 
    editSupply(newMapType: string)
    {
-     this.prov.applyAction("Map Type Changed", (state: AppState) => {
+     let action = this.prov.addAction("Map Type Changed", (state: AppState) => {
        state.mapType = newMapType;
        return state;
      })
+
+     action.applyAction();
    }
 
    editNeed(newMapType: string)
    {
-     this.prov.applyAction("Map Type Changed", (state: AppState) => {
+     let action = this.prov.addAction("Map Type Changed", (state: AppState) => {
        state.mapType = newMapType;
        return state;
      })
+
+     action.applyAction();
    }
 
 	 updateComparisonType(newCompType: string)
 	 {
-		 this.prov.applyAction("Comparison Type Changed", (state: AppState) => {
+		 let action = this.prov.addAction("Comparison Type Changed", (state: AppState) => {
 			 state.scaleType = newCompType;
 			 return state;
 		 })
+
+     action.applyAction();
 	 }
 
 	 updateModelsSelected(newModelsSelected: string[])
 	 {
-		 this.prov.applyAction("Change Selected Models", (state: AppState) => {
+		 let action = this.prov.addAction("Change Selected Models", (state: AppState) => {
 			 state.modelsSelected = newModelsSelected;
 			 return state;
 		 })
+
+     action.applyAction()
 	 }
 
 	// updateMapType(mapData:string):void{
@@ -335,11 +345,13 @@ class MapController{
 
 	updateMapYear(newYear: string)
 	{
-		this.prov.applyAction("Map Year Changed", (state: AppState) => {
+    let action = this.prov.addAction("Map Year Changed", (state: AppState) => {
 			state.year = newYear;
 			return state;
-		})
-	}
+		});
+
+    action.applyAction();
+	 }
 
 	updateSelectedProf(profSelected: string)
 	{
@@ -351,11 +363,13 @@ class MapController{
     else{
       label = "Profession " + profSelected + " Selected";
     }
-		console.log(profSelected)
-		this.prov.applyAction(label, (state: AppState) => {
+
+    let action = this.prov.addAction(label, (state: AppState) => {
 			state.professionsSelected[profSelected] = !state.professionsSelected[profSelected];
 			return state;
-		})
+		});
+
+    action.applyAction();
 	}
 
 	updateSelectedCounty(selectCounty: string)
@@ -370,7 +384,7 @@ class MapController{
       label = "County " + selectCounty + " Selected";
     }
 
-		this.prov.applyAction(label, (state: AppState) => {
+    let action = this.prov.addAction(label, (state: AppState) => {
 
 			if(selectCounty === 'State of Utah')
 			{
@@ -395,6 +409,8 @@ class MapController{
 
 			return state;
 		})
+
+    action.applyAction();
 	}
 
 
