@@ -9,7 +9,7 @@ class MapEvents{
 	map: MapController;
 	selectAll : boolean;
 
-	private API_URL: string = 'http://127.0.0.1:5000/api/';
+	private API_URL: string = 'http://3.135.81.128/api/';
 
 	constructor(map:MapController){
 		this.map = map;
@@ -23,12 +23,12 @@ class MapEvents{
 
 				let bodyFormData = new FormData();
 
-				bodyFormData.set('model_id', this.map.prov.current().state.modelsSelected[0]);
+				bodyFormData.set('model_id', this.map.prov.current().getState().modelsSelected[0]);
 
 				let removedString = "";
-				for(let j in this.map.prov.current().state.professionsSelected)
+				for(let j in this.map.prov.current().getState().professionsSelected)
 				{
-					if(!this.map.prov.current().state.professionsSelected[j])
+					if(!this.map.prov.current().getState().professionsSelected[j])
 					{
 						removedString += j + ','
 					}
@@ -107,14 +107,14 @@ class MapEvents{
 						.append('option')
 						.attr("value", mod)
 						.attr("selected", "")
-						.html(results[mod].name)
+						.html(results[mod].name ? results[mod].name : results[mod].model_name)
 				}
 				else
 				{
 					d3.select('#modelData')
 						.append('option')
 						.attr("value", mod)
-						.html(results[mod].name)
+						.html(results[mod].name ? results[mod].name : results[mod].model_name)
 				}
 				counter++;
 

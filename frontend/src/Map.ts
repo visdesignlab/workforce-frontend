@@ -21,7 +21,7 @@ class Map{
 	totalResults:any;
 	firstMap:boolean;
 
-	private API_URL: string = 'http://127.0.0.1:5000/api/';
+	private API_URL: string = 'http://3.135.81.128/api/';
 
 	/**
 	 *
@@ -51,7 +51,7 @@ class Map{
 			// 	.classed('d-flex', true)
 
 		this.modelData = modelUsed;
-		const map = this.controller.prov.current().state.mapType;
+		const map = this.controller.prov.current().getState().mapType;
 
 
 		const modelFile = this.controller.serverModels[this.modelData].path;
@@ -81,8 +81,17 @@ class Map{
 			.attr('y1', 10)
 			.attr('y2', 600);
 
+			let name = ''
+
+			if(this.controller.serverModels[this.modelData].name)
+			{
+				name = (!this.firstMap && this.controller.modelRemovedComparison) ? this.controller.serverModels[this.modelData].name + "(Modified)" : this.controller.serverModels[this.modelData].name
+			}
+			else{
+				name = (!this.firstMap && this.controller.modelRemovedComparison) ? this.controller.serverModels[this.modelData].model_name + "(Modified)" : this.controller.serverModels[this.modelData].model_name
+			}
 			this.svg.append('text')
-				.text((!this.firstMap && this.controller.modelRemovedComparison) ? this.controller.serverModels[this.modelData].name + "(Modified)" : this.controller.serverModels[this.modelData].name)
+				.text(name)
 				.attr("x", 20)
 				.attr("y", 20)
 				.attr('alignment-baseline', 'middle')
@@ -108,7 +117,7 @@ class Map{
 					d3.select("#descriptionTooltip").transition().duration(200).style("opacity", 0);
 				})
 
-			this.currentYearData = this.results[this.controller.prov.current().state.year]
+			this.currentYearData = this.results[this.controller.prov.current().getState().year]
 			d3.select('#spinner')
 				.classed('d-flex', false)
 				.style('display', 'none');
@@ -119,7 +128,7 @@ class Map{
 					let totalSupply = 0;
 					let totalDemand = 0;
 					for (let profession of professions) {
-						if (this.controller.prov.current().state.professionsSelected[profession]) {
+						if (this.controller.prov.current().getState().professionsSelected[profession]) {
 							totalSupply += this.currentYearData[county]['supply'][profession];
 							totalDemand += this.currentYearData[county]['demand'][profession];
 						}
@@ -206,9 +215,9 @@ class Map{
 						.attr("transform", "translate(20,40)")
 						.attr("d", path(topojson.mesh(us, us.objects[map], function(a, b) { return a !== b; })));
 
-					this.updateMapType(this.controller.prov.current().state.scaleType, 0);
+					this.updateMapType(this.controller.prov.current().getState().scaleType, 0);
 				});
-				this.linechart.initLineChart(this.results, this.controller.prov.current().state.countiesSelected);
+				this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 
 		});
 		return promise;
@@ -232,21 +241,21 @@ class Map{
 				currentYearData[d]['totalSupply'] / currentYearData[d]['population'] * 100000
 			));
 
-			return d3.scaleLinear()
+			return d3.scaleLinear<string, string>()
 				.domain([0, max])
-				.range([+d3.interpolateBlues(0), +d3.interpolateBlues(1)]);
+				.range([d3.interpolateBlues(0), d3.interpolateBlues(1)]);
 		} else if (mapData == 'demand_per_100k') {
 			let max = d3.max(Object.keys(currentYearData), d => {
 				return currentYearData[d]['totalDemand'] / currentYearData[d]['population'] * 100000;
 			});
 
-			return d3.scaleLinear()
+			return d3.scaleLinear<string, string>()
 				.domain([0, max])
-				.range([+d3.interpolateOranges(0), +d3.interpolateOranges(1)]);
+				.range([d3.interpolateOranges(0), d3.interpolateOranges(1)]);
 		} else {
-			return d3.scaleLinear()
+			return d3.scaleLinear<string, string>()
 				.domain([1000, 1000000])
-				.range([+d3.interpolateGreens(0), +d3.interpolateGreens(1)]);
+				.range([d3.interpolateGreens(0), d3.interpolateGreens(1)]);
 		}
 	}
 	/**
@@ -256,6 +265,7 @@ class Map{
 	 * @param mapData current map type that is selected
 	 */
 	myColorScale(d,that,mapData){
+		console.log(mapData);
 		let county = d.properties.NAME;
 		if (mapData == 'supply_need') {
 			return d3.interpolateRdBu(that.supplyScore[county]);
@@ -323,6 +333,7 @@ class Map{
 
 		if(this.firstMap)
 		{
+			console.log(mapData)
 			switch(mapData)
 			{
 				case 'supply_need':
@@ -403,7 +414,7 @@ class Map{
 
 		console.log(year);
 
-		const map = this.controller.prov.current().state.mapType;
+		const map = this.controller.prov.current().getState().mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
 		let replacementJson = undefined;
@@ -446,7 +457,7 @@ class Map{
 						let totalSupply = 0;
 						let totalDemand = 0;
 						for (let profession of professions) {
-							if (this.controller.prov.current().state.professionsSelected[profession]) {
+							if (this.controller.prov.current().getState().professionsSelected[profession]) {
 								totalSupply += this.currentYearData[county]['supply'][profession];
 								totalDemand += this.currentYearData[county]['demand'][profession];
 							}
@@ -459,8 +470,8 @@ class Map{
 							this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
 					}
 
-					this.updateMapType(this.controller.prov.current().state.scaleType, 1000);
-					this.linechart.initLineChart(this.results, this.controller.prov.current().state.countiesSelected);
+					this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
+					this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 
 			})
 		});
@@ -482,13 +493,13 @@ class Map{
 		})
 			.classed("selectedCounty", false)
 
-		this.linechart.initLineChart(this.results, this.controller.prov.current().state.countiesSelected);
+		this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 		this.controller.setAllHighlights();
 	}
 
 	// highlightPath(name:string) {
 	// 	// d3.selectAll('path').classed('selected', false);
-	// 	this.linechart.initLineChart(this.results, this.controller.prov.current().state.countiesSelected);
+	// 	this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 	// 	// should be moved it id-based paths
 	// 	d3.selectAll('svg .counties').selectAll('path')
 	// 		.filter(d => (d as any).properties.NAME == name)
@@ -497,7 +508,7 @@ class Map{
 	//
 	// unHighlightPath(name:string) {
 	// 	// d3.selectAll('path').classed('selected', false);
-	// 	this.linechart.initLineChart(this.results, this.controller.prov.current().state.countiesSelected);
+	// 	this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 	//
 	// 	// this.linechart.initLineChart(this.results, name);
 	// 	// should be moved it id-based paths
@@ -511,7 +522,7 @@ class Map{
 		let profTotalDemand = {}
 		let profTotalSupply = {}
 
-		let allCounties = this.controller.prov.current().state.countiesSelected.includes("State of Utah");
+		let allCounties = this.controller.prov.current().getState().countiesSelected.includes("State of Utah");
 
 		console.log(this.results);
 
@@ -521,7 +532,7 @@ class Map{
 			{
 				continue;
 			}
-			if(allCounties || this.controller.prov.current().state.countiesSelected.includes(county))
+			if(allCounties || this.controller.prov.current().getState().countiesSelected.includes(county))
 			{
 				for(let prof in this.results["2019"][county].demand)
 				{
@@ -537,7 +548,7 @@ class Map{
 		{
 			for(let local in this.results[year])
 			{
-				if(!(allCounties || this.controller.prov.current().state.countiesSelected.includes(local)))
+				if(!(allCounties || this.controller.prov.current().getState().countiesSelected.includes(local)))
 				{
 					continue;
 				}

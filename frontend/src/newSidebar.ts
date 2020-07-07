@@ -379,7 +379,7 @@ class Sidebar {
 			.attr("r", 5)
 			.on("mouseover", () => {
 				d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
-				d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.prov.current().state.modelsSelected[0]].name + "</h5>")
+				d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.prov.current().getState().modelsSelected[0]].name + "</h5>")
 					.style("left", (d3.event.pageX) + "px")
 					.style("top", (d3.event.pageY - 28) + "px");
 			})
@@ -606,7 +606,7 @@ class Sidebar {
 
 
 
-    let check = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(stateData[0]), name:stateData[0]}
+    let check = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().getState().countiesSelected.includes(stateData[0]), name:stateData[0]}
     let name = {type:"name", vis:"text", value:stateData[0]}
     let supply = {type:"supply", vis:"text", value:stateData[1]}
     let need = {type:"need", vis:"text", value:stateData[2]}
@@ -614,7 +614,7 @@ class Sidebar {
 		let fakeSpot = {type:"name", vis:"text", value:''}
 
 
-		let check2 = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(stateData[0]), name:stateData[0]}
+		let check2 = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().getState().countiesSelected.includes(stateData[0]), name:stateData[0]}
 		let name2 = {type:"name", vis:"text", value:stateData[0]}
 		let supply2 = {type:"supply", vis:"text", value:stateData[4]}
 		let need2 = {type:"need", vis:"text", value:stateData[5]}
@@ -670,7 +670,7 @@ class Sidebar {
       {
         if(i % 2 == 0)
         {
-          let check = {type:"selectedCheck", vis:"check", value:this.map.prov.current().state.countiesSelected.includes(d[0]), name:d[0]}
+          let check = {type:"selectedCheck", vis:"check", value:this.map.prov.current().getState().countiesSelected.includes(d[0]), name:d[0]}
           let name = {type:"name", vis:"textDouble", value:d[0]}
 					// let circle = {type:"circle", vis:"svg", value:true}
           let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
@@ -690,7 +690,7 @@ class Sidebar {
       }
       else
       {
-        let check = {type:"selectedCheck", vis:"check", value:this.map.prov.current().state.countiesSelected.includes(d[0]), name:d[0]}
+        let check = {type:"selectedCheck", vis:"check", value:this.map.prov.current().getState().countiesSelected.includes(d[0]), name:d[0]}
         let name = {type:"name", vis:"text", value:d[0]}
         let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
         let need = {type:"need", vis:"text", value:Math.round(d[2])}
@@ -735,7 +735,7 @@ class Sidebar {
 			this.map.removedProfessions.add(id);
 		}
 
-		this.map.recalcData(this.map.prov.current().state.year).then(() => this.updateTable());
+		this.map.recalcData(this.map.prov.current().getState().year).then(() => this.updateTable());
 
 	}
 
@@ -768,8 +768,8 @@ class Sidebar {
     		.domain([0, d3.max(profData, (d) => d3.max([d[1], d[2], d[4], d[5]]))])
     		.range([0, this.cell.width - this.cell.margin * 2 ])
 
-    let check1 = {type:"profSelectedCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(allProfData[0] as string), name:allProfData[0]}
-    let check2 = {type:"infoCheck", vis:"allCheck", value:this.map.prov.current().state.countiesSelected.includes(allProfData[0] as string), name:allProfData[0]}
+    let check1 = {type:"profSelectedCheck", vis:"allCheck", value:this.map.prov.current().getState().countiesSelected.includes(allProfData[0] as string), name:allProfData[0]}
+    let check2 = {type:"infoCheck", vis:"allCheck", value:this.map.prov.current().getState().countiesSelected.includes(allProfData[0] as string), name:allProfData[0]}
 
     let name = {type:"name", vis:"text", value:allProfData[0]}
     let supply = {type:"supply", vis:"text", value:allProfData[1]}
@@ -799,7 +799,7 @@ class Sidebar {
       {
         if(i % 2 == 0)
         {
-          let check1 = {type:"profSelected", vis:"check", value:this.map.prov.current().state.professionsSelected[d[0]], name:d[0]}
+          let check1 = {type:"profSelected", vis:"check", value:this.map.prov.current().getState().professionsSelected[d[0]], name:d[0]}
           let check2 = {type:"profIncluded", vis:"button", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
           let name = {type:"name", vis:"textDouble", value:d[0]}
           let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
@@ -821,7 +821,7 @@ class Sidebar {
         return [supply, need, gap];
       }
       else{
-        let check1 = {type:"profSelected", vis:"check", value:this.map.prov.current().state.professionsSelected[d[0]], name:d[0]}
+        let check1 = {type:"profSelected", vis:"check", value:this.map.prov.current().getState().professionsSelected[d[0]], name:d[0]}
         let check2 = {type:"profIncluded", vis:"button", value:!this.map.removedProfessions.has(d[0]), name:d[0]}
         let name = {type:"name", vis:"text", value:d[0]}
         let supply = {type:"supply", vis:"text", value:Math.round(d[1])}
@@ -843,7 +843,7 @@ class Sidebar {
 
   getProfessionsData(currentYear, otherCurrentYearData, mapData)
   {
-      let tempSelectedList = this.map.prov.current().state.countiesSelected;
+      let tempSelectedList = this.map.prov.current().getState().countiesSelected;
 
       var professions = Object.keys(currentYear[tempSelectedList[0]]['supply']);
       var population = currentYear[tempSelectedList[0]]['population'];

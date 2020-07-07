@@ -131,10 +131,10 @@ class MapController{
 	drawMap():Promise<void>{
 		let promise;
 
-		promise = this.originalMap.drawMap(this.prov.current().state.modelsSelected[0]);
+		promise = this.originalMap.drawMap(this.prov.current().getState().modelsSelected[0]);
 		if(this.comparisonMode)
 		{
-			promise = promise.then(() => this.secondMap.drawMap(this.prov.current().state.modelsSelected[1]));
+			promise = promise.then(() => this.secondMap.drawMap(this.prov.current().getState().modelsSelected[1]));
 			// promise = promise.then(() => this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType));
 			d3.select("#comparisonView")
 				.style("display", "block")
@@ -164,7 +164,7 @@ class MapController{
 	{
 		this.prov.addObserver(['year'], () => {
 
-			let state = this.prov.current().state;
+			let state = this.prov.current().getState();
 			console.log(state.year)
 
 			let promise = this.originalMap.updateMapYear(state.year)
@@ -182,7 +182,7 @@ class MapController{
 
 		this.prov.addObserver(['mapType'], () => {
 
-			console.log("updating map type", this.prov.current().state.mapType);
+			console.log("updating map type", this.prov.current().getState().mapType);
 
 			ProvVisCreator(
 		    document.getElementById("provDiv")!,
@@ -191,16 +191,16 @@ class MapController{
 		})
 
 		this.prov.addObserver(['modelsSelected'], () => {
-			if(this.comparisonMode && this.prov.current().state.modelsSelected.length < 2)
+			if(this.comparisonMode && this.prov.current().getState().modelsSelected.length < 2)
 			{
 				this.secondMap.destroy();
 			}
-			else if (this.prov.current().state.modelsSelected.length === 0)
+			else if (this.prov.current().getState().modelsSelected.length === 0)
 			{
 				this.originalMap.destroy();
 				return;
 			}
-			this.comparisonMode = this.prov.current().state.modelsSelected.length > 1;
+			this.comparisonMode = this.prov.current().getState().modelsSelected.length > 1;
 			this.drawMap().then(() => this.drawSidebar());
 
 			ProvVisCreator(
@@ -210,11 +210,11 @@ class MapController{
 		})
 
 		this.prov.addObserver(['scaleType'], () => {
-			console.log(this.prov.current().state.scaleType);
-			this.originalMap.updateMapType(this.prov.current().state.scaleType, 1000);
+			console.log(this.prov.current().getState().scaleType);
+			this.originalMap.updateMapType(this.prov.current().getState().scaleType, 1000);
 			if(this.comparisonMode)
 			{
-				this.secondMap.updateMapType(this.prov.current().state.scaleType, 1000);
+				this.secondMap.updateMapType(this.prov.current().getState().scaleType, 1000);
 			}
 			this.drawSidebar();
 
@@ -225,12 +225,12 @@ class MapController{
 		})
 
 		this.prov.addObserver(['countiesSelected'], () => {
-			this.sidebar.highlightAllCounties(this.prov.current().state.countiesSelected)
-			this.originalMap.highlightAllCounties(this.prov.current().state.countiesSelected)
+			this.sidebar.highlightAllCounties(this.prov.current().getState().countiesSelected)
+			this.originalMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
 
 			if(this.comparisonMode)
 			{
-				this.secondMap.highlightAllCounties(this.prov.current().state.countiesSelected)
+				this.secondMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
 			}
 
 			this.sidebar.updateProfessions();
@@ -242,7 +242,7 @@ class MapController{
 		})
 
 		this.prov.addObserver(['professionsSelected'], () => {
-			this.recalcData(this.prov.current().state.year).then(() => {
+			this.recalcData(this.prov.current().getState().year).then(() => {
 				this.drawSidebar();
 				this.setAllHighlights();
 			});
@@ -343,8 +343,16 @@ class MapController{
 
 	updateSelectedProf(profSelected: string)
 	{
+    let label = '';
+    if(this.prov.current().getState().professionsSelected[profSelected])
+    {
+      label = "Profession " + profSelected + " De-Selected";
+    }
+    else{
+      label = "Profession " + profSelected + " Selected";
+    }
 		console.log(profSelected)
-		this.prov.applyAction("Profession " + profSelected + " Selected", (state: AppState) => {
+		this.prov.applyAction(label, (state: AppState) => {
 			state.professionsSelected[profSelected] = !state.professionsSelected[profSelected];
 			return state;
 		})
@@ -352,7 +360,17 @@ class MapController{
 
 	updateSelectedCounty(selectCounty: string)
 	{
-		this.prov.applyAction("Select " + selectCounty, (state: AppState) => {
+
+    let label = '';
+    if(this.prov.current().getState().countiesSelected.includes(selectCounty))
+    {
+      label = "County " + selectCounty + " De-Selected";
+    }
+    else{
+      label = "County " + selectCounty + " Selected";
+    }
+
+		this.prov.applyAction(label, (state: AppState) => {
 
 			if(selectCounty === 'State of Utah')
 			{
@@ -391,7 +409,7 @@ class MapController{
 
 			this.modelRemovedComparison = true;
 			this.comparisonMode = true;
-			this.secondMap.drawMap(this.prov.current().state.modelsSelected[0]);
+			this.secondMap.drawMap(this.prov.current().getState().modelsSelected[0]);
 		}
 	}
 
@@ -468,9 +486,9 @@ class MapController{
 
 	setAllHighlights(){
 
-		for(let prof in this.prov.current().state.professionsSelected)
+		for(let prof in this.prov.current().getState().professionsSelected)
 		{
-			if(this.prov.current().state.professionsSelected[prof])
+			if(this.prov.current().getState().professionsSelected[prof])
 			{
 				this.highlightProfession(prof);
 			}
