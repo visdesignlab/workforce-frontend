@@ -6,6 +6,14 @@ import {Map} from './Map';
 
 import { ProvVis, EventConfig, Config, ProvVisConfig, ProvVisCreator } from './ProvVis/provvis';
 
+import {
+  CountiesChanged,
+  ProfessionsChanged,
+  MapTypeChange,
+  MapShapeChange,
+  YearChanged,
+  ModelChanged
+} from './Icons';
 
 import
 {
@@ -41,7 +49,7 @@ export interface AppState
 const initialState: AppState = {
 	year: '2019',
 	mapType: 'counties',
-	modelsSelected: [],
+	modelsSelected: ['8bcaed56-89aa-4d24-9d6c-732f2eb35fd7'],
 	scaleType: 'supply_need',
 	countiesSelected: ['State of Utah'],
 	professionsSelected: {
@@ -60,13 +68,53 @@ const initialState: AppState = {
   editedData:{}
 }
 
-type EventTypes = "Change Quartet" | "Select Node" | "Hover Node"
+  //
+  const eventConfig: EventConfig<EventOptions> = {
+    "Counties Changed": {
+      backboneGlyph: CountiesChanged({size: 22}),
+      currentGlyph: CountiesChanged({size: 22, fill: "#2185d0"}),
+      regularGlyph: CountiesChanged({size: 16}),
+      bundleGlyph: CountiesChanged({size: 22, fill: "#2185d0"})
+    },
+    "Professions Changed": {
+      backboneGlyph: ProfessionsChanged({size: 22}),
+      currentGlyph: ProfessionsChanged({size: 22, fill: "#2185d0"}),
+      regularGlyph: ProfessionsChanged({size: 16}),
+      bundleGlyph: ProfessionsChanged({size: 22, fill: "#2185d0"})
+    },
+    "Year Changed": {
+      backboneGlyph: YearChanged({size: 22}),
+      currentGlyph: YearChanged({size: 22, fill: "#2185d0"}),
+      regularGlyph: YearChanged({size: 16}),
+      bundleGlyph: YearChanged({size: 22, fill: "#2185d0"})
+    },
+    "Model Changed": {
+      backboneGlyph: ModelChanged({size: 22}),
+      currentGlyph: ModelChanged({size: 22, fill: "#2185d0"}),
+      regularGlyph: ModelChanged({size: 16}),
+      bundleGlyph: ModelChanged({size: 22, fill: "#2185d0"})
+    },
+    "MapType Changed": {
+      backboneGlyph: MapTypeChange({size: 22}),
+      currentGlyph: MapTypeChange({size: 22, fill: "#2185d0"}),
+      regularGlyph: MapTypeChange({size: 16}),
+      bundleGlyph: MapTypeChange({size: 22, fill: "#2185d0"})
+    },
+    "MapShape Changed": {
+      backboneGlyph: MapShapeChange({size: 22}),
+      currentGlyph: MapShapeChange({size: 22, fill: "#2185d0"}),
+      regularGlyph: MapShapeChange({size: 16}),
+      bundleGlyph: MapShapeChange({size: 22, fill: "#2185d0"})
+    }
+  };
 
+
+type EventOptions = "Counties Changed" | "Professions Changed" | "Year Changed" | "Model Changed" | "MapType Changed" | "MapShape Changed"
 /**
  *
  */
 class MapController{
-	prov: Provenance<AppState, EventTypes, string>;
+	prov: Provenance<AppState, EventOptions, string>;
 
 	serverModels:any;
 	originalMap: Map;
@@ -86,7 +134,7 @@ class MapController{
 	 */
 	constructor()
 	{
-		this.prov = initProvenance(initialState);
+		this.prov = initProvenance(initialState, true);
 
 		this.removedMapSupply = {}
 		this.removedMapDemand = {}
@@ -102,17 +150,6 @@ class MapController{
 		this.comparisonType="gap";
 
 		this.setupObservers();
-	}
-
-	visCallback(newNode:NodeID)
-	{
-	  this.prov.goToNode(newNode);
-
-	  //Incase the state doesn't change and the observers arent called, updating the ProvVis here.
-	  ProvVisCreator(
-	    document.getElementById("provDiv")!,
-	    this.prov.graph() as ProvenanceGraph<AppState, EventTypes, string>,
-	    (newNode:NodeID) => this.prov.goToNode(newNode));
 	}
 
 	setSideBar(sideBar: Sidebar){
@@ -162,6 +199,18 @@ class MapController{
 
 	setupObservers()
 	{
+
+    this.prov.addGlobalObserver(() => {
+      ProvVisCreator(
+        document.getElementById("provDiv")!,
+        this.prov,
+        (newNode:NodeID) => this.prov.goToNode(newNode),
+      false,
+      false,
+      undefined,
+      {eventConfig: eventConfig});
+    })
+
 		this.prov.addObserver(['year'], () => {
 
 			let state = this.prov.current().getState();
@@ -172,10 +221,6 @@ class MapController{
 				return this.secondMap.updateMapYear(state.year);
 			})
 
-			ProvVisCreator(
-				document.getElementById("provDiv")!,
-				this.prov.graph() as ProvenanceGraph<AppState, EventTypes, string>,
-				(newNode:NodeID) => this.prov.goToNode(newNode));
 
 			return Promise.all([promise]);
 		})
@@ -183,11 +228,6 @@ class MapController{
 		this.prov.addObserver(['mapType'], () => {
 
 			console.log("updating map type", this.prov.current().getState().mapType);
-
-			ProvVisCreator(
-		    document.getElementById("provDiv")!,
-		    this.prov.graph() as ProvenanceGraph<AppState, EventTypes, string>,
-		    (newNode:NodeID) => this.prov.goToNode(newNode));
 		})
 
 		this.prov.addObserver(['modelsSelected'], () => {
@@ -203,10 +243,6 @@ class MapController{
 			this.comparisonMode = this.prov.current().getState().modelsSelected.length > 1;
 			this.drawMap().then(() => this.drawSidebar());
 
-			ProvVisCreator(
-				document.getElementById("provDiv")!,
-				this.prov.graph() as ProvenanceGraph<AppState, EventTypes, string>,
-				(newNode:NodeID) => this.prov.goToNode(newNode));
 		})
 
 		this.prov.addObserver(['scaleType'], () => {
@@ -218,13 +254,10 @@ class MapController{
 			}
 			this.drawSidebar();
 
-			ProvVisCreator(
-				document.getElementById("provDiv")!,
-				this.prov.graph() as ProvenanceGraph<AppState, EventTypes, string>,
-				(newNode:NodeID) => this.prov.goToNode(newNode));
 		})
 
 		this.prov.addObserver(['countiesSelected'], () => {
+
 			this.sidebar.highlightAllCounties(this.prov.current().getState().countiesSelected)
 			this.originalMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
 
@@ -235,10 +268,6 @@ class MapController{
 
 			this.sidebar.updateProfessions();
 
-			ProvVisCreator(
-				document.getElementById("provDiv")!,
-				this.prov.graph() as ProvenanceGraph<AppState, EventTypes, string>,
-				(newNode:NodeID) => this.prov.goToNode(newNode));
 		})
 
 		this.prov.addObserver(['professionsSelected'], () => {
@@ -247,18 +276,15 @@ class MapController{
 				this.setAllHighlights();
 			});
 
-			ProvVisCreator(
-				document.getElementById("provDiv")!,
-				this.prov.graph() as ProvenanceGraph<AppState, EventTypes, string>,
-				(newNode:NodeID) => this.prov.goToNode(newNode));
 		})
+
+    console.log("observers set")
 	}
 
 	/**
 	 * this updates the map when the user selects a new type of map
 	 * @param mapData this the selection of the new map type
 	 */
-
 	 updateMapType(newMapType: string)
 	 {
      let action = this.prov.addAction("Map Type Changed", (state: AppState) => {
@@ -266,7 +292,9 @@ class MapController{
 			 return state;
 		 })
 
-     action.applyAction();
+     action
+      .addEventType("MapShape Changed")
+      .applyAction();
 	 }
 
    editSupply(newMapType: string)
@@ -296,7 +324,9 @@ class MapController{
 			 return state;
 		 })
 
-     action.applyAction();
+     action
+      .addEventType("MapType Changed")
+      .applyAction();
 	 }
 
 	 updateModelsSelected(newModelsSelected: string[])
@@ -306,7 +336,9 @@ class MapController{
 			 return state;
 		 })
 
-     action.applyAction()
+     action
+      .addEventType("Model Changed")
+      .applyAction();
 	 }
 
 	// updateMapType(mapData:string):void{
@@ -350,7 +382,9 @@ class MapController{
 			return state;
 		});
 
-    action.applyAction();
+    action
+     .addEventType("Year Changed")
+     .applyAction();
 	 }
 
 	updateSelectedProf(profSelected: string)
@@ -369,7 +403,9 @@ class MapController{
 			return state;
 		});
 
-    action.applyAction();
+    action
+     .addEventType("Professions Changed")
+     .applyAction();
 	}
 
 	updateSelectedCounty(selectCounty: string)
@@ -410,7 +446,9 @@ class MapController{
 			return state;
 		})
 
-    action.applyAction();
+    action
+     .addEventType("Counties Changed")
+     .applyAction();
 	}
 
 

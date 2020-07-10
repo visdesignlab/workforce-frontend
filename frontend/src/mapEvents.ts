@@ -102,7 +102,8 @@ class MapEvents{
 
 				if(counter == 2)
 				{
-					this.map.updateModelsSelected([mod]);
+					// console.log(this.map.prov.current().getState())
+					// this.map.updateModelsSelected([mod]);
 					d3.select('#modelData')
 						.append('option')
 						.attr("value", mod)

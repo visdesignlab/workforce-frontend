@@ -46,24 +46,21 @@ class Map{
 	/**
 	 * initial drawing of map.
 	 */
-	drawMap(modelUsed: any):Promise<void>{
+	drawMap(modelUsed: any):Promise<any>{
 			// d3.select('#spinner')
 			// 	.classed('d-flex', true)
 
 		this.modelData = modelUsed;
 		const map = this.controller.prov.current().getState().mapType;
-
-
 		const modelFile = this.controller.serverModels[this.modelData].path;
-
-		// const option = (document.getElementById('customModel') as HTMLInputElement).value;
 
 		let promise;
 		// if (!customModel) {
 		promise = d3.json(`${this.API_URL}/${modelFile}`);
+
+		let innerPromise = d3.json("data/UT-49-utah-counties.json");
 		// }
 		// else {
-
 
 		promise = promise.then((results)=> {
 
@@ -168,7 +165,7 @@ class Map{
 					return d3.interpolateRdBu(this.supplyScore[county]);
 				}
 				let that:any = this
-				d3.json("data/UT-49-utah-counties.json").then((us)=> {
+				innerPromise.then((us)=> {
 					var topojsonFeatures = topojson.feature(us, us.objects[map]);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
 					// var projection = d3.geoAlbersUsa()
@@ -177,6 +174,8 @@ class Map{
 					let projection = d3.geoMercator().scale(4000).translate([520/2, 600/2])
 					projection.center(mapCenter);
 					var path = d3.geoPath(projection);
+
+					console.log("applying g")
 
 					this.svg.append("g")
 						.attr("class", "counties")
@@ -220,7 +219,7 @@ class Map{
 				this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 
 		});
-		return promise;
+		return Promise.all([promise, innerPromise]);
 	}
 	/**
 	 *
@@ -265,7 +264,6 @@ class Map{
 	 * @param mapData current map type that is selected
 	 */
 	myColorScale(d,that,mapData){
-		console.log(mapData);
 		let county = d.properties.NAME;
 		if (mapData == 'supply_need') {
 			return d3.interpolateRdBu(that.supplyScore[county]);
@@ -333,7 +331,6 @@ class Map{
 
 		if(this.firstMap)
 		{
-			console.log(mapData)
 			switch(mapData)
 			{
 				case 'supply_need':
@@ -412,8 +409,6 @@ class Map{
 			return Promise.resolve();
 		}
 
-		console.log(year);
-
 		const map = this.controller.prov.current().getState().mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
@@ -446,7 +441,6 @@ class Map{
 				else{
 					if(this.controller.modelRemovedComparison)
 					{
-						console.log(this.results);
 						this.removeProfessionsFromData(this.results, replacementJson);
 					}
 				}
@@ -484,6 +478,8 @@ class Map{
 
 	highlightAllCounties(counties: string[])
 	{
+		console.log(d3.selectAll('svg .counties').selectAll('path'));
+
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => counties.includes((d as any).properties.NAME))
 			.classed('selectedCounty', true);
@@ -523,8 +519,6 @@ class Map{
 		let profTotalSupply = {}
 
 		let allCounties = this.controller.prov.current().getState().countiesSelected.includes("State of Utah");
-
-		console.log(this.results);
 
 		for(let county in this.results["2019"])
 		{

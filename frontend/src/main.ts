@@ -32,6 +32,8 @@ let promise = myMapEvents.changeModelData();
 promise.then(()=>{
   mapController.drawMap().then(() => {
     mapController.drawSidebar();
+    console.log("done");
+    mapController.prov.done();
   });
 });
 
@@ -47,3 +49,15 @@ fetch(MODELS_URL)
 
 		SimpleTableCreator(document.getElementById('modelPage'), rows);
 	})
+
+  //Setting up undo/redo hotkey to typical buttons
+  document.onkeydown = function(e){
+    var mac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+
+    if(!e.shiftKey && (mac ? e.metaKey : e.ctrlKey) && e.which == 90){
+      mapController.prov.goBackOneStep();
+    }
+    else if(e.shiftKey && (mac ? e.metaKey : e.ctrlKey) && e.which == 90){
+      mapController.prov.goForwardOneStep();
+    }
+  }
