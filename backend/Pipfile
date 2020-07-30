@@ -35,6 +35,7 @@ flask-cors = "*"
 pytest = "*"
 coverage = "*"
 xlrd = "*"
+flask-login = "*"
 
 [requires]
 python_version = "3.7"

@@ -4,6 +4,7 @@ from flask_cors import CORS
 
 
 app = Flask(__name__, static_folder = "static", static_url_path = "/api/")
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 # Set some config
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, 'uploads')
@@ -13,3 +14,4 @@ app.config["ALLOWED_EXTENSIONS"] = set(["txt", "csv", "xlsx"])
 CORS(app)
 
 import server.routes
+import server.auth_routes
