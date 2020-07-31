@@ -1,40 +1,74 @@
+from datetime import datetime, timedelta
 from server import app
-import server.auth_utils as utils
+from uuid import uuid4
+import server.auth_user_utils as utils
+import server.db as db
 import flask
-import flask_login
+import json
+import os
+import requests
 
-@app.route('/api/login', methods=['GET', 'POST'])
+@app.route("/api/login", methods=["GET", "POST"])
 def login():
-    if flask.request.method == 'GET':
-        return '''
-               <form action='login' method='POST'>
-                <input type='text' name='email' id='email' placeholder='email'/>
-                <input type='password' name='password' id='password' placeholder='password'/>
-                <input type='submit' name='submit'/>
-               </form>
-               '''
-
-    email = flask.request.form['email']
-    if flask.request.form['password'] == utils.users[email]['password']:
-        user = utils.User()
-        user.id = email
-        flask_login.login_user(user)
-        return flask.redirect(flask.url_for('protected'))
-
-    return 'Bad login'
+    redirect_uri = flask.url_for('authorize', _external=True)
+    return utils.oauth.utahid.authorize_redirect(redirect_uri)
 
 
-@app.route('/api/protected')
-@flask_login.login_required
-def protected():
-    return 'Logged in as: ' + flask_login.current_user.id
+@app.route('/api/authorize')
+def authorize():
+    auth_code = flask.request.args["code"]
+    redirect_uri = flask.url_for('authorize', _external=True)
+
+    token_json = requests.post(
+        utils.info["token_endpoint"],
+        data = {
+            "grant_type": "authorization_code",
+            "code": auth_code,
+            "redirect_uri": redirect_uri,
+            "client_id": os.getenv("UTAHID_ID"),
+            "client_secret": os.getenv("UTAHID_SECRET"),
+        }
+    ).content.decode('utf8')
+    token = json.loads(token_json)
+
+    email_resp_json = requests.get(
+        utils.info["userinfo_endpoint"],
+        headers = {'Authorization': f'Bearer {token["access_token"]}'}
+    ).content.decode('utf8')
+    email_resp = json.loads(email_resp_json)
+
+    session_token = uuid4().hex
+    flask.session["token"] = session_token
+
+    # TODO: Store session token into the database
+    new_session = db.Session(
+        email = email_resp["email"],
+        token = session_token,
+        generated = datetime.utcnow(),
+        expires = datetime.utcnow() + timedelta(hours = 6),
+    )
+
+    db.session.add(new_session)
+    db.session.commit()
+
+    return flask.redirect('/api/whoami')
 
 
-@app.route('/api/logout')
-def logout():
-    flask_login.logout_user()
-    return 'Logged out'
+@app.route("/api/whoami")
+@utils.check_session
+def whoami():
+    return f"Logged in as: {flask.session['email']}"
 
-@utils.login_manager.unauthorized_handler
-def unauthorized_handler():
-    return 'Unauthorized'
+
+@app.route("/api/logout")
+def logout():    
+    sessionToDelete = db.session.query(db.Session).filter_by(token=flask.session["token"]).one_or_none()
+
+    if sessionToDelete:
+        db.session.delete(sessionToDelete)
+        db.session.commit()
+
+    flask.session["token"] = None
+
+    return "Logged out"
+
