@@ -15,4 +15,3 @@ def client():
 def test_no_param_routes(client):
     response = client.get('/api')
     assert response.status_code is 200
-
