@@ -46,7 +46,6 @@ def authorize():
     session_token = uuid4().hex
     flask.session["token"] = session_token
 
-    # TODO: Store session token into the database
     new_session = db.Session(
         email = email_resp["email"],
         token = session_token,
