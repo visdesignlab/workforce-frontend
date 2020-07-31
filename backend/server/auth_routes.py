@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from server import app
-from uuid import uuid4
 import server.auth_user_utils as utils
 import server.db as db
 import flask
@@ -11,7 +10,7 @@ import requests
 @app.route("/api/login", methods=["GET", "POST"])
 def login():
     browser_session = flask.session
-    query_results = db.session.query(db.Session).filter_by(token = browser_session["token"]).one_or_none()
+    query_results = db.session.query(db.Session).filter_by(token = browser_session.get("token", None)).one_or_none()
     redirect_uri = flask.url_for('authorize', _external=True)
 
     if query_results:
@@ -43,18 +42,7 @@ def authorize():
     ).content.decode('utf8')
     email_resp = json.loads(email_resp_json)
 
-    session_token = uuid4().hex
-    flask.session["token"] = session_token
-
-    new_session = db.Session(
-        email = email_resp["email"],
-        token = session_token,
-        generated = datetime.utcnow(),
-        expires = datetime.utcnow() + timedelta(hours = 6),
-    )
-
-    db.session.add(new_session)
-    db.session.commit()
+    session_token = utils.refresh_or_create_session(None, email = email_resp["email"])
 
     return flask.redirect('/api/whoami')
 
@@ -68,13 +56,7 @@ def whoami():
 
 @app.route("/api/logout")
 def logout():    
-    sessionToDelete = db.session.query(db.Session).filter_by(token=flask.session["token"]).one_or_none()
-
-    if sessionToDelete:
-        db.session.delete(sessionToDelete)
-        db.session.commit()
-
+    utils.delete_session(flask.session["token"])
     flask.session["token"] = None
-
     return "Logged out"
 
