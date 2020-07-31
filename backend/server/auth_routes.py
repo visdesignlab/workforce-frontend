@@ -10,8 +10,14 @@ import requests
 
 @app.route("/api/login", methods=["GET", "POST"])
 def login():
+    browser_session = flask.session
+    query_results = db.session.query(db.Session).filter_by(token = browser_session["token"]).one_or_none()
     redirect_uri = flask.url_for('authorize', _external=True)
-    return utils.oauth.utahid.authorize_redirect(redirect_uri)
+
+    if query_results:
+        return "Already logged in", 200
+    else:
+        return utils.oauth.utahid.authorize_redirect(redirect_uri)
 
 
 @app.route('/api/authorize')
@@ -57,7 +63,8 @@ def authorize():
 @app.route("/api/whoami")
 @utils.check_session
 def whoami():
-    return f"Logged in as: {flask.session['email']}"
+    session = db.session.query(db.Session).filter_by(token=flask.session["token"]).one()
+    return f"Logged in as: {session.email}"
 
 
 @app.route("/api/logout")
