@@ -35,6 +35,15 @@ import
   Extra
 } from '@visdesignlab/provenance-lib-core';
 
+export interface EditedCounties{
+  supply: {
+
+  }
+  demand: {
+
+  }
+}
+
 export interface AppState
 {
 	year: string;
@@ -43,7 +52,7 @@ export interface AppState
 	scaleType: string;
 	countiesSelected: string[];
  	professionsSelected: any;
-  editedData:any;
+  editedCounties: EditedCounties;
 }
 
 const initialState: AppState = {
@@ -65,7 +74,16 @@ const initialState: AppState = {
 		'CMHC': true,
 		'MFT': true
 	},
-  editedData:{}
+  editedCounties:{
+    supply:
+    {
+
+    },
+    demand:
+    {
+
+    }
+  }
 }
 
   //
