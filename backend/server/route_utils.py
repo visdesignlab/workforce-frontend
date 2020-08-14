@@ -78,3 +78,11 @@ def get_model_from_id(model_id):
     models = pickle.load(f)
 
   return models[model_id]
+
+def get_allowed_origins() -> List[str]:
+    """Read in comma-separated list of allowed origins from environment."""
+    allowed_origins = os.getenv("ALLOWED_ORIGINS", default=None)
+    if allowed_origins is None:
+        return []
+
+    return [s.strip() for s in allowed_origins.split(",")]
