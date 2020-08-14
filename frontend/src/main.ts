@@ -38,6 +38,38 @@ promise.then(()=>{
 });
 
 const MODELS_URL = '/api/models'; //
+export function getCookie(name: string) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i];
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+let server = "http://127.0.0.1:5000/"
+
+fetch(`http://127.0.0.1:5000/api/login`, {
+            method: 'GET'
+        })
+        .then((response) => {
+          console.log(response);
+          return response.json();
+        })
+        .catch(error => {
+          // console.log(error);
+        })
+
+var csrftoken = getCookie('csrftoken');
+console.log(csrftoken)
+
+const MODELS_URL = 'http://3.135.81.128/api/models'; //
 fetch(MODELS_URL)
 	.then((response) => {
 		return response.json();
@@ -61,3 +93,30 @@ fetch(MODELS_URL)
       mapController.prov.goForwardOneStep();
     }
   }
+let username = null;
+let password = null;
+let loggedIn = false;
+
+fetch(`http://127.0.0.1:5000/api/login`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken || '',
+            "Access-Control-Allow-Origin": 'http://vdl.sci.utah.edu/workforce-frontend/frontend/dist',
+            "Access-Control-Allow-Credentials": "true",
+        }
+    })
+    .then(response => { console.log(response); return response })
+    .then(data => {
+        console.log(data);
+        if (data.redirected) {
+            loggedIn = true;
+        } else {
+            username = ""
+            password = ""
+        }
+    })
+    .catch(error => {
+        console.log(error)
+        // if (error.response.status === 401) setError(error.response.data.message);
+        // else setError("something went wrong")
+    })
