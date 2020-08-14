@@ -57,6 +57,38 @@ export function getCookie(name: string) {
 var csrftoken = getCookie('csrftoken');
 console.log(csrftoken)
 
+function logout()
+{
+  console.log("logging out")
+
+  fetch(`http://localhost:5000/api/logout`, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                  'X-CSRFToken': csrftoken || '',
+                  "Access-Control-Allow-Origin": 'http://localhost:8000',
+                  "Access-Control-Allow-Credentials": "true",
+              }
+          })
+          .then((response) => {
+
+            if(response.status === 200)
+            {
+              d3.select("#login").select("a").attr("href", "http://localhost:5000/api/login").html("Login");
+              d3
+                .select("#logout")
+                .remove();
+            }
+            else{
+              console.log("failed to logout")
+            }
+          })
+          .catch(error => {
+            // console.log(error);
+          })
+
+}
+
 fetch(`http://localhost:5000/api/whoami`, {
             method: 'GET',
             credentials: 'include',
@@ -68,13 +100,20 @@ fetch(`http://localhost:5000/api/whoami`, {
         })
         .then((response) => {
 
-
-
           if(response.status === 200)
           {
             response.text().then((t) => {
               let e = t.substring("14")
-              d3.select("#login").select("a").html("Logged in: " + e);
+              d3.select("#login").select("a").attr("href", null).html("Logged in: " + e);
+              d3
+                .select("#loginOut")
+                .append("li")
+                .on("click", () => {
+                  logout()
+                })
+                .attr("id", "logout")
+                .append("a")
+                .html("Logout")
             })
           }
           else{
