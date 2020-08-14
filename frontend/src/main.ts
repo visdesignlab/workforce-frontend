@@ -6,6 +6,8 @@ import 'bootstrap';
 import 'bootstrap-select';
 import * as d3 from 'd3';
 
+import * as session from 'express-session'
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { SimpleTableCreator } from './modelInterface/SimpleCreator';
@@ -32,7 +34,6 @@ let promise = myMapEvents.changeModelData();
 promise.then(()=>{
   mapController.drawMap().then(() => {
     mapController.drawSidebar();
-    console.log("done");
     mapController.prov.done();
   });
 });
@@ -55,11 +56,17 @@ export function getCookie(name: string) {
 
 let server = "http://127.0.0.1:5000/"
 
-fetch(`http://127.0.0.1:5000/api/login`, {
+fetch(`http://127.0.0.1:5000/api/whoami`, {
             method: 'GET'
         })
         .then((response) => {
-          console.log(response);
+          if(response.status === 200)
+          {
+            d3.select("#login").select("a").html("Logged in: ");
+          }
+          else{
+            d3.select("#login").select("a").html("Login");
+          }
           return response.json();
         })
         .catch(error => {
@@ -76,47 +83,44 @@ fetch(MODELS_URL)
 	})
 	.then((myJson) => {
 		const rows = Object.values(myJson);
-
     console.log(rows);
-
 		SimpleTableCreator(document.getElementById('modelPage'), rows);
 	})
 
-  //Setting up undo/redo hotkey to typical buttons
-  document.onkeydown = function(e){
-    var mac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+console.log(document.cookie);
 
-    if(!e.shiftKey && (mac ? e.metaKey : e.ctrlKey) && e.which == 90){
-      mapController.prov.goBackOneStep();
-    }
-    else if(e.shiftKey && (mac ? e.metaKey : e.ctrlKey) && e.which == 90){
-      mapController.prov.goForwardOneStep();
-    }
+// fetch(`http://127.0.0.1:5000/api/login`, {
+//         method: 'POST',
+//         headers: {
+//             'X-CSRFToken': csrftoken || '',
+//             "Access-Control-Allow-Origin": 'http://vdl.sci.utah.edu/workforce-frontend/frontend/dist',
+//             "Access-Control-Allow-Credentials": "true",
+//         },
+//         body: `csrfmiddlewaretoken=${csrftoken}&username=${username}&password=${password}`
+//     })
+//     .then(response => { console.log(response); return response })
+//     .then(data => {
+//         console.log(data);
+//         if (data.redirected) {
+//             loggedIn = true;
+//         } else {
+//             username = ""
+//             password = ""
+//         }
+//     })
+//     .catch(error => {
+//         console.log(error)
+//         // if (error.response.status === 401) setError(error.response.data.message);
+//         // else setError("something went wrong")
+//     })
+//Setting up undo/redo hotkey to typical buttons
+document.onkeydown = function(e){
+  var mac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+
+  if(!e.shiftKey && (mac ? e.metaKey : e.ctrlKey) && e.which == 90){
+    mapController.prov.goBackOneStep();
   }
-let username = null;
-let password = null;
-let loggedIn = false;
-
-fetch(`http://127.0.0.1:5000/api/login`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken || '',
-            "Access-Control-Allow-Origin": 'http://vdl.sci.utah.edu/workforce-frontend/frontend/dist',
-            "Access-Control-Allow-Credentials": "true",
-        }
-    })
-    .then(response => { console.log(response); return response })
-    .then(data => {
-        console.log(data);
-        if (data.redirected) {
-            loggedIn = true;
-        } else {
-            username = ""
-            password = ""
-        }
-    })
-    .catch(error => {
-        console.log(error)
-        // if (error.response.status === 401) setError(error.response.data.message);
-        // else setError("something went wrong")
-    })
+  else if(e.shiftKey && (mac ? e.metaKey : e.ctrlKey) && e.which == 90){
+    mapController.prov.goForwardOneStep();
+  }
+}
