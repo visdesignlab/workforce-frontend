@@ -54,27 +54,37 @@ export function getCookie(name: string) {
     return cookieValue;
 }
 
-let server = "http://127.0.0.1:5000/"
+var csrftoken = getCookie('csrftoken');
+console.log(csrftoken)
 
-fetch(`http://127.0.0.1:5000/api/whoami`, {
-            method: 'GET'
+fetch(`http://localhost:5000/api/whoami`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'X-CSRFToken': csrftoken || '',
+                "Access-Control-Allow-Origin": 'http://localhost:8000',
+                "Access-Control-Allow-Credentials": "true",
+            }
         })
         .then((response) => {
+
+
+
           if(response.status === 200)
           {
-            d3.select("#login").select("a").html("Logged in: ");
+            response.text().then((t) => {
+              let e = t.substring("14")
+              d3.select("#login").select("a").html("Logged in: " + e);
+            })
           }
           else{
             d3.select("#login").select("a").html("Login");
           }
-          return response.json();
         })
         .catch(error => {
           // console.log(error);
         })
 
-var csrftoken = getCookie('csrftoken');
-console.log(csrftoken)
 
 const MODELS_URL = 'http://3.135.81.128/api/models'; //
 fetch(MODELS_URL)
