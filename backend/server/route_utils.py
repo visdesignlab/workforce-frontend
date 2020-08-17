@@ -78,4 +78,3 @@ def get_model_from_id(model_id):
     models = pickle.load(f)
 
   return models[model_id]
-
