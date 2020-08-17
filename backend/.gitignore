@@ -7,3 +7,4 @@ __pycache__
 .env.prod
 requirements.txt
 sessions.db
+admins.txt
