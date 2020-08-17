@@ -7,15 +7,15 @@ import json
 import os
 import requests
 
-@app.route("/api/login", methods=["GET", "POST"])
+@app.route("/api/login", methods=["GET"])
 def login():
-    browser_session = flask.session
-    query_results = db.session.query(db.Session).filter_by(token = browser_session.get("token", None)).one_or_none()
-    redirect_uri = flask.url_for('authorize', _external=True)
+    current_token = flask.session.get("token")
+    query_results =  utils.token_to_user(current_token, expires=True)
 
     if query_results:
         return "Already logged in", 200
     else:
+        redirect_uri = flask.url_for('authorize', _external=True)
         return utils.oauth.utahid.authorize_redirect(redirect_uri)
 
 
@@ -38,11 +38,16 @@ def authorize():
 
     email_resp_json = requests.get(
         utils.info["userinfo_endpoint"],
-        headers = {'Authorization': f'Bearer {token["access_token"]}'}
+        headers = {'Authorization': f'Bearer {token.get("access_token")}'}
     ).content.decode('utf8')
     email_resp = json.loads(email_resp_json)
 
-    session_token = utils.refresh_or_create_session(None, email = email_resp["email"])
+    user_email = email_resp.get("email")
+
+    if user_email:
+        session_token = utils.refresh_or_create_session(None, email = user_email)
+    else:
+        return "Something wrong with auth, try login again", 400
 
     return flask.redirect('/api/whoami')
 
@@ -50,8 +55,8 @@ def authorize():
 @app.route("/api/whoami")
 @utils.check_session
 def whoami():
-    session = db.session.query(db.Session).filter_by(token=flask.session["token"]).one()
-    return f"Logged in as: {session.email}"
+    user = utils.token_to_user(flask.session.get("token"))
+    return f"Logged in as: {user.email}"
 
 
 @app.route("/api/logout")

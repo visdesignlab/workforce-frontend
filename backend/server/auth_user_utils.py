@@ -19,13 +19,15 @@ def utahid_oauth2_info():
 def check_session(func):
     def wrapper():
         token = flask.session.get("token", None)
-        query_results = db.session.query(db.Session).filter_by(token = token)
+        query_result = token_to_user(token, expires=False)
 
-        # If token, query_results, and token is less than 1 day old
-        if token and query_results.count() > 0 and query_results.one().expires > datetime.utcnow() - timedelta(days = 1) :
-            # If token was made in the last day, but has expired, refresh it
-            if not query_results.one().expires > datetime.utcnow():
+        # If token, query_result
+        if token and query_result:
+            # If token expired in the last 6 hours, refresh it
+            if not query_result.expires < datetime.utcnow() - timedelta(hours=6):
                 refresh_or_create_session(token)
+            else:
+                return 'Unauthorized. Log in or re-log', 401
             
             return func()
 
@@ -37,6 +39,14 @@ def check_session(func):
 
 
 def refresh_or_create_session(old_token, email = None):
+    # Args can't both be None
+    if old_token is None and email is None:
+        raise TypeError("email and token must be supplied.")
+
+    # See if there is a token for the email if one isn't passed in
+    if (not old_token) and email:
+        old_token = email_to_token(email)
+
     # Delete old session associated with the token
     old_email = delete_session(old_token)
     flask.session["token"] = None
@@ -57,7 +67,7 @@ def refresh_or_create_session(old_token, email = None):
 
 
 def delete_session(token):
-    session_to_delete = db.session.query(db.Session).filter_by(token = token).one_or_none()
+    session_to_delete = token_to_user(token)
     
     # If old session in db, remove
     if session_to_delete:
@@ -66,6 +76,31 @@ def delete_session(token):
         return session_to_delete.email
     
     return None
+
+
+def token_to_user(token, expires=False):
+    if expires:
+        return db.session \
+            .query(db.Session) \
+            .filter_by(token = token) \
+            .filter(db.Session.expires >= datetime.utcnow()) \
+            .one_or_none()
+    else:
+        return db.session \
+            .query(db.Session) \
+            .filter_by(token = token) \
+            .one_or_none()
+
+def email_to_token(email):
+    session = db.session \
+        .query(db.Session) \
+        .filter_by(email = email) \
+        .one_or_none()
+    
+    if session:
+        return session.get("token")
+    else:
+        return None
 
 
 # Define some variables we'll need
