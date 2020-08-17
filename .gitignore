@@ -3,3 +3,4 @@ node_modules/
 package-lock.json
 *.map
 .DS_Store
+backend/admins.txt

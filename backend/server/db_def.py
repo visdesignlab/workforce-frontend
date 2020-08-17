@@ -10,8 +10,8 @@ class Session(Base):
     __tablename__ = 'session'
 
     id = Column(Integer, primary_key=True)
-    email = Column(String(250), nullable=False)
-    token = Column(String(32), nullable=False)
+    email = Column(String(250), nullable=False, unique=True)
+    token = Column(String(32), nullable=False, unique=True)
     generated = Column(DateTime(), nullable=False)
     expires = Column(DateTime(), nullable=False)
 
