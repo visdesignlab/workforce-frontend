@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 
 from server import app
 from server.route_utils import allowed_file, add_model_metadata, run_model, get_model_from_id
+from server.auth_user_utils import check_session
 
 
 @app.route("/api")
@@ -15,6 +16,7 @@ def root():
 
 
 @app.route("/api/file-upload", methods=["POST"])
+@check_session
 def upload_file():
   form_metadata = request.form.get("metadata", None)
 
@@ -71,6 +73,7 @@ def upload_file():
 
 
 @app.route("/api/models", methods=["GET"])
+@check_session
 def get_models():
   # Read in the model metadata
   with open(os.path.join(app.root_path, "models.pkl"), "rb") as f:
@@ -79,6 +82,7 @@ def get_models():
   return jsonify(metadata)
 
 @app.route("/api/rerun-model", methods=["POST"])
+@check_session
 def rerun_model():
     model_id = request.form.get("model_id", None)
     author = request.form.get("author", None)

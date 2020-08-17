@@ -6,3 +6,5 @@ __pycache__
 .env
 .env.prod
 requirements.txt
+sessions.db
+admins.txt

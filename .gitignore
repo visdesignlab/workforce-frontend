@@ -1,5 +1,1 @@
-node_modules/
-*.swp
-package-lock.json
-*.map
-.DS_Store
+**/.DS_Store
