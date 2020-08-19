@@ -98,7 +98,7 @@ def email_to_token(email):
         .one_or_none()
     
     if session:
-        return session.get("token")
+        return session.token
     else:
         return None
 
