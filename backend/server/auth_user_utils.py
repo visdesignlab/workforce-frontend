@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from authlib.integrations.flask_client import OAuth
 from server import app
 from uuid import uuid4
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
 
 
 def utahid_oauth2_info():

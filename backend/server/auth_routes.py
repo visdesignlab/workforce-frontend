@@ -6,6 +6,8 @@ import flask
 import json
 import os
 import requests
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
 
 @app.route("/api/login", methods=["GET"])
 def login():
