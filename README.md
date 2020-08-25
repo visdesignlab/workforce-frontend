@@ -48,22 +48,19 @@ npm run build
 cd ..
 
 # Build the docker container and start it (If on a new system and you get a permissions error, log out and in)
-docker image prune -af
-docker build --no-cache -t workforce .
-docker stop workforce_container
-docker rm workforce_container
-docker run \
-  -d \
-  -p 80:80 \
-  -v `pwd`/backend/server:/app/server/ \
-  --name workforce_container \
-  workforce
+docker-compose up -d
+docker exec -it workforce-frontend_db_1 bash
+- mysql -u root -p
+- # pass = initial
+- # run the commands in setup.sql in the terminal
+# verify deploy is working
 ```
 
 The container redirects the nginx error logs to stderr and stdout, not to a file, so you 
 can attach to the container to debug. However, if you want to poke around the file system
-you can with the following command:
+you can use the following command:
 
 ```
-docker exec -it workforce_container bash
+docker exec -it workforce-frontend_web bash
+docker exec -it workforce-frontend_db bash
 ```
