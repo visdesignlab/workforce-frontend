@@ -9,7 +9,7 @@ class MapEvents{
 	map: MapController;
 	selectAll : boolean;
 
-	private API_URL: string = 'http://3.135.81.128/api/';
+	private API_URL: string = '/api/';
 
 	constructor(map:MapController){
 		this.map = map;
