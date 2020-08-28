@@ -37,7 +37,7 @@ promise.then(()=>{
   });
 });
 
-const MODELS_URL = 'http://3.135.81.128/api/models'; //
+const MODELS_URL = '/api/models'; //
 fetch(MODELS_URL)
 	.then((response) => {
 		return response.json();
