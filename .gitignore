@@ -1,3 +1,7 @@
 **/.DS_Store
 setup.sql
 data
+
+# Sensitive SSL config
+backend/certs/
+backend/nginx.conf

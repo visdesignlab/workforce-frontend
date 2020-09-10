@@ -48,7 +48,7 @@ npm run build
 cd ..
 
 # Build the docker container and start it (If on a new system and you get a permissions error, log out and in)
-docker-compose up -d
+docker-compose up -d --build
 docker exec -it workforce-frontend_db_1 bash
 - mysql -u root -p
 - # pass = initial
