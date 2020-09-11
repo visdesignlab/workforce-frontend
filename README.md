@@ -26,7 +26,7 @@ sudo add-apt-repository \
    $(lsb_release -cs) \
    stable"
 sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose
 sudo usermod -aG docker ubuntu
 
 cd ~
@@ -61,6 +61,6 @@ can attach to the container to debug. However, if you want to poke around the fi
 you can use the following command:
 
 ```
-docker exec -it workforce-frontend_web bash
-docker exec -it workforce-frontend_db bash
+docker exec -it workforcefrontend_web_1 bash
+docker exec -it workforcefrontend_db_1 bash
 ```
