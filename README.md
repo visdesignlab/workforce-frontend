@@ -26,7 +26,7 @@ sudo add-apt-repository \
    $(lsb_release -cs) \
    stable"
 sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose
 sudo usermod -aG docker ubuntu
 
 cd ~
@@ -48,11 +48,12 @@ npm run build
 cd ..
 
 # Build the docker container and start it (If on a new system and you get a permissions error, log out and in)
-docker-compose up -d
-docker exec -it workforce-frontend_db_1 bash
+sudo chmod -R ubuntu:docker ~/workforce-frontend
+docker-compose up -d --build
+docker exec -it workforcefrontend_db_1 bash
 - mysql -u root -p
 - # pass = initial
-- # run the commands in setup.sql in the terminal
+- # run the commands in setup.prod.sql in the terminal
 # verify deploy is working
 ```
 
@@ -61,6 +62,6 @@ can attach to the container to debug. However, if you want to poke around the fi
 you can use the following command:
 
 ```
-docker exec -it workforce-frontend_web bash
-docker exec -it workforce-frontend_db bash
+docker exec -it workforcefrontend_web_1 bash
+docker exec -it workforcefrontend_db_1 bash
 ```
