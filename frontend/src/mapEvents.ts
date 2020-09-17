@@ -10,6 +10,10 @@ class MapEvents{
 	selectAll : boolean;
 
 	private API_URL: string = '/api/';
+	// private API_URL: string = 'http://3.135.81.128/api/';
+
+	// private API_URL: string = 'http://127.0.0.1:5000/';
+
 
 	constructor(map:MapController){
 		this.map = map;

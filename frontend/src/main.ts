@@ -125,7 +125,9 @@ fetch(`http://localhost:5000/api/whoami`, {
         })
 
 
-const MODELS_URL = 'http://3.135.81.128/api/models'; //
+// const MODELS_URL = 'http://3.135.81.128/api/models'; //
+const MODELS_URL: string = 'http://127.0.0.1:5000/';
+
 fetch(MODELS_URL)
 	.then((response) => {
 		return response.json();
