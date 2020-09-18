@@ -55,8 +55,8 @@ class Sidebar {
 		let that = this;
 
 		d3.select("#countiesHeaderRow")
-			.on("click", function(e) {
-				let clicked = (e as HTMLElement).innerHTML;
+			.on("click", function() {
+				let clicked = (this as HTMLElement).innerHTML;
 
 				if(clicked === "Need")
 				{
