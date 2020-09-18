@@ -58,10 +58,24 @@ class Sidebar {
 			.on("click", function() {
 				let clicked = (this as HTMLElement).innerHTML;
 
+				console.log(clicked);
+
 				if(clicked === "Need")
 				{
 					that.countiesAscending = !that.countiesAscending;
 					that.countiesSortingFunction = that.getSortingOptions(2, that.countiesAscending);
+					that.updateCounties();
+				}
+				else if (clicked === ("County"))
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(0, that.countiesAscending);
+					that.updateCounties();
+				}
+				else if (clicked === "Gap")
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(3, that.countiesAscending);
 					that.updateCounties();
 				}
 				else if (clicked.includes("Supply"))
@@ -70,23 +84,11 @@ class Sidebar {
 					that.countiesSortingFunction = that.getSortingOptions(1, that.countiesAscending);
 					that.updateCounties();
 				}
-				else if (clicked.includes("County"))
-				{
-					that.countiesAscending = !that.countiesAscending;
-					that.countiesSortingFunction = that.getSortingOptions(0, that.countiesAscending);
-					that.updateCounties();
-				}
-				else if (clicked.includes("Gap"))
-				{
-					that.countiesAscending = !that.countiesAscending;
-					that.countiesSortingFunction = that.getSortingOptions(3, that.countiesAscending);
-					that.updateCounties();
-				}
 			})
 
 		d3.select("#profHeaderRow")
-			.on("click", function(e) {
-				let clicked = (e as HTMLElement).innerHTML;
+			.on("click", function() {
+				let clicked = (this as HTMLElement).innerHTML;
 
 				if(clicked === "Need")
 				{
@@ -94,22 +96,22 @@ class Sidebar {
 					that.professionsSortingFunction = that.getSortingOptions(2, that.profAscending);
 					that.updateProfessions();
 				}
-				else if (clicked.includes("Supply"))
-				{
-					that.profAscending = !that.profAscending;
-					that.professionsSortingFunction = that.getSortingOptions(1, that.profAscending);
-					that.updateProfessions();
-				}
-				else if (clicked.includes("Profession"))
+				else if (clicked === "Profession")
 				{
 					that.profAscending = !that.profAscending;
 					that.professionsSortingFunction = that.getSortingOptions(0, that.profAscending);
 					that.updateProfessions();
 				}
-				else if (clicked.includes("Gap"))
+				else if (clicked === "Gap")
 				{
 					that.profAscending = !that.profAscending;
 					that.professionsSortingFunction = that.getSortingOptions(3, that.profAscending);
+					that.updateProfessions();
+				}
+				else if (clicked.includes("Supply"))
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(1, that.profAscending);
 					that.updateProfessions();
 				}
 			})
