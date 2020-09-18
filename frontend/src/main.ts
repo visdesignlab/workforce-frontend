@@ -12,6 +12,20 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { SimpleTableCreator } from './modelInterface/SimpleCreator';
 
+const MODELS_URL = '/api/models'; //
+
+export const modelsData = fetch(MODELS_URL)
+	.then((response) => {
+		return response.json();
+	});
+
+modelsData
+	.then((myJson) => {
+		const rows = Object.values(myJson);
+    console.log(rows);
+		SimpleTableCreator(document.getElementById('modelPage'), rows);
+	})
+
 d3.select('#visualization').on('click', () => {
   (d3.select('#visualization').node() as HTMLElement).className = 'is-active';
   (d3.select('#modelCreate').node() as HTMLElement).className = '';
@@ -38,7 +52,7 @@ promise.then(()=>{
   });
 });
 
-const MODELS_URL = '/api/models'; //
+
 export function getCookie(name: string) {
     var cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -126,17 +140,7 @@ fetch(`/api/whoami`, {
 
 
 // const MODELS_URL = 'http://3.135.81.128/api/models'; //
-const MODELS_URL: string = '/api/models/';
-
-fetch(MODELS_URL)
-	.then((response) => {
-		return response.json();
-	})
-	.then((myJson) => {
-		const rows = Object.values(myJson);
-    console.log(rows);
-		SimpleTableCreator(document.getElementById('modelPage'), rows);
-	})
+// const MODELS_URL: string = '/api/models/';
 
 console.log(document.cookie);
 

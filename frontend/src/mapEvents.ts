@@ -3,6 +3,8 @@ import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
 import {MapController} from './mapController'
 
+import {modelsData} from "./main";
+
 import axios from 'axios'
 
 class MapEvents{
@@ -96,10 +98,9 @@ class MapEvents{
 	}
 
 	changeModelData():Promise<void> {
-		let promise = d3.json(this.API_URL + "models");
 		let counter = 0;
 
-		promise = promise.then((results)=> {
+		let promise = modelsData.then((results)=> {
 			this.map.serverModels = results;
 			for(let mod in results)
 			{
