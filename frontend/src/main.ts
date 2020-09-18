@@ -89,7 +89,7 @@ function logout()
 
 }
 
-fetch(`http://localhost:5000/api/whoami`, {
+fetch(`/api/whoami`, {
             method: 'GET',
             credentials: 'include',
             headers: {
