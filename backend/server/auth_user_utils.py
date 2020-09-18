@@ -49,10 +49,11 @@ def refresh_or_create_session(old_token, email = None):
     if (not old_token) and email:
         old_token = email_to_token(email)
 
-    old_session = token_to_user(old_token) or {}
+    old_session = token_to_user(old_token)
+    expires = old_session.expires if old_session else datetime(year=2020, month=1, day=1)
 
     # Delete old session associated with the token
-    if datetime.utcnow() >= old_session.get("expires", datetime(year=2020, month=1, day=1)):
+    if datetime.utcnow() >= expires:
         old_email = delete_session(old_token)
         flask.session["token"] = None
 
