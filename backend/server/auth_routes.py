@@ -17,7 +17,8 @@ def login():
     if query_results:
         return "Already logged in", 200
     else:
-        redirect_uri = flask.url_for('authorize', _external=True)
+        redirect_uri = "https://teamcare.utah.gov/api/authorize"
+        print(redirect_uri)
         return utils.oauth.utahid.authorize_redirect(redirect_uri)
 
 
@@ -43,7 +44,7 @@ def authorize():
         headers = {'Authorization': f'Bearer {token.get("access_token")}'}
     ).content.decode('utf8')
     email_resp = json.loads(email_resp_json)
-
+    
     user_email = email_resp.get("email")
 
     if user_email:
@@ -51,7 +52,7 @@ def authorize():
     else:
         return "Something wrong with auth, try login again", 400
 
-    return flask.redirect('/api/whoami')
+    return flask.redirect('/')
 
 
 @app.route("/api/whoami")
