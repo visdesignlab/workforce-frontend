@@ -1,0 +1,14 @@
+,Tab,Description
+0,geo_area_list,"List of geographic areas supported in the analysis, and their Social Determinants of Health index"
+1,population,"population counts by age, gender and county across years"
+2,provider_list,list of primary care provider types supported in the analysis
+3,provider_supply,counts of the various provider types by geographic area
+4,encounter_types,types of face to face enounters provided in primary care
+5,encounter_detail,"for each encounter type, what services are included in the encounter"
+6,service_characteristics,"for each type of face to face service, who can perform the service and what is the estimated time in minutes"
+7,overhead_work,types of overhead tasks that are performed as part of primary care as a proportion of face to face time
+8,pop_prev_need,preventive care encounters and frequency required for a given age range and sex supported by evidence-based guidelines
+9,pop_acute_need,acute care encounters and frequency anticipated for a given age range and sex supported by historic data
+10,pop_chronic_prev,estimated prevalence of the included chronic care conditions by age range and sex
+11,pop_chronic_trend,anticipated annual trend in chronic prevalence by age range and sex
+12,pop_chron_freq,"frequency at which various chronic encounter types should be delivered, supported by evidence-based guidelines"

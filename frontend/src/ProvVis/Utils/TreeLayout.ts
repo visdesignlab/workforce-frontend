@@ -1,11 +1,10 @@
-import {HierarchyNode} from 'd3';
-import {StratifiedMap} from '../components/ProvVis';
-import {ProvenanceNode} from '@visdesignlab/provenance-lib-core';
+import { HierarchyNode } from 'd3';
+import { StratifiedMap } from '../components/ProvVis';
+import { ProvenanceNode } from '@visdesignlab/provenance-lib-core';
 
 export type TreeNode = HierarchyNode<unknown>;
 
-export interface ExtendedHierarchyNode<T, S, A>
-  extends HierarchyNode<ProvenanceNode<T, S, A>> {
+export interface ExtendedHierarchyNode<T, S, A> extends HierarchyNode<ProvenanceNode<T, S, A>> {
   column: number;
 }
 
@@ -13,12 +12,8 @@ export type ExtendedStratifiedMap<T, S, A> = {
   [key: string]: ExtendedHierarchyNode<T, S, A>;
 };
 
-export function treeLayout<T, S, A>(
-  nodes: StratifiedMap<T, S, A>,
-  current: string,
-  root: string,
-) {
-  const depthMap: {[key: string]: any} = {};
+export function treeLayout<T, S, A>(nodes: StratifiedMap<T, S, A>, current: string, root: string) {
+  const depthMap: { [key: string]: any } = {};
 
   const currentPath = getPathTo(nodes, root, current);
 
@@ -31,7 +26,7 @@ function DFS<T, S, A>(
   nodes: StratifiedMap<T, S, A>,
   node: string,
   depthMap: any,
-  currentPath: string[],
+  currentPath: string[]
 ) {
   let explored = new Set();
 
@@ -58,7 +53,7 @@ function DFS<T, S, A>(
           const aIncludes = currentPath.includes(a.id) ? 1 : 0;
           const bIncludes = currentPath.includes(b.id) ? 1 : 0;
           return aIncludes - bIncludes;
-        }),
+        })
       );
     } else {
       currDepth++;
@@ -69,7 +64,7 @@ function DFS<T, S, A>(
 export function getPathTo<T, S, A>(
   nodes: StratifiedMap<T, S, A>,
   from: string,
-  to: string,
+  to: string
 ): string[] {
   const path: string[] = [];
 
@@ -82,7 +77,7 @@ function search<T, S, A>(
   nodes: StratifiedMap<T, S, A>,
   node: string,
   final: string,
-  path: string[],
+  path: string[]
 ) {
   if (!nodes[node]) return false;
 

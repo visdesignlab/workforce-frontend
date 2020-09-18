@@ -287,6 +287,10 @@ body {
 
 }
 
+#login{
+	float:right;
+}
+
 h3{
 	text-align: center;
 	justify-content: center;
