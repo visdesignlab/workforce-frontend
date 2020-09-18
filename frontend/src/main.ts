@@ -61,7 +61,7 @@ function logout()
 {
   console.log("logging out")
 
-  fetch(`http://localhost:5000/api/logout`, {
+  fetch(`/api/logout`, {
               method: 'GET',
               credentials: 'include',
               headers: {
