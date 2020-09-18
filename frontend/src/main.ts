@@ -64,11 +64,11 @@ function logout()
   fetch(`/api/logout`, {
               method: 'GET',
               credentials: 'include',
-              headers: {
-                  'X-CSRFToken': csrftoken || '',
-                  "Access-Control-Allow-Origin": 'http://localhost:8000',
-                  "Access-Control-Allow-Credentials": "true",
-              }
+              //headers: {
+              //    'X-CSRFToken': csrftoken || '',
+              //    "Access-Control-Allow-Origin": 'http://localhost:8000',
+              //    "Access-Control-Allow-Credentials": "true",
+              //}
           })
           .then((response) => {
 
