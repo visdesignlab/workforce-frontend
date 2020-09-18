@@ -50,22 +50,36 @@ def refresh_or_create_session(old_token, email = None):
         old_token = email_to_token(email)
 
     # Delete old session associated with the token
-    old_email = delete_session(old_token)
-    flask.session["token"] = None
+    if datetime.utcnow() >= old_token.expires:
+        old_email = delete_session(old_token)
+        flask.session["token"] = None
 
-    # Generate new token and session
-    new_token = uuid4().hex
-    flask.session["token"] = new_token
+        # Generate new token and session
+        new_token = uuid4().hex
+        flask.session["token"] = new_token
 
-    new_session = db.Session(
-        email = old_email or email,
-        token = new_token,
-        generated = datetime.utcnow(),
-        expires = datetime.utcnow() + timedelta(hours = 6),
-    )
+        new_session = db.Session(
+            email = old_email or email,
+            token = new_token,
+            generated = datetime.utcnow(),
+            expires = datetime.utcnow() + timedelta(hours = 6),
+        )
 
-    db.session.add(new_session)
-    db.session.commit()
+        db.session.add(new_session)
+        db.session.commit()
+    elif not old_token:
+        new_token = uuid4().hex
+        flask.session["token"] = new_token
+
+        new_session = db.Session(
+            email = old_email or email,
+            token = new_token,
+            generated = datetime.utcnow(),
+            expires = datetime.utcnow() + timedelta(hours = 6),
+        )
+
+        db.session.add(new_session)
+        db.session.commit()
 
 
 def delete_session(token):
