@@ -74,7 +74,7 @@ function logout()
 
             if(response.status === 200)
             {
-              d3.select("#login").select("a").attr("href", "http://localhost:5000/api/login").html("Login");
+              d3.select("#login").select("a").attr("href", "/api/login").html("Login");
               d3
                 .select("#logout")
                 .remove();
