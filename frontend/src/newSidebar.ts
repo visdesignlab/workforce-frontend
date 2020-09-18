@@ -15,12 +15,16 @@ class Sidebar {
   currentYearData:any;
   otherCurrentYearData:any;
   mapData:any;
+	countiesAscending: boolean;
+	profAscending: boolean;
 
   constructor(map:MapController) {
     this.cell = {height: 30, width: 150, margin:10}
     this.map = map;
-    // this.countiesSortingFunction = this.getSortingOptions(0, true);
-    // this.professionsSortingFunction = this.getSortingOptions(0, true);
+    this.countiesSortingFunction = this.getSortingOptions(0, true);
+    this.professionsSortingFunction = this.getSortingOptions(0, true);
+		this.countiesAscending = true;
+		this.profAscending = true;
 
     this.countiesSvg = d3.select('#counties').select('svg');
 
@@ -47,6 +51,68 @@ class Sidebar {
         .attr('height', 50)
         .attr('width', 510)
     }
+
+		let that = this;
+
+		d3.select("#countiesHeaderRow")
+			.on("click", function(e) {
+				let clicked = (e as HTMLElement).innerHTML;
+
+				if(clicked === "Need")
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(2, that.countiesAscending);
+					that.updateCounties();
+				}
+				else if (clicked.includes("Supply"))
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(1, that.countiesAscending);
+					that.updateCounties();
+				}
+				else if (clicked.includes("County"))
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(0, that.countiesAscending);
+					that.updateCounties();
+				}
+				else if (clicked.includes("Gap"))
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(3, that.countiesAscending);
+					that.updateCounties();
+				}
+			})
+
+		d3.select("#profHeaderRow")
+			.on("click", function(e) {
+				let clicked = (e as HTMLElement).innerHTML;
+
+				if(clicked === "Need")
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(2, that.profAscending);
+					that.updateProfessions();
+				}
+				else if (clicked.includes("Supply"))
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(1, that.profAscending);
+					that.updateProfessions();
+				}
+				else if (clicked.includes("Profession"))
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(0, that.profAscending);
+					that.updateProfessions();
+				}
+				else if (clicked.includes("Gap"))
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(3, that.profAscending);
+					that.updateProfessions();
+				}
+			})
   }
 
   destroy()
@@ -657,7 +723,7 @@ class Sidebar {
 
     let tr = d3.select("#countiesTable").select("tbody")
       .selectAll("tr .notState")
-      .data(this.map.comparisonMode ? doubleCountyData : countiesData)
+      .data(this.map.comparisonMode ? doubleCountyData.sort(this.countiesSortingFunction) : countiesData.sort(this.countiesSortingFunction))
       .enter()
       .append("tr")
       .classed("notState", true)
@@ -787,7 +853,7 @@ class Sidebar {
 
     let profTr = d3.select("#professionsTable").select("tbody")
       .selectAll("tr .notState")
-      .data(this.map.comparisonMode ? doubleProfData : profData)
+      .data(this.map.comparisonMode ? doubleProfData.sort(this.professionsSortingFunction) : profData.sort(this.professionsSortingFunction))
       .enter()
       .append("tr")
       .classed("notState", true)
