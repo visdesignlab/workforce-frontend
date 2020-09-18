@@ -1,6 +1,7 @@
 
-import { isStateNode, NodeID, Nodes, ProvenanceGraph, ProvenanceNode, StateNode } from '@visdesignlab/provenance-lib-core';
-import { HierarchyNode, stratify } from 'd3';
+import { Provenance, isStateNode, isChildNode, NodeID, Nodes, ProvenanceGraph, ProvenanceNode, StateNode, ChildNode, DiffNode } from '@visdesignlab/provenance-lib-core';
+import { HierarchyNode, stratify, Symbol, symbol, symbolWye, symbolCross, symbolCircle, symbolTriangle, symbolSquare, symbolDiamond, symbolStar } from 'd3';
+
 import React, { ReactChild, useEffect, useState } from 'react';
 import { NodeGroup } from 'react-move';
 import { Popup } from 'semantic-ui-react';
@@ -10,6 +11,8 @@ import { BundleMap } from '../Utils/BundleMap';
 import { EventConfig } from '../Utils/EventConfig';
 import findBundleParent from '../Utils/findBundleParent';
 import translate from '../Utils/translate';
+
+import UndoRedoButton from "./UndoRedoButton"
 import { treeLayout } from '../Utils/TreeLayout';
 import BackboneNode from './BackboneNode';
 import bundleTransitions from './BundleTransitions';
@@ -19,7 +22,6 @@ import nodeTransitions from './NodeTransitions';
 import { treeColor } from './Styles';
 
 interface ProvVisProps<T, S extends string, A> {
-  graph: ProvenanceGraph<T, S, A>;
   root: NodeID;
   sideOffset?: number;
   iconOnly?: boolean;
@@ -46,6 +48,9 @@ interface ProvVisProps<T, S extends string, A> {
   changeCurrent?: (id: NodeID) => void;
   popupContent?: (nodeId: StateNode<T, S, A>) => ReactChild;
   annotationContent?: (nodeId: StateNode<T, S, A>) => ReactChild;
+  undoRedoButtons?: boolean;
+  prov?: Provenance<T, S, A>;
+  ephemeralUndo?: boolean;
 }
 
 export type StratifiedMap<T, S, A> = {
@@ -77,22 +82,134 @@ function ProvVis<T, S extends string, A>({
   linkWidth = 4,
   duration = 600,
   clusterLabels = true,
-  bundleMap,
+  bundleMap = {},
   eventConfig,
   popupContent,
   annotationContent,
+  undoRedoButtons = true,
+  prov,
+  ephemeralUndo = false
 }: ProvVisProps<T, S, A>) {
   const [first, setFirst] = useState(true);
   const [annotationOpen, setAnnotationOpen] = useState(-1);
-  const [expandedClusterList, setExpandedClusterList] = useState<string[]>(bundleMap ? Object.keys(bundleMap).filter(d => bundleMap[d].metadata.includes(d)) : []);
+  let list: string[] = [];
+  let eventTypes = new Set<string>();
+  for(let j in nodeMap)
+  {
+    let child = nodeMap[j]
+    if(isChildNode(child))
+    {
+      if(child.metadata.type)
+      {
+        eventTypes.add(child.metadata.type);
+      }
+
+      if(child.ephemeral && child.children.length == 1 && (!nodeMap[child.parent].ephemeral || nodeMap[child.parent].children.length > 1))
+      {
+        let group:string[] = [];
+        let curr = child;
+        while(curr.ephemeral)
+        {
+          group.push(curr.id)
+          if(curr.children.length === 1 && nodeMap[curr.children[0]].ephemeral)
+          {
+            curr = nodeMap[curr.children[0]] as DiffNode<T, S, A>;
+          }
+          else{
+            break;
+          }
+        }
+
+        bundleMap[child.id] = {
+          metadata: "",
+          bundleLabel: "",
+          bunchedNodes: group
+        }
+      }
+
+    }
+  }
+
+  if(bundleMap)
+  {
+    list = list.concat(Object.keys(bundleMap).filter(d => bundleMap[d].metadata && bundleMap[d].metadata.includes(d)));
+  }
+
+
+  function setDefaultConfig<E extends string>(types:Set<string>): EventConfig<E> {
+    let symbols = [
+      symbol().type(symbolStar).size(50),
+      symbol().type(symbolDiamond),
+      symbol().type(symbolTriangle),
+      symbol().type(symbolCircle),
+      symbol().type(symbolCross),
+      symbol().type(symbolSquare),
+      symbol().type(symbolWye)
+    ]
+
+
+    // Find nodes in the clusters whose entire cluster is on the backbone.
+    let conf: EventConfig<E> = {}
+    let counter = 0;
+
+    for(let j of types)
+    {
+      conf[j] = {}
+      conf[j].backboneGlyph = (
+        <path
+          strokeWidth={2}
+          className={treeColor(false)}
+          d={symbols[counter]()!}
+        />
+      )
+
+      conf[j].bundleGlyph = (
+        <path
+          strokeWidth={2}
+          className={treeColor(false)}
+          d={symbols[counter]()!}
+        />
+      )
+
+      conf[j].currentGlyph = (
+        <path
+          strokeWidth={2}
+          className={treeColor(true)}
+          d={symbols[counter]()!}
+        />
+      )
+
+      conf[j].regularGlyph = (
+        <path
+          strokeWidth={2}
+          className={treeColor(false)}
+          d={symbols[counter]()!}
+        />
+      )
+
+      counter++;
+    }
+
+    return conf;
+  }
+
+
+  const [expandedClusterList, setExpandedClusterList] = useState<string[]>(list);
+
+  if(!eventConfig && eventTypes.size > 0 && eventTypes.size < 8)
+  {
+    eventConfig = setDefaultConfig<S>(eventTypes);
+  }
+
 
   useEffect(() => {
     setFirst(false);
   }, []);
 
   let nodeList = Object.values(nodeMap).filter(
-    (d) => d.metadata.createdOn! >= nodeMap[root].metadata.createdOn!
+    (d) => true
   );
+
 
   let copyList = Array.from(nodeList);
 
@@ -113,7 +230,7 @@ function ProvVis<T, S extends string, A>({
     .parentId((d) => {
       if (d.id === root) return null;
 
-      if (isStateNode(d)) {
+      if (isChildNode(d)) {
         //If you are a unexpanded bundle, find your parent by going straight up.
         if (
           bundleMap &&
@@ -148,7 +265,7 @@ function ProvVis<T, S extends string, A>({
               return d.id === localCurr.parent;
             })[0];
 
-            if (isStateNode(temp)) {
+            if (isChildNode(temp)) {
               curr = temp;
             }
           }
@@ -206,6 +323,7 @@ function ProvVis<T, S extends string, A>({
   }
 
   const stratifiedTree = strat(nodeList);
+
   // //console.log(JSON.parse(JSON.stringify(stratifiedTree)));
 
   const stratifiedList: StratifiedList<T, S, A> = stratifiedTree.descendants();
@@ -304,6 +422,41 @@ function ProvVis<T, S extends string, A>({
 
   return (
     <div style={overflowStyle} className={container} id="prov-vis">
+      <div id="undoRedoDiv">
+        <UndoRedoButton
+          graph={prov ? prov.graph() : undefined}
+          undoCallback = {() => {
+            if(prov)
+            {
+              if(ephemeralUndo)
+              {
+                prov.goBackToNonEphemeral()
+              }
+              else{
+                prov.goBackOneStep();
+              }
+            }
+            else{
+              return;
+            }
+          }}
+          redoCallback = {() => {
+            if(prov)
+            {
+              if(ephemeralUndo)
+              {
+                prov.goForwardToNonEphemeral()
+              }
+              else{
+                prov.goForwardOneStep();
+              }
+            }
+            else{
+              return;
+            }
+          }}
+        />
+      </div>
       <svg
         style={{ overflow: "visible" }}
         id={"topSvg"}
@@ -337,7 +490,8 @@ function ProvVis<T, S extends string, A>({
                     <g key={key}>
                       <Link
                         {...state}
-                        className={treeColor(true)}
+                        fill={'#ccc'}
+                        stroke={'#ccc'}
                         strokeWidth={linkWidth}
                       />
                     </g>
@@ -349,6 +503,7 @@ function ProvVis<T, S extends string, A>({
           <NodeGroup
             data={stratifiedList}
             keyAccessor={(d) => d.id}
+
             {...nodeTransitions(
               xOffset,
               yOffset,
@@ -418,6 +573,7 @@ function ProvVis<T, S extends string, A>({
                               </g>
                             }
                           />
+
                         ) : (
                           <g
                             onClick={() => {
@@ -498,7 +654,6 @@ function ProvVis<T, S extends string, A>({
 export default ProvVis;
 
 const container = style({
-  display: "flex",
   alignItems: "center",
   justifyContent: "center",
   overflow: "auto",

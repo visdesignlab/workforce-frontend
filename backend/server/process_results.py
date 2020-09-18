@@ -11,6 +11,7 @@ def process_results(path):
     with open(os.path.join(app.root_path, "population.pkl"), "rb") as f:
         population = pickle.load(f)
 
+
     pd = {}
     for year in results:
         print(year)
@@ -18,11 +19,12 @@ def process_results(path):
         for county in results[year]:
             if "MCD" not in county:
                 county_clean = county.replace(" County", "")
+                print(results[year][county]["detail_f2f_mini"])
                 pd[year][county_clean] = {}
                 pd[year][county_clean]["demand"] = list(results[year][county]["demand"].values())[0] if type(list(results[year][county]["demand"].values())[0]) is dict else results[year][county]["demand"]
                 pd[year][county_clean]["supply"] = results[year][county]["supply"]
                 pd[year][county_clean]["population"] = population[year][county]
-
+                pd[year][county_clean]["detail_f2f_mini"] = results[year][county]["detail_f2f_mini"]
 
     localHealthDistricts = {
         "Bear River": ["Box Elder", "Cache", "Rich"],
@@ -50,7 +52,7 @@ def process_results(path):
 
             for county in localHealthDistricts[district]:
                 lhdData[year][district]["population"] += pd[year][county]["population"]
-                
+
                 for prof, val in pd[year][county]["demand"].items():
                     lhdData[year][district]["demand"].setdefault(prof, 0)
                     lhdData[year][district]["demand"][prof] += val
@@ -60,7 +62,7 @@ def process_results(path):
                     lhdData[year][district]["supply"][prof] += val
         lhdData[year]["State of Utah"] = pd[year]["State of Utah"]
 
-    stateData = {"counties": pd, "LHD": lhdData}
-    
+    stateData = {"counties": pd, "LHD": lhdData, "detail_f2f": "testing"}
+
     with open(path, "w") as f:
         json.dump(stateData, f)

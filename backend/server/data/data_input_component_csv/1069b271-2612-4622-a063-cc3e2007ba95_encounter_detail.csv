@@ -1,0 +1,319 @@
+,encounter_category,encounter_type,svc_category,svc_desc,rate_per_encounter
+0,Preventive,Well-Child Visits-Infant,Patient History,Patient History,1.0
+1,Preventive,Well-Child Visits-Infant,Behavioral Health Screenings,Child Developmental Screening,0.16666666666666666
+2,Preventive,Well-Child Visits-Infant,Behavioral Health Screenings,Child Developmental Surveillance,1.0
+3,Preventive,Well-Child Visits-Infant,Behavioral Health Screenings,Psychosocial/Behavioral Surveillance,0.5
+4,Preventive,Well-Child Visits-Infant,Behavioral Health Screenings,Maternal Depression Screening,1.0
+5,Preventive,Well-Child Visits-Infant,Measurements,length/height & weight,1.0
+6,Preventive,Well-Child Visits-Infant,Measurements,head circumference,1.0
+7,Preventive,Well-Child Visits-Infant,Measurements,BP,1.0
+8,Preventive,Well-Child Visits-Infant,Physical Exam,Physical Exam,1.0
+9,Preventive,Well-Child Visits-Infant,Sensory Screening,Vision Screening,1.0
+10,Preventive,Well-Child Visits-Infant,Sensory Screening,Hearing Screening,0.5
+11,Preventive,Well-Child Visits-Infant,Immunization,Hep B,0.5
+12,Preventive,Well-Child Visits-Infant,Immunization,Rotavirus,0.5
+13,Preventive,Well-Child Visits-Infant,Immunization,DTaP,0.5
+14,Preventive,Well-Child Visits-Infant,Immunization,Hib,0.5
+15,Preventive,Well-Child Visits-Infant,Immunization,PCV12,0.5
+16,Preventive,Well-Child Visits-Infant,Immunization,IPV,0.5
+17,Preventive,Well-Child Visits-Infant,Immunization,flu,1.0
+18,Preventive,Well-Child Visits-Infant,Lab,Newborn Blood,0.3333333333333333
+19,Preventive,Well-Child Visits-Infant,Lab,Newborn Bilirubin,0.16666666666666666
+20,Preventive,Well-Child Visits-Infant,Lab,Anemia Screening,0.16666666666666666
+21,Preventive,Well-Child Visits-Infant,Lab,Lead Screening,0.3333333333333333
+22,Preventive,Well-Child Visits-Infant,Oral Health,Identify Dental Home,0.3333333333333333
+23,Preventive,Well-Child Visits-Infant,Oral Health,Fluoride Supplementation,0.3333333333333333
+24,Preventive,Well-Child Visits-Infant,Counseling,Anticipatory Guidance,1.0
+25,Preventive,Well Child Visits-Early Childhood,Patient History,Patient History,1.0
+26,Preventive,Well Child Visits-Early Childhood,Behavioral Health Screenings,Child Developmental Screening,0.2857142857142857
+27,Preventive,Well Child Visits-Early Childhood,Behavioral Health Screenings,Autism Spectrum Disorder Screening,0.2857142857142857
+28,Preventive,Well Child Visits-Early Childhood,Behavioral Health Screenings,Child Developmental Surveillance,0.7142857142857143
+29,Preventive,Well Child Visits-Early Childhood,Behavioral Health Screenings,Psychosocial/Behavioral Surveillance,1.0
+30,Preventive,Well Child Visits-Early Childhood,Measurements,head circumference,0.5714285714285714
+31,Preventive,Well Child Visits-Early Childhood,Measurements,length/height & weight,1.0
+32,Preventive,Well Child Visits-Early Childhood,Measurements,BP,1.0
+33,Preventive,Well Child Visits-Early Childhood,Physical Exam,Physical Exam,1.0
+34,Preventive,Well Child Visits-Early Childhood,Sensory Screening,Vision Screening,1.0
+35,Preventive,Well Child Visits-Early Childhood,Sensory Screening,Hearing Screening,1.0
+36,Preventive,Well Child Visits-Early Childhood,Immunization,Hep B,0.0
+37,Preventive,Well Child Visits-Early Childhood,Immunization,Dtap,0.14285714285714285
+38,Preventive,Well Child Visits-Early Childhood,Immunization,Hib,0.14285714285714285
+39,Preventive,Well Child Visits-Early Childhood,Immunization,PCV13,0.14285714285714285
+40,Preventive,Well Child Visits-Early Childhood,Immunization,IPV,0.0
+41,Preventive,Well Child Visits-Early Childhood,Immunization,Influenza,0.5714285714285714
+42,Preventive,Well Child Visits-Early Childhood,Immunization,MMR,0.14
+43,Preventive,Well Child Visits-Early Childhood,Immunization,VAR,0.14285714285714285
+44,Preventive,Well Child Visits-Early Childhood,Immunization,Hep A,0.2857142857142857
+45,Preventive,Well Child Visits-Early Childhood,Lab,Anemia Screening,1.0
+46,Preventive,Well Child Visits-Early Childhood,Lab,Lead Screening,0.5
+47,Preventive,Well Child Visits-Early Childhood,Lab,Dyslipidemia Screening,0.2857142857142857
+48,Preventive,Well Child Visits-Early Childhood,Oral Health,Identify Dental Home,0.8571428571428571
+49,Preventive,Well Child Visits-Early Childhood,Oral Health,Fluoride Varnish,0.8571428571428571
+50,Preventive,Well Child Visits-Early Childhood,Oral Health,Fluoride Supplementation,0.8571428571428571
+51,Preventive,Well Child Visits-Early Childhood,Counseling,Anticipatory Guidance,1.0
+52,Preventive,Well Child Visits-Mid Childhood,Patient History,Patient History,1.0
+53,Preventive,Well Child Visits-Mid Childhood,Behavioral Health Screenings,Child Developmental Screening,0.0
+54,Preventive,Well Child Visits-Mid Childhood,Behavioral Health Screenings,Child Developmental Surveillance,1.0
+55,Preventive,Well Child Visits-Mid Childhood,Behavioral Health Screenings,Psychosocial/Behavioral Surveillance,1.0
+56,Preventive,Well Child Visits-Mid Childhood,Measurements,BMI,1.0
+57,Preventive,Well Child Visits-Mid Childhood,Measurements,BP,1.0
+58,Preventive,Well Child Visits-Mid Childhood,Physical Exam,Physical Exam,1.0
+59,Preventive,Well Child Visits-Mid Childhood,Sensory Screening,Vision Screening,1.0
+60,Preventive,Well Child Visits-Mid Childhood,Sensory Screening,Hearing Screening,1.0
+61,Preventive,Well Child Visits-Mid Childhood,Physical Screening,Obesity Screening,1.0
+62,Preventive,Well Child Visits-Mid Childhood,Immunization,DTaP,0.16666666666666666
+63,Preventive,Well Child Visits-Mid Childhood,Immunization,Polio,0.16666666666666666
+64,Preventive,Well Child Visits-Mid Childhood,Immunization,Hib,0.0
+65,Preventive,Well Child Visits-Mid Childhood,Immunization,MMR,0.16666666666666666
+66,Preventive,Well Child Visits-Mid Childhood,Immunization,VAR,0.14285714285714285
+67,Preventive,Well Child Visits-Mid Childhood,Immunization,Flu,1.0
+68,Preventive,Well Child Visits-Mid Childhood,Lab,Anemia Screening,1.0
+69,Preventive,Well Child Visits-Mid Childhood,Lab,Lead Screening,0.3333333333333333
+70,Preventive,Well Child Visits-Mid Childhood,Lab,Dyslipidemia Screening,0.5
+71,Preventive,Well Child Visits-Mid Childhood,Lab,TB* Screening,1.0
+72,Preventive,Well Child Visits-Mid Childhood,Oral Health,Identify Dental Home,1.0
+73,Preventive,Well Child Visits-Mid Childhood,Oral Health,Fluoride Supplementation,1.0
+74,Preventive,Well Child Visits-Mid Childhood,Counseling,Anticipatory Guidance,1.0
+75,Preventive,Well-Child Visits-Adolescence,Counseling,Anticipatory Guidance,1.0
+76,Preventive,Well-Child Visits-Adolescence,Patient History,Patient History,1.0
+77,Preventive,Well-Child Visits-Adolescence,Behavioral Health Screenings,Child Developmental Screening,0.0
+78,Preventive,Well-Child Visits-Adolescence,Behavioral Health Screenings,Child Developmental Surveillance,1.0
+79,Preventive,Well-Child Visits-Adolescence,Behavioral Health Screenings,Psychosocial/Behavioral Surveillance,1.0
+80,Preventive,Well-Child Visits-Adolescence,Behavioral Health Screenings,Tobacco/Alcohol/Drug Use,1.0
+81,Preventive,Well-Child Visits-Adolescence,Behavioral Health Screenings,Depression Screening,1.0
+82,Preventive,Well-Child Visits-Adolescence,Measurements,BMI,1.0
+83,Preventive,Well-Child Visits-Adolescence,Measurements,BP,1.0
+84,Preventive,Well-Child Visits-Adolescence,Physical Exam,Physical Exam,1.0
+85,Preventive,Well-Child Visits-Adolescence,Sensory Screening,Vision Screening,1.0
+86,Preventive,Well-Child Visits-Adolescence,Sensory Screening,Hearing Screening,1.0
+87,Preventive,Well-Child Visits-Adolescence,Physical Screening,Obesity Screening,1.0
+88,Preventive,Well-Child Visits-Adolescence,Lab,HIV Screening,1.0
+89,Preventive,Additional Screening: STI,Lab,Gonorrhea Screening,1.0
+90,Preventive,Additional Screening: STI,Lab,Chlamydia Screening,1.0
+91,Preventive,Well-Child Visits-Adolescence,Immunization,Flu,1.0
+92,Preventive,Well-Child Visits-Adolescence,Immunization,Meningococcal,0.0
+93,Preventive,Well-Child Visits-Adolescence,Immunization,Tdap,0.0
+94,Preventive,Well-Child Visits-Adolescence,Immunization,HPV,0.0
+95,Preventive,Well-Child Visits-Adolescence,Lab,Anemia Screening,1.0
+96,Preventive,Well-Child Visits-Adolescence,Lab,Dyslipidemia Screening,1.0
+97,Preventive,Well-Child Visits-Adolescence,Lab,TB* Screening,1.0
+98,Preventive,Well-Child Visits-Adolescence,Lab,STI Screening,1.0
+99,Preventive,Well-Child Visits-Adolescence,Oral Health,Fluoride Supplementation,0.5
+100,Preventive,Adult Wellness Visits-Under 65,Patient History,Patient History,1.0
+101,Preventive,Adult Wellness Visits-Under 65,Behavioral Health Screenings,Alcohol Misuse Screening,1.0
+102,Preventive,Adult Wellness Visits-Under 65,Behavioral Health Screenings,Depression Screening,1.0
+103,Preventive,Addl Screening: Int Part Violence,Behavioral Health Screenings,Intimate partner violence screening,1.0
+104,Preventive,Adult Wellness Visits-Under 65,Measurements,BMI,1.0
+105,Preventive,Adult Wellness Visits-Under 65,Measurements,BP,1.0
+106,Preventive,Adult Wellness Visits-Under 65,Physical Exam,Physical Exam,1.0
+107,Preventive,Adult Wellness Visits-Under 65,Sensory Screening,Vision Screening,1.0
+108,Preventive,Adult Wellness Visits-Under 65,Sensory Screening,Hearing Screening,1.0
+109,Preventive,Adult Wellness Visits-Under 65,Physical Screening,Obesity Screening,1.0
+110,Preventive,Addl Screening: Cerv Cancer,Lab,Cervical Cancer Screening,1.0
+111,Preventive,Addl Screening: Breast Cancer,Physical Screening,Breast Cancer Screening,1.0
+112,Preventive,Addl Screening: Osteoporosis,Physical Screening,Osteoporosis Screening,1.0
+113,Preventive,Adult Wellness Visits-Under 65,Immunization,Influenza,1.0
+114,Preventive,Adult Wellness Visits-Under 65,Immunization,MMR,1.0
+115,Preventive,Adult Wellness Visits-Under 65,Immunization,HZV,0.02
+116,Preventive,Adult Wellness Visits-Over 65,Immunization,HZV,0.044
+117,Preventive,Adult Wellness Visits-Under 65,Lab,Lab,1.0
+118,Preventive,Adult Wellness Visits-Under 65,Lab,HIV Screening,0.02
+119,Preventive,Adult Wellness Visits-Under 65,Lab,Hepititis C Screening,0.08333333333333333
+120,Preventive,Adult Wellness Visits-Under 65,Oral Health,Identify Dental Home,1.0
+121,Preventive,Adult Wellness Visits-Under 65,Counseling,Alcohol Misuse Counseling,1.0
+122,Preventive,Adult Wellness Visits-Under 65,Counseling,Tobacco Use Prevention and Counseling ,1.0
+123,Preventive,Adult Wellness Visits-Under 65,Counseling,Sexually Transmitted Infections Counseling,1.0
+124,Preventive,Adult Wellness Visits-Under 65,Counseling,Skin Cancer Behavioral Counseling,1.0
+125,Preventive,Adult Wellness Visits-Under 65,Counseling,Visit wrap-up/care planning,1.0
+126,Preventive,Adult Wellness Visits-Over 65,Patient History,Patient History,1.0
+127,Preventive,Adult Wellness Visits-Over 65,Counseling,Alcohol Misuse Counseling,1.0
+128,Preventive,Adult Wellness Visits-Over 65,Behavioral Health Screenings,Alcohol Misuse Screening,1.0
+129,Preventive,Adult Wellness Visits-Over 65,Behavioral Health Screenings,Depression Screening,1.0
+130,Preventive,Adult Wellness Visits-Over 65,Measurements,BMI,1.0
+131,Preventive,Adult Wellness Visits-Over 65,Measurements,BP,1.0
+132,Preventive,Adult Wellness Visits-Over 65,Physical Exam,Physical Exam,1.0
+133,Preventive,Adult Wellness Visits-Over 65,Sensory Screening,Vision Screening,1.0
+134,Preventive,Adult Wellness Visits-Over 65,Sensory Screening,Hearing Screening,1.0
+135,Preventive,Adult Wellness Visits-Over 65,Physical Screening,Obesity Screening,1.0
+136,Preventive,Adult Wellness Visits-Over 65,Immunization,Influenza,1.0
+137,Preventive,Adult Wellness Visits-Under 65,Immunization,Td/Tdap,0.02
+138,Preventive,Adult Wellness Visits-Over 65,Immunization,Td/Tdap,0.044
+139,Preventive,Adult Wellness Visits-Over 65,Immunization,VAR,0.046511627906976744
+140,Preventive,Adult Wellness Visits-Over 65,Oral Health,Identify Dental Home,1.0
+141,Preventive,Adult Wellness Visits-Over 65,Counseling,Advanced Care Planning,1.0
+142,Preventive,Adult Wellness Visits-Over 65,Counseling,Visit wrap-up/care planning,1.0
+143,Chronic,Chronic Care Needs: Obesity,Physical Screening,Abdominal aortic aneurysm screening,1.0
+144,Chronic,Chronic Care Needs: Smoker,Physical Screening,Lung Cancer Screening,1.0
+145,Chronic,Chronic Care Needs: Smoker,Counseling,Tobacco Use Counseling,1.0
+146,Chronic,Chronic Care Needs: Obesity,Counseling,Obesity Counseling,1.0
+147,Chronic,Chronic Care Needs: Obesity,Physical Screening,Diabetes Screening,1.0
+148,Chronic,Chronic Care Needs: Obesity,Counseling,Diet/Physical Activity Counseling,1.0
+149,Preventive,Addl Screen and Counsel: BRCA,Counseling,BRCA risk assessment and genetic counseling,1.0
+150,Preventive,Addl Counsel: Breast Cancer Prev Rx,Counseling,Breast Cancer Preventive Medications,1.0
+151,Preventive,Addl Counsel: Folic Acid Supp,Counseling,Folic Acid Supplementation,1.0
+152,Preventive,Addl Screening: Colon Cancer,Physical Screening,Colorectal Cancer Screening,1.0
+153,Acute,Acute Level 1 visit,Measurements,BP,1.0
+154,Acute,Acute Level 1 visit,Measurements,Weight,1.0
+155,Acute,Acute Level 1 visit,Measurements,Temp,1.0
+156,Acute,Acute Level 1 visit,Patient History,Data Collection,1.0
+157,Acute,Acute Level 1 visit,Physical Exam,Problem Oriented Physical,1.0
+158,Acute,Acute Level 1 visit,Lab,Orders,1.0
+159,Acute,Acute Level 1 visit,Lab,Results Consultation,1.0
+160,Acute,Acute Level 1 visit,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+161,Acute,Acute Level 1 visit,Counseling,Visit wrap-up/care planning,1.0
+162,Acute,Acute Level 2 visit,Measurements,BP,1.0
+163,Acute,Acute Level 2 visit,Measurements,Weight,1.0
+164,Acute,Acute Level 2 visit,Measurements,Temp,1.0
+165,Acute,Acute Level 2 visit,Patient History,Data Collection,1.0
+166,Acute,Acute Level 2 visit,Physical Exam,Problem Oriented Physical,1.0
+167,Acute,Acute Level 2 visit,Lab,Orders,1.0
+168,Acute,Acute Level 2 visit,Lab,Results Consultation,1.0
+169,Acute,Acute Level 2 visit,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+170,Acute,Acute Level 2 visit,Counseling,Visit wrap-up/care planning,1.0
+171,Acute,Acute Level 3 visit,Measurements,BP,1.0
+172,Acute,Acute Level 3 visit,Measurements,Weight,1.0
+173,Acute,Acute Level 3 visit,Measurements,Temp,1.0
+174,Acute,Acute Level 3 visit,Patient History,Data Collection,1.0
+175,Acute,Acute Level 3 visit,Physical Exam,Problem Oriented Physical,1.0
+176,Acute,Acute Level 3 visit,Lab,Orders,1.0
+177,Acute,Acute Level 3 visit,Lab,Results Consultation,1.0
+178,Acute,Acute Level 3 visit,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+179,Acute,Acute Level 3 visit,Counseling,Visit wrap-up/care planning,1.0
+180,Acute,Acute Level 4 visit,Measurements,BP,1.0
+181,Acute,Acute Level 4 visit,Measurements,Weight,1.0
+182,Acute,Acute Level 4 visit,Measurements,Temp,1.0
+183,Acute,Acute Level 4 visit,Patient History,Data Collection,1.0
+184,Acute,Acute Level 4 visit,Physical Exam,Problem Oriented Physical,1.0
+185,Acute,Acute Level 4 visit,Lab,Orders,1.0
+186,Acute,Acute Level 4 visit,Lab,Results Consultation,1.0
+187,Acute,Acute Level 4 visit,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+188,Acute,Acute Level 4 visit,Counseling,Visit wrap-up/care planning,1.0
+189,Chronic,Chronic Maintenance Visit: Other,Counseling,Visit wrap-up/care planning,1.0
+190,Chronic,Chronic Maintenance Visit: Other,Lab,Orders,1.0
+191,Chronic,Chronic Maintenance Visit: Other,Lab,Results Consultation,1.0
+192,Chronic,Chronic Maintenance Visit: Other,Measurements,BP,1.0
+193,Chronic,Chronic Maintenance Visit: Other,Measurements,Temp,1.0
+194,Chronic,Chronic Maintenance Visit: Other,Measurements,Weight,1.0
+195,Chronic,Chronic Maintenance Visit: Other,Patient History,Data Collection,1.0
+196,Chronic,Chronic Maintenance Visit: Other,Patient History,Interval history/Consultation,1.0
+197,Chronic,Chronic Maintenance Visit: Other,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+198,Chronic,Chronic Maintenance Visit: Other,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+199,Chronic,Chronic Maintenance Visit: Other,Physical Exam,Problem Oriented Physical,1.0
+200,Chronic,Chronic Maintenance Visit: Anxiety,Counseling,Visit wrap-up/care planning,1.0
+201,Chronic,Chronic Maintenance Visit: Anxiety,Lab,Orders,1.0
+202,Chronic,Chronic Maintenance Visit: Anxiety,Lab,Results Consultation,1.0
+203,Chronic,Chronic Maintenance Visit: Anxiety,Measurements,BP,1.0
+204,Chronic,Chronic Maintenance Visit: Anxiety,Measurements,Temp,1.0
+205,Chronic,Chronic Maintenance Visit: Anxiety,Measurements,Weight,1.0
+206,Chronic,Chronic Maintenance Visit: Anxiety,Patient History,Data Collection,1.0
+207,Chronic,Chronic Maintenance Visit: Anxiety,Patient History,Interval history/Consultation,1.0
+208,Chronic,Chronic Maintenance Visit: Anxiety,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+209,Chronic,Chronic Maintenance Visit: Anxiety,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+210,Chronic,Chronic Maintenance Visit: Anxiety,Physical Exam,Problem Oriented Physical,1.0
+211,Chronic,Chronic Maintenance Visit: Anxiety,Counseling,CBT,1.0
+212,Chronic,Chronic Maintenance Visit: Arthritis,Counseling,Visit wrap-up/care planning,1.0
+213,Chronic,Chronic Maintenance Visit: Arthritis,Lab,Orders,1.0
+214,Chronic,Chronic Maintenance Visit: Arthritis,Lab,Results Consultation,1.0
+215,Chronic,Chronic Maintenance Visit: Arthritis,Measurements,BP,1.0
+216,Chronic,Chronic Maintenance Visit: Arthritis,Measurements,Temp,1.0
+217,Chronic,Chronic Maintenance Visit: Arthritis,Measurements,Weight,1.0
+218,Chronic,Chronic Maintenance Visit: Arthritis,Patient History,Data Collection,1.0
+219,Chronic,Chronic Maintenance Visit: Arthritis,Patient History,Interval history/Consultation,1.0
+220,Chronic,Chronic Maintenance Visit: Arthritis,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+221,Chronic,Chronic Maintenance Visit: Arthritis,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+222,Chronic,Chronic Maintenance Visit: Arthritis,Physical Exam,Problem Oriented Physical,1.0
+223,Chronic,Chronic Maintenance Visit: Arthritis,Education,Dietary/Physical Activity Guidance,1.0
+224,Chronic,Chronic Maintenance Visit: Asthma,Lab,Orders,1.0
+225,Chronic,Chronic Maintenance Visit: Asthma,Lab,Results Consultation,1.0
+226,Chronic,Chronic Maintenance Visit: Asthma,Measurements,BP,1.0
+227,Chronic,Chronic Maintenance Visit: Asthma,Measurements,Temp,1.0
+228,Chronic,Chronic Maintenance Visit: Asthma,Measurements,Weight,1.0
+229,Chronic,Chronic Maintenance Visit: Asthma,Patient History,Data Collection,1.0
+230,Chronic,Chronic Maintenance Visit: Asthma,Patient History,Interval history/Consultation,1.0
+231,Chronic,Chronic Maintenance Visit: Asthma,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+232,Chronic,Chronic Maintenance Visit: Asthma,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+233,Chronic,Chronic Maintenance Visit: Asthma,Physical Exam,Problem Oriented Physical,1.0
+234,Chronic,Chronic Maintenance Visit: Asthma,Education,Asthma action plan,1.0
+235,Chronic,Chronic Maintenance Visit: Asthma,Education,Inhaler use Guidance,1.0
+236,Chronic,Chronic Maintenance Visit: CAD,Lab,Orders,1.0
+237,Chronic,Chronic Maintenance Visit: CAD,Lab,Results Consultation,1.0
+238,Chronic,Chronic Maintenance Visit: CAD,Measurements,BP,1.0
+239,Chronic,Chronic Maintenance Visit: CAD,Measurements,Temp,1.0
+240,Chronic,Chronic Maintenance Visit: CAD,Measurements,Weight,1.0
+241,Chronic,Chronic Maintenance Visit: CAD,Patient History,Data Collection,1.0
+242,Chronic,Chronic Maintenance Visit: CAD,Patient History,Interval history/Consultation,1.0
+243,Chronic,Chronic Maintenance Visit: CAD,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+244,Chronic,Chronic Maintenance Visit: CAD,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+245,Chronic,Chronic Maintenance Visit: CAD,Physical Exam,Problem Oriented Physical,1.0
+246,Chronic,Chronic Maintenance Visit: CAD,Education,Dietary/Physical Activity Guidance,1.0
+247,Chronic,Chronic Maintenance Visit: COPD,Lab,Orders,1.0
+248,Chronic,Chronic Maintenance Visit: COPD,Lab,Results Consultation,1.0
+249,Chronic,Chronic Maintenance Visit: COPD,Measurements,BP,1.0
+250,Chronic,Chronic Maintenance Visit: COPD,Measurements,Temp,1.0
+251,Chronic,Chronic Maintenance Visit: COPD,Measurements,Weight,1.0
+252,Chronic,Chronic Maintenance Visit: COPD,Patient History,Data Collection,1.0
+253,Chronic,Chronic Maintenance Visit: COPD,Patient History,Interval history/Consultation,1.0
+254,Chronic,Chronic Maintenance Visit: COPD,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+255,Chronic,Chronic Maintenance Visit: COPD,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+256,Chronic,Chronic Maintenance Visit: COPD,Physical Exam,Problem Oriented Physical,1.0
+257,Chronic,Chronic Maintenance Visit: COPD,Education,Exercise & COPD Management,1.0
+258,Chronic,Chronic Maintenance Visit: Diabetes,Lab,Orders,1.0
+259,Chronic,Chronic Maintenance Visit: Diabetes,Lab,Results Consultation,1.0
+260,Chronic,Chronic Maintenance Visit: Diabetes,Measurements,BP,1.0
+261,Chronic,Chronic Maintenance Visit: Diabetes,Measurements,Temp,1.0
+262,Chronic,Chronic Maintenance Visit: Diabetes,Measurements,Weight,1.0
+263,Chronic,Chronic Maintenance Visit: Diabetes,Patient History,Data Collection,1.0
+264,Chronic,Chronic Maintenance Visit: Diabetes,Patient History,Interval history/Consultation,1.0
+265,Chronic,Chronic Maintenance Visit: Diabetes,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+266,Chronic,Chronic Maintenance Visit: Diabetes,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+267,Chronic,Chronic Maintenance Visit: Diabetes,Physical Exam,Problem Oriented Physical,1.0
+268,Chronic,Chronic Maintenance Visit: Diabetes,Education,Control: Weight; Hypertension; Hyperlipidemia; Smoking,1.0
+269,Chronic,Chronic Maintenance Visit: Diabetes,Education,Diabetes Self Management Education/Support,1.0
+270,Chronic,Chronic Maintenance Visit: Diabetes,Education,Medical Nutrition Therapy (MNT),1.0
+271,Chronic,Chronic Maintenance Visit: Diabetes,Lab,Results Consultation: CHD Risk Assessment; A1c; Microalbuminuria,1.0
+272,Chronic,Chronic Maintenance Visit: Diabetes,Physical Exam,Foot Exam,1.0
+273,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Lab,Orders,1.0
+274,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Lab,Results Consultation,1.0
+275,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Measurements,BP,1.0
+276,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Measurements,Temp,1.0
+277,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Measurements,Weight,1.0
+278,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Patient History,Data Collection,1.0
+279,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Patient History,Interval history/Consultation,1.0
+280,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+281,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+282,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Physical Exam,Problem Oriented Physical,1.0
+283,Chronic,Chronic Maintenance Visit: Hyperlipidemia,Education,Dietary/Physical Activity Guidance,1.0
+284,Chronic,Chronic Maintenance Visit: Hypertension,Lab,Orders,1.0
+285,Chronic,Chronic Maintenance Visit: Hypertension,Lab,Results Consultation,1.0
+286,Chronic,Chronic Maintenance Visit: Hypertension,Measurements,BP,1.0
+287,Chronic,Chronic Maintenance Visit: Hypertension,Measurements,Temp,1.0
+288,Chronic,Chronic Maintenance Visit: Hypertension,Measurements,Weight,1.0
+289,Chronic,Chronic Maintenance Visit: Hypertension,Patient History,Data Collection,1.0
+290,Chronic,Chronic Maintenance Visit: Hypertension,Patient History,Interval history/Consultation,1.0
+291,Chronic,Chronic Maintenance Visit: Hypertension,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+292,Chronic,Chronic Maintenance Visit: Hypertension,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+293,Chronic,Chronic Maintenance Visit: Hypertension,Physical Exam,Problem Oriented Physical,1.0
+294,Chronic,Chronic Maintenance Visit: Hypertension,Education,Dietary/Physical Activity Guidance,1.0
+295,Chronic,Chronic Maintenance Visit: Depression,Lab,Orders,1.0
+296,Chronic,Chronic Maintenance Visit: Depression,Lab,Results Consultation,1.0
+297,Chronic,Chronic Maintenance Visit: Depression,Measurements,BP,1.0
+298,Chronic,Chronic Maintenance Visit: Depression,Measurements,Temp,1.0
+299,Chronic,Chronic Maintenance Visit: Depression,Measurements,Weight,1.0
+300,Chronic,Chronic Maintenance Visit: Depression,Patient History,Data Collection,1.0
+301,Chronic,Chronic Maintenance Visit: Depression,Patient History,Interval history/Consultation,1.0
+302,Chronic,Chronic Maintenance Visit: Depression,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+303,Chronic,Chronic Maintenance Visit: Depression,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+304,Chronic,Chronic Maintenance Visit: Depression,Physical Exam,Problem Oriented Physical,1.0
+305,Chronic,Chronic Maintenance Visit: Depression,Counseling,Psychotherapy,1.0
+306,Chronic,Chronic Maintenance Visit: Osteoporosis,Lab,Orders,1.0
+307,Chronic,Chronic Maintenance Visit: Osteoporosis,Lab,Results Consultation,1.0
+308,Chronic,Chronic Maintenance Visit: Osteoporosis,Measurements,BP,1.0
+309,Chronic,Chronic Maintenance Visit: Osteoporosis,Measurements,Temp,1.0
+310,Chronic,Chronic Maintenance Visit: Osteoporosis,Measurements,Weight,1.0
+311,Chronic,Chronic Maintenance Visit: Osteoporosis,Patient History,Data Collection,1.0
+312,Chronic,Chronic Maintenance Visit: Osteoporosis,Patient History,Interval history/Consultation,1.0
+313,Chronic,Chronic Maintenance Visit: Osteoporosis,Pharmacological Treatment/Mgmt,Condition Consultation,1.0
+314,Chronic,Chronic Maintenance Visit: Osteoporosis,Pharmacological Treatment/Mgmt,Orders/scripts,1.0
+315,Chronic,Chronic Maintenance Visit: Osteoporosis,Physical Exam,Problem Oriented Physical,1.0
+316,Chronic,Chronic Maintenance Visit: Osteoporosis,Education,Dietary/Physical Activity Guidance,1.0
+317,<<end>>,,,,

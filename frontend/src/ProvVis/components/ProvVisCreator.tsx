@@ -1,9 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import ProvVis from './ProvVis';
-import { ProvenanceGraph, NodeID } from '@visdesignlab/provenance-lib-core';
+import UndoRedoButton from './UndoRedoButton';
+import {EventConfig} from '../Utils/EventConfig';
+
+
+import { Provenance, ProvenanceGraph, NodeID } from '@visdesignlab/provenance-lib-core';
 
 export interface ProvVisConfig {
+  eventConfig: EventConfig<any>;
   height: number;
   width: number;
   sideOffset: number;
@@ -22,19 +27,39 @@ export interface ProvVisConfig {
 
 export function ProvVisCreator<T, S extends string, A>(
   node: Element,
-  graph: ProvenanceGraph<T, S, A>,
+  prov: Provenance<T, S, A>,
   callback?: (id: NodeID) => void,
-  fauxRoot: NodeID = graph.root,
+  buttons: boolean = true,
+  ephemeralUndo: boolean = false,
+  fauxRoot: NodeID = prov.graph().root,
   config: Partial<ProvVisConfig> = {}
 ) {
   ReactDOM.render(
     <ProvVis
       {...config}
-      graph={graph}
       root={fauxRoot}
       changeCurrent={callback}
-      current={graph.current}
-      nodeMap={graph.nodes}
+      current={prov.graph().current}
+      nodeMap={prov.graph().nodes}
+      prov={prov}
+      undoRedoButtons={true}
+      ephemeralUndo={ephemeralUndo}
+    />,
+    node
+  );
+}
+
+export function UndoRedoButtonCreator<T, S extends string, A>(
+  node: Element,
+  graph: ProvenanceGraph<T, S, A>,
+  undoCallback: () => void,
+  redoCallback: () => void
+) {
+  ReactDOM.render(
+    <UndoRedoButton
+      graph={graph}
+      undoCallback={undoCallback}
+      redoCallback={redoCallback}
     />,
     node
   );

@@ -62,8 +62,7 @@ def whoami():
 
 
 @app.route("/api/logout")
-def logout():    
+def logout():
     utils.delete_session(flask.session.get("token"))
     flask.session["token"] = None
     return "Logged out"
-

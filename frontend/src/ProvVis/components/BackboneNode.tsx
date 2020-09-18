@@ -104,24 +104,32 @@ function BackboneNode<T, S extends string, A>({
   let label: string = "";
   let annotate: string = "";
 
-  // if (node.artifacts.extra && node.artifacts.extra.length > 0) {
-  //   annotate = (node.artifacts.extra[node.artifacts.extra.length - 1].e as any)
-  //     .annotation;
-  // }
+  if (bundleMap && Object.keys(bundleMap).includes(node.id) && node.ephemeral && expandedClusterList && !expandedClusterList.includes(node.id))
+  {
+    if(node.metadata && node.metadata.type)
+    {
+      label = "[" + bundleMap[node.id].bunchedNodes.length + "] " + node.metadata.type
+    }
+    else{
+      label = "[" + bundleMap[node.id].bunchedNodes.length + "]"
+    }
+  }
+  else{
+    label = node.label;
+  }
 
-  label = node.label;
-  // else if(!backboneBundleNodes.includes(node.id) || !clusterLabels)
-  // {
-  //   label = node.label;
-  // }
-  //
+  if (node.artifacts && node.artifacts.annotation && node.artifacts.annotation.length > 0) {
+    annotate = node.artifacts.annotation;
+  }
+
+
   if (!nodeMap[node.id]) {
     return null;
   }
 
-  if (annotate.length > 23) annotate = annotate.substr(0, 23) + "..";
+  if (annotate.length > 30) annotate = annotate.substr(0, 30) + "..";
 
-  if (label.length > 23) label = label.substr(0, 23) + "..";
+  if (label.length > 30) label = label.substr(0, 30) + "..";
 
   let labelG = (
     <g style={{ opacity: 1 }} transform={translate(padding, 0)}>

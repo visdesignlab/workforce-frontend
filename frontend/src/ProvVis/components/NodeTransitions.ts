@@ -20,37 +20,28 @@ export default function nodeTransitions(
     let clusteredNodesInFront = 0;
 
     const x = getX(data.width, xOffset, backboneOffset);
+    let parentId: string | undefined = undefined;
 
-    let parentId = findBundleParent(data.id, bundleMap).filter((d) => {
+    let arr = findBundleParent(data.id, bundleMap).filter(d => {
       return nodeMap[d].width === 0;
-    })[0];
+    });
+
+    if (arr.length > 0) {
+      parentId = arr[0];
+    }
 
     clusteredNodesInFront =
-      clusteredNodesInFront === 0
-        ? clusteredNodesInFront
-        : clusteredNodesInFront - 1;
+      clusteredNodesInFront === 0 ? clusteredNodesInFront : clusteredNodesInFront - 1;
 
-    let y =
-      yOffset * data.depth - (yOffset - clusterOffset) * clusteredNodesInFront;
+    let y = yOffset * data.depth - (yOffset - clusterOffset) * clusteredNodesInFront;
 
-    if (
-      parentId !== undefined &&
-      bundleMap &&
-      !Object.keys(bundleMap).includes(data.id)
-    ) {
+    if (parentId !== undefined && bundleMap && !Object.keys(bundleMap).includes(data.id)) {
       y =
-        yOffset *
-          (nodeMap[parentId].depth -
-            bundleMap[parentId].bunchedNodes.length +
-            2) -
+        yOffset * (nodeMap[parentId].depth - bundleMap[parentId].bunchedNodes.length + 2) -
         (yOffset - clusterOffset) * clusteredNodesInFront;
     }
 
-    if (
-      annotationOpen !== -1 &&
-      data.depth > annotationOpen &&
-      data.width === 0
-    ) {
+    if (annotationOpen !== -1 && data.depth > annotationOpen && data.width === 0) {
       y += annotationHeight;
     }
 
@@ -76,18 +67,11 @@ export default function nodeTransitions(
     const x = getX(data.width, xOffset, backboneOffset);
 
     clusteredNodesInFront =
-      clusteredNodesInFront === 0
-        ? clusteredNodesInFront
-        : clusteredNodesInFront - 1;
+      clusteredNodesInFront === 0 ? clusteredNodesInFront : clusteredNodesInFront - 1;
 
-    let y =
-      yOffset * data.depth - (yOffset - clusterOffset) * clusteredNodesInFront;
+    let y = yOffset * data.depth - (yOffset - clusterOffset) * clusteredNodesInFront;
 
-    if (
-      annotationOpen !== -1 &&
-      data.depth > annotationOpen &&
-      data.width === 0
-    ) {
+    if (annotationOpen !== -1 && data.depth > annotationOpen && data.width === 0) {
       y += annotationHeight;
     }
 
@@ -95,7 +79,7 @@ export default function nodeTransitions(
       x: [x],
       y: [y],
       opactiy: 1,
-      timing: { duration },
+      timing: { duration }
     };
   };
 
@@ -118,18 +102,11 @@ export default function nodeTransitions(
     const x = getX(data.width, xOffset, backboneOffset);
 
     clusteredNodesInFront =
-      clusteredNodesInFront === 0
-        ? clusteredNodesInFront
-        : clusteredNodesInFront - 1;
+      clusteredNodesInFront === 0 ? clusteredNodesInFront : clusteredNodesInFront - 1;
 
-    let y =
-      yOffset * data.depth - (yOffset - clusterOffset) * clusteredNodesInFront;
+    let y = yOffset * data.depth - (yOffset - clusterOffset) * clusteredNodesInFront;
 
-    if (
-      annotationOpen !== -1 &&
-      data.depth > annotationOpen &&
-      data.width === 0
-    ) {
+    if (annotationOpen !== -1 && data.depth > annotationOpen && data.width === 0) {
       y += annotationHeight;
     }
 
@@ -137,7 +114,7 @@ export default function nodeTransitions(
       x: [x],
       y: [y],
       opactiy: 1,
-      timing: { duration },
+      timing: { duration }
     };
   };
 

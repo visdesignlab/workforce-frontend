@@ -10,6 +10,10 @@ class MapEvents{
 	selectAll : boolean;
 
 	private API_URL: string = '/api/';
+	// private API_URL: string = 'http://3.135.81.128/api/';
+
+	// private API_URL: string = 'http://127.0.0.1:5000/';
+
 
 	constructor(map:MapController){
 		this.map = map;
@@ -102,7 +106,8 @@ class MapEvents{
 
 				if(counter == 2)
 				{
-					this.map.updateModelsSelected([mod]);
+					// console.log(this.map.prov.current().getState())
+					// this.map.updateModelsSelected([mod]);
 					d3.select('#modelData')
 						.append('option')
 						.attr("value", mod)
