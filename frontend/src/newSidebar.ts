@@ -55,6 +55,7 @@ class Sidebar {
 		let that = this;
 
 		d3.select("#countiesHeaderRow")
+			.selectAll("th")
 			.on("click", function() {
 				let clicked = (this as HTMLElement).innerHTML;
 
@@ -87,6 +88,7 @@ class Sidebar {
 			})
 
 		d3.select("#profHeaderRow")
+			.selectAll("th")
 			.on("click", function() {
 				let clicked = (this as HTMLElement).innerHTML;
 
