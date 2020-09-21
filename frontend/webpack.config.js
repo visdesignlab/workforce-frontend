@@ -1,7 +1,8 @@
 const path = require('path');
-// const webpack = require('webpack');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
+  target: 'node',
   entry: ["./src/main.ts"],
   output: {
       filename: "bundle.js",
@@ -61,11 +62,7 @@ module.exports = {
 
 
         },
-        // plugins: [
-        //   new webpack.optimize.OccurrenceOrderPlugin(),
-        //   new webpack.HotModuleReplacementPlugin(),
-        //   // Use NoErrorsPlugin for webpack 1.x
-        //   new webpack.NoEmitOnErrorsPlugin()
-        // ],
-  // Other options...
+        plugins: [
+          new Dotenv()
+        ],
 };

@@ -5,8 +5,9 @@ import {Sidebar} from './newSidebar'
 import 'bootstrap';
 import 'bootstrap-select';
 import * as d3 from 'd3';
+require('dotenv').config()
 
-import * as session from 'express-session'
+const MODELS_URL = `${process.env.API_ROOT}/models`;
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -38,7 +39,6 @@ promise.then(()=>{
   });
 });
 
-const MODELS_URL = '/api/models'; //
 export function getCookie(name: string) {
     var cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -61,7 +61,7 @@ function logout()
 {
   console.log("logging out")
 
-  fetch(`/api/logout`, {
+  fetch(`${process.env.API_ROOT}/logout`, {
               method: 'GET',
               credentials: 'include',
               //headers: {
@@ -74,7 +74,7 @@ function logout()
 
             if(response.status === 200)
             {
-              d3.select("#login").select("a").attr("href", "/api/login").html("Login");
+              d3.select("#login").select("a").attr("href", `${process.env.API_ROOT}/login`).html("Login");
               d3
                 .select("#logout")
                 .remove();
@@ -89,7 +89,7 @@ function logout()
 
 }
 
-fetch(`/api/whoami`, {
+fetch(`${process.env.API_ROOT}/whoami`, {
             method: 'GET',
             credentials: 'include',
             //headers: {
@@ -124,9 +124,6 @@ fetch(`/api/whoami`, {
           // console.log(error);
         })
 
-
-// const MODELS_URL = 'http://3.135.81.128/api/models'; //
-const MODELS_URL: string = '/api/models';
 
 fetch(MODELS_URL)
 	.then((response) => {

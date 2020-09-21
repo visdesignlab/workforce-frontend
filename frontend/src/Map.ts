@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import * as fc from 'd3fc';
 
 import * as topojson from 'topojson-client';
 import {legendColor} from 'd3-svg-legend'
@@ -20,12 +19,6 @@ class Map{
 	controller:MapController;
 	totalResults:any;
 	firstMap:boolean;
-
-	private API_URL: string = '/api/';
-	// private API_URL: string = 'http://3.135.81.128/api/';
-
-	// private API_URL: string = 'http://127.0.0.1:5000/';
-
 
 	/**
 	 *
@@ -60,7 +53,7 @@ class Map{
 
 		let promise;
 		// if (!customModel) {
-		promise = d3.json(`${this.API_URL}/${modelFile}`);
+		promise = d3.json(`${process.env.API_ROOT}/${modelFile}`);
 
 		let innerPromise = d3.json("data/UT-49-utah-counties.json");
 		// }
@@ -422,7 +415,7 @@ class Map{
 			replacementJson = res;
 		})
 
-		let promise2 = d3.json(`${this.API_URL}${modelFile}`).then((results)=> {
+		let promise2 = d3.json(`{process.env.API_ROOT}/${modelFile}`).then((results)=> {
 
 			promise1.then(() => {
 

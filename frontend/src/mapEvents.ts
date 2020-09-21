@@ -9,12 +9,6 @@ class MapEvents{
 	map: MapController;
 	selectAll : boolean;
 
-	private API_URL: string = '/api/';
-	// private API_URL: string = 'http://3.135.81.128/api/';
-
-	// private API_URL: string = 'http://127.0.0.1:5000/';
-
-
 	constructor(map:MapController){
 		this.map = map;
 		this.selectAll=false;
@@ -45,7 +39,7 @@ class MapEvents{
 
 				axios({
 			    method: 'post',
-			    url: this.API_URL + 'rerun-model',
+			    url: `${process.env.API_ROOT}/rerun-model`,
 			    data: bodyFormData,
 			    headers: {'Content-Type': 'multipart/form-data', 'Access-Control-Allow-Origin': '*' }
 			    })
@@ -95,8 +89,7 @@ class MapEvents{
 		})
 	}
 
-	changeModelData():Promise<void> {
-		let promise = d3.json(this.API_URL + "models");
+		let promise = d3.json(`${process.env.API_ROOT}/models`);
 		let counter = 0;
 
 		promise = promise.then((results)=> {

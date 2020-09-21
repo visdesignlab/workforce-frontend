@@ -63,7 +63,7 @@ let arr = Array.from(removedProfessions) as string[];
     formData.append('metadata', JSON.stringify(info));
 
     axios
-      .post(`/api/file-upload`, formData)
+      .post(`${process.env.API_ROOT}/file-upload`, formData)
       .then(() => {
         //setUploadComplete(true);
         //goToNextStep();
