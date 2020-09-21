@@ -3,6 +3,21 @@ setup.sql
 setup.prod.sql
 data
 
+# Frontend
+frontend/dist/bundle.js*
+frontend/node_modules
+
+# Backend
+.coverage
+.vscode
+__pycache__
+.pytest_cache
+*.DS_Store
+.env
+.env.prod
+requirements.txt
+admins.txt
+
 # Sensitive SSL config
 backend/certs/
 backend/nginx.conf
