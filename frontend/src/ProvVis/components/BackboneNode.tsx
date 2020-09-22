@@ -57,7 +57,6 @@ function BackboneNode<T, S extends string, A>({
     cursor: "pointer",
   } as React.CSSProperties;
 
-  // console.log(JSON.parse(JSON.stringify(node)));
   let glyph = (
     <circle
       style={cursorStyle}

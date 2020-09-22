@@ -6,11 +6,6 @@ interface AddTaskGlyphProps {
   scale?: number;
 }
 
-function translate(x: number, y: number): string {
-  return `translate(${x}, ${y})`;
-}
-
-
 //Occurs on clear all click ???
 export function CountiesChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   return (

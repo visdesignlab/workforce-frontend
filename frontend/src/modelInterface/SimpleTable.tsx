@@ -88,7 +88,6 @@ if (!count || count == 0) {
 		onClick={() => {
 			isDone = false;
 setCount(count + 1)
-console.log( isDone)
 		}}
       >
         Upload

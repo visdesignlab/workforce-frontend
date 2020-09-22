@@ -32,8 +32,6 @@ class MapEvents{
 
 				bodyFormData.set('removed_professions', removedString.slice(0, removedString.length - 2));
 
-				console.log(removedString.slice(0, removedString.length - 2));
-
 
 				axios({
 			    method: 'post',
@@ -87,17 +85,17 @@ class MapEvents{
 		})
 	}
 
+	changeModelData():Promise<any> {
 		let promise = d3.json(`${process.env.API_ROOT}/models`);
 		let counter = 0;
 
-		promise = promise.then((results)=> {
+		promise = promise.then((results: any[])=> {
 			this.map.serverModels = results;
 			for(let mod in results)
 			{
 
 				if(counter == 2)
 				{
-					// console.log(this.map.prov.current().getState())
 					// this.map.updateModelsSelected([mod]);
 					d3.select('#modelData')
 						.append('option')
