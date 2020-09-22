@@ -17,6 +17,22 @@ There is one final dependency that you'll need to run the application, GLPK. On 
 
 Now, copy the .env.default to .env using `cp .env.default .env`.
 
+Now run MySQL through docker using:
+```
+docker stop workforce-mysql
+docker rm workforce-mysql
+
+docker run \
+  --name workforce-mysql \
+  -e MYSQL_ROOT_PASSWORD=password \
+  -e MYSQL_USER=workforceuser \
+  -e MYSQL_PASSWORD=password \
+  -e MYSQL_DATABASE=workforcewebapp \
+  -d \
+  -p 3306:3306 \
+  mysql:5
+```
+
 Once `pipenv` is set up and the .env file is set correctly, run `pipenv run serve` to run a local development server at http://127.0.0.1:5000/.
 
 ## Deploying In Production
