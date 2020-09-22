@@ -324,8 +324,6 @@ function ProvVis<T, S extends string, A>({
 
   const stratifiedTree = strat(nodeList);
 
-  // //console.log(JSON.parse(JSON.stringify(stratifiedTree)));
-
   const stratifiedList: StratifiedList<T, S, A> = stratifiedTree.descendants();
   const stratifiedMap: StratifiedMap<T, S, A> = {};
 
@@ -406,7 +404,6 @@ function ProvVis<T, S extends string, A>({
   //       .getBoundingClientRect()
   //       .width.valueOf() > svgWidth
   //   ) {
-  //     console.log("in here");
   //     svgWidth =
   //       document
   //         .getElementById("globalG")!

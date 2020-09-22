@@ -112,7 +112,6 @@ class Sidebar {
   }
 	//
   // highlightRect(id) {
-	// 	console.log(id);
   //   if(id == "State of Utah")
   //   {
   //     this.currentlySelected.forEach(id => {
@@ -333,7 +332,6 @@ class Sidebar {
 
   doubleMapRows(td, xScale, domainMax)
   {
-		console.log("double map row!");
 		let that = this;
     let labels = td.filter((d) => {
        return d.vis == 'text' && ((d.type !== "supplyChangeable" && d.type !== "needChangeable") || !this.map.removedProfessions.has(d.name));

@@ -53,12 +53,10 @@ const SimpleForm = () => {
   const handleFormSubmission = (info: ModelConfig) => {
     const formData = new FormData();
 
-console.log( 'info')
     formData.append('file', info.file);
 let arr = Array.from(removedProfessions) as string[];
     //info.removedProfessions = arr as string[];
     di.removedProfessions = arr;
-	console.log(info)
     formData.append('metadata', JSON.stringify(info));
 
     axios
@@ -66,7 +64,6 @@ let arr = Array.from(removedProfessions) as string[];
       .then(() => {
         //setUploadComplete(true);
         //goToNextStep();
-		console.log( 'succccc')
 		alert('Uploaded successfully!')
       })
       .catch(err => {

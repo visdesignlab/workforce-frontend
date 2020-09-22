@@ -230,7 +230,6 @@ class MapController{
 		this.prov.addObserver(['year'], () => {
 
 			let state = this.prov.current().getState();
-			console.log(state.year)
 
 			let promise = this.originalMap.updateMapYear(state.year)
 			.then(() => {
@@ -239,11 +238,6 @@ class MapController{
 
 
 			return Promise.all([promise]);
-		})
-
-		this.prov.addObserver(['mapType'], () => {
-
-			console.log("updating map type", this.prov.current().getState().mapType);
 		})
 
 		this.prov.addObserver(['modelsSelected'], () => {
@@ -262,7 +256,6 @@ class MapController{
 		})
 
 		this.prov.addObserver(['scaleType'], () => {
-			console.log(this.prov.current().getState().scaleType);
 			this.originalMap.updateMapType(this.prov.current().getState().scaleType, 1000);
 			if(this.comparisonMode)
 			{
@@ -293,8 +286,6 @@ class MapController{
 			});
 
 		})
-
-    console.log("observers set")
 	}
 
 	/**
@@ -380,8 +371,6 @@ class MapController{
 		{
 			this.comparisonMode = true;
 		}
-
-    console.log(this.comparisonMode);
 
 		let promise = this.originalMap.updateMapYear(year)
 		.then(() => {
@@ -502,8 +491,6 @@ class MapController{
 	}
 	//
 	// highlightPath(name:string) {
-	//
-	// 	console.log(this.selectedCounties)
 	//
 	// 	if(!this.selectedCounties.has(name) && this.selectedCounties.has("State of Utah"))
 	// 	{

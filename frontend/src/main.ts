@@ -21,9 +21,7 @@ d3.select('#modelCreate').on('click', () => {
 });
 
 let mapController = new MapController();
-
 let myMapEvents:MapEvents = new MapEvents(mapController);
-
 let promise = myMapEvents.changeModelData();
 
 promise.then(()=>{
@@ -48,75 +46,68 @@ export function getCookie(name: string) {
     return cookieValue;
 }
 
-var csrftoken = getCookie('csrftoken');
-console.log(csrftoken)
+const csrftoken = getCookie('csrftoken');
 
-function logout()
-{
-  console.log("logging out")
-
-  fetch(`${process.env.API_ROOT}/logout`, {
-              method: 'GET',
-              credentials: 'include',
-              //headers: {
-              //    'X-CSRFToken': csrftoken || '',
-              //    "Access-Control-Allow-Origin": 'http://localhost:8000',
-              //    "Access-Control-Allow-Credentials": "true",
-              //}
-          })
-          .then((response) => {
-
-            if(response.status === 200)
-            {
-              d3.select("#login").select("a").attr("href", `${process.env.API_ROOT}/login`).html("Login");
-              d3
-                .select("#logout")
-                .remove();
-            }
-            else{
-              console.log("failed to logout")
-            }
-          })
-          .catch(error => {
-            // console.log(error);
-          })
-
+// Set headers if necessary
+let headers = {}
+if (process.env.API_ROOT.includes('http://localhost:5000')) {
+  headers = {
+    'X-CSRFToken': csrftoken || '',
+    "Access-Control-Allow-Origin": 'http://localhost:5000',
+    "Access-Control-Allow-Credentials": "true",
+  }
 }
 
-fetch(`${process.env.API_ROOT}/whoami`, {
-            method: 'GET',
-            credentials: 'include',
-            //headers: {
-            //    'X-CSRFToken': csrftoken || '',
-            //    "Access-Control-Allow-Origin": 'http://localhost:8000',
-            //    "Access-Control-Allow-Credentials": "true",
-            //}
-        })
-        .then((response) => {
+function logout() {
+  fetch(
+    `${process.env.API_ROOT}/logout`, 
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: headers,
+    }
+  )
+    .then((response) => {
+      if(response.status === 200) {
+        d3.select("#login").select("a").attr("href", `${process.env.API_ROOT}/login`).html("Login");
+        d3
+          .select("#logout")
+          .remove();
+      } else{
+        console.log("failed to logout")
+      }
+    })
+}
 
-          if(response.status === 200)
-          {
-            response.text().then((t) => {
-              let e = t.substring("14")
-              d3.select("#login").select("a").attr("href", null).html("Logged in: " + e);
-              d3
-                .select("#loginOut")
-                .append("li")
-                .on("click", () => {
-                  logout()
-                })
-                .attr("id", "logout")
-                .append("a")
-                .html("Logout")
-            })
-          }
-          else{
-            d3.select("#login").select("a").html("Login");
-          }
-        })
-        .catch(error => {
-          // console.log(error);
-        })
+fetch(
+  `${process.env.API_ROOT}/whoami`,
+  {
+    method: 'GET',
+    credentials: 'include',
+    headers: headers,
+  }
+)
+  .then((response) => {
+    if(response.status === 200)
+    {
+      response.text().then((t) => {
+        let e = t.substring(14)
+        d3.select("#login").select("a").attr("href", null).html("Logged in: " + e);
+        d3
+          .select("#loginOut")
+          .append("li")
+          .on("click", () => {
+            logout()
+          })
+          .attr("id", "logout")
+          .append("a")
+          .html("Logout")
+      })
+    }
+    else{
+      d3.select("#login").select("a").html("Login");
+    }
+  })
 
 
 fetch(MODELS_URL)
@@ -125,37 +116,10 @@ fetch(MODELS_URL)
 	})
 	.then((myJson) => {
 		const rows = Object.values(myJson);
-    console.log(rows);
 		SimpleTableCreator(document.getElementById('modelPage'), rows);
 	})
 
-console.log(document.cookie);
-
-// fetch(`http://127.0.0.1:5000/api/login`, {
-//         method: 'POST',
-//         headers: {
-//             'X-CSRFToken': csrftoken || '',
-//             "Access-Control-Allow-Origin": 'http://vdl.sci.utah.edu/workforce-frontend/frontend/dist',
-//             "Access-Control-Allow-Credentials": "true",
-//         },
-//         body: `csrfmiddlewaretoken=${csrftoken}&username=${username}&password=${password}`
-//     })
-//     .then(response => { console.log(response); return response })
-//     .then(data => {
-//         console.log(data);
-//         if (data.redirected) {
-//             loggedIn = true;
-//         } else {
-//             username = ""
-//             password = ""
-//         }
-//     })
-//     .catch(error => {
-//         console.log(error)
-//         // if (error.response.status === 401) setError(error.response.data.message);
-//         // else setError("something went wrong")
-//     })
-//Setting up undo/redo hotkey to typical buttons
+// Set up undo/redo hotkey to typical buttons
 document.onkeydown = function(e){
   var mac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
 

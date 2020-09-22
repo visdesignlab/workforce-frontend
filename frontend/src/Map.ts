@@ -159,7 +159,7 @@ class Map{
 					return d3.interpolateRdBu(this.supplyScore[county]);
 				}
 				let that:any = this
-				innerPromise.then((us)=> {
+				innerPromise.then((us: any)=> {
 					var topojsonFeatures = topojson.feature(us, us.objects[map]);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
 					// var projection = d3.geoAlbersUsa()
@@ -168,8 +168,6 @@ class Map{
 					let projection = d3.geoMercator().scale(4000).translate([520/2, 600/2])
 					projection.center(mapCenter);
 					var path = d3.geoPath(projection);
-
-					console.log("applying g")
 
 					this.svg.append("g")
 						.attr("class", "counties")
@@ -472,8 +470,6 @@ class Map{
 
 	highlightAllCounties(counties: string[])
 	{
-		console.log(d3.selectAll('svg .counties').selectAll('path'));
-
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => counties.includes((d as any).properties.NAME))
 			.classed('selectedCounty', true);

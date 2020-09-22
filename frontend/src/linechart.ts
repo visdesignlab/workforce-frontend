@@ -214,10 +214,6 @@ class Linechart{
 		lineChartGroup.append("g")
 			.call(yAxis);
 
-		// lineChartGroup.on('mouseover', d=> {
-		// 	console.log(profession);
-		// })
-
 		lineChartGroup.on('click', d=>{
 			this.controller.updateSelectedProf(profession);
 		})
