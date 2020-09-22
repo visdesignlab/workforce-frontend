@@ -1,6 +1,4 @@
 import * as d3 from 'd3';
-import * as topojson from 'topojson-client';
-import {legendColor} from 'd3-svg-legend'
 import {Sidebar} from './newSidebar';
 import {Map} from './Map';
 

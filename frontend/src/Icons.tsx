@@ -1,5 +1,4 @@
 import React from 'react';
-// import { symbol, symbols } from 'd3';
 
 interface AddTaskGlyphProps {
   size?: number;

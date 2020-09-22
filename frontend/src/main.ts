@@ -1,17 +1,11 @@
-import {Map} from './Map';
-import {MapController} from './mapController';
-import {MapEvents} from './mapEvents'
-import {Sidebar} from './newSidebar'
+import { MapController } from './mapController';
+import { MapEvents } from './mapEvents'
+import { SimpleTableCreator } from './modelInterface/SimpleCreator';
 import 'bootstrap';
 import 'bootstrap-select';
 import * as d3 from 'd3';
-require('dotenv').config()
 
 const MODELS_URL = `${process.env.API_ROOT}/models`;
-
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { SimpleTableCreator } from './modelInterface/SimpleCreator';
 
 d3.select('#visualization').on('click', () => {
   (d3.select('#visualization').node() as HTMLElement).className = 'is-active';

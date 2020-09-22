@@ -1,29 +1,30 @@
 const path = require('path');
-const Dotenv = require('dotenv-webpack');
+const webpack = require('webpack');
 
-module.exports = {
-  target: 'node',
-  entry: ["./src/main.ts"],
-  output: {
-      filename: "bundle.js",
-      path: path.resolve(__dirname, 'dist'),
-      publicPath: '/',
-  },
+module.exports = env => {
+  return {
+    node: { global: true, fs: 'empty' },
+    entry: ["./src/main.ts"],
+    output: {
+        filename: "bundle.js",
+        path: path.resolve(__dirname, 'dist'),
+        publicPath: '/',
+    },
 
-  // Enable sourcemaps for debugging webpack's output.
-  devtool: "source-map",
-  devServer: {
-    contentBase: './dist',
-    hot: true,
-  },
-	mode: 'development',
+    // Enable sourcemaps for debugging webpack's output.
+    devtool: "source-map",
+    devServer: {
+      contentBase: './dist',
+      hot: true,
+    },
+    mode: 'development',
 
-  resolve: {
-      // Add '.ts' and '.tsx' as resolvable extensions.
-      extensions: [ ".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
-  },
+    resolve: {
+        // Add '.ts' and '.tsx' as resolvable extensions.
+        extensions: [ ".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
+    },
 
-  module: {
+    module: {
       rules: [
           // All files with a '.ts' or '.tsx' extension will be handled by 'awesome-typescript-loader'.
           { test: /\.tsx?$/, loader: "awesome-typescript-loader" },
@@ -59,10 +60,11 @@ module.exports = {
             ]
           }
       ]
-
-
-        },
-        plugins: [
-          new Dotenv()
-        ],
+    },
+    plugins: [
+      new webpack.DefinePlugin({
+        'process.env.API_ROOT': JSON.stringify(env.API_ROOT)
+      })
+    ]
+  }
 };
