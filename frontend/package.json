@@ -42,7 +42,7 @@
   },
   "scripts": {
     "build": "webpack --env.API_ROOT=/api --progress --colors",
-    "start": "webpack-dev-server --env.API_ROOT=http://localhost:5000/api --watch --progress --colors"
+    "start": "webpack-dev-server --env.API_ROOT=http://localhost:8000/api --watch --progress --colors"
   },
   "repository": {
     "type": "git",
