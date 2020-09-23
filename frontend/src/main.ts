@@ -50,8 +50,7 @@ api_request('whoami')
     if(response.status === 200)
     {
       response.text().then((t) => {
-        let e = t.substring(14)
-        d3.select("#login").select("a").attr("href", null).html("Logged in: " + e);
+        d3.select("#login").select("a").attr("href", null).html(`Logged in: ${t}`);
         d3
           .select("#loginOut")
           .append("li")
