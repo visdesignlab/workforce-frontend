@@ -4,8 +4,7 @@ import { SimpleTableCreator } from './modelInterface/SimpleCreator';
 import 'bootstrap';
 import 'bootstrap-select';
 import * as d3 from 'd3';
-
-const MODELS_URL = `${process.env.API_ROOT}/models`;
+import { api_request } from './API_utils'
 
 d3.select('#visualization').on('click', () => {
   (d3.select('#visualization').node() as HTMLElement).className = 'is-active';
@@ -31,42 +30,11 @@ promise.then(()=>{
   });
 });
 
-export function getCookie(name: string) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) {
-            var cookie = cookies[i];
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
 
-const csrftoken = getCookie('csrftoken');
 
-// Set headers if necessary
-let headers = {}
-if (process.env.API_ROOT.includes('http://localhost:5000')) {
-  headers = {
-    'X-CSRFToken': csrftoken || '',
-    "Access-Control-Allow-Origin": 'http://localhost:5000',
-    "Access-Control-Allow-Credentials": "true",
-  }
-}
 
 function logout() {
-  fetch(
-    `${process.env.API_ROOT}/logout`, 
-    {
-      method: 'GET',
-      credentials: 'include',
-      headers: headers,
-    }
-  )
+  api_request('logout')
     .then((response) => {
       if(response.status === 200) {
         d3.select("#login").select("a").attr("href", `${process.env.API_ROOT}/login`).html("Login");
@@ -79,14 +47,7 @@ function logout() {
     })
 }
 
-fetch(
-  `${process.env.API_ROOT}/whoami`,
-  {
-    method: 'GET',
-    credentials: 'include',
-    headers: headers,
-  }
-)
+api_request('whoami')
   .then((response) => {
     if(response.status === 200)
     {
@@ -110,7 +71,7 @@ fetch(
   })
 
 
-fetch(MODELS_URL)
+  api_request('models')
 	.then((response) => {
 		return response.json();
 	})

@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import {MapController} from './mapController'
+import { api_request } from './API_utils'
 
 import axios from 'axios'
 
@@ -86,7 +87,7 @@ class MapEvents{
 	}
 
 	changeModelData():Promise<any> {
-		let promise = d3.json(`${process.env.API_ROOT}/models`);
+		let promise = api_request('models').then(response => response.json())
 		let counter = 0;
 
 		promise = promise.then((results: any[])=> {

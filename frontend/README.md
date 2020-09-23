@@ -13,4 +13,4 @@ To install necessary packages, run the command `npm install`.
 To build this project, run the command `npm run-script build`. This will use webpack to bundle the typescript files into a single minified javascript file.
 
 ## Running
-To run this project, run the command `npm start`. The project will be served on localhost:8000.
+To run this project, run the command `npm start`. The project will be served on localhost:8080.

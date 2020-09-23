@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import {Linechart} from './linechart'
 import {MapController} from './mapController'
+import { api_request } from './API_utils'
 
 /**
  *
@@ -50,7 +51,7 @@ class Map{
 
 		let promise;
 		// if (!customModel) {
-		promise = d3.json(`${process.env.API_ROOT}/${modelFile}`);
+		promise = api_request(modelFile).then(response => response.json());
 
 		let innerPromise = d3.json("data/UT-49-utah-counties.json");
 		// }
