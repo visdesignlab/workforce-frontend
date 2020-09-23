@@ -63,7 +63,7 @@ api_request('whoami')
       })
     }
     else{
-      d3.select("#login").select("a").html("Login");
+      d3.select("#login").select("a").attr("href", `${process.env.API_ROOT}/login`).html("Login");
     }
   })
 
