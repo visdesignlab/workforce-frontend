@@ -32,7 +32,6 @@ class MapEvents{
 
 				bodyFormData.set('removed_professions', removedString.slice(0, removedString.length - 2));
 
-
 				axios({
 			    method: 'post',
 			    url: `${process.env.API_ROOT}/rerun-model`,
@@ -93,10 +92,8 @@ class MapEvents{
 			this.map.serverModels = results;
 			for(let mod in results)
 			{
-
 				if(counter == 2)
 				{
-					// this.map.updateModelsSelected([mod]);
 					d3.select('#modelData')
 						.append('option')
 						.attr("value", mod)
@@ -114,7 +111,6 @@ class MapEvents{
 
 			}
 		})
-
 
 		document.getElementById("modelData").addEventListener('change',()=>{
 			this.map.removedProfessions.clear();
