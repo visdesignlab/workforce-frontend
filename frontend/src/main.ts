@@ -28,7 +28,7 @@ promise.then(()=>{
     mapController.drawSidebar();
     mapController.prov.done();
 
-		alert('The current model is based on dummy data.');
+		// alert('The current model is based on dummy data.');
   });
 });
 
