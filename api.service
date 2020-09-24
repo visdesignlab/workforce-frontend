@@ -1,0 +1,12 @@
+[Unit]
+Description=Workforce API
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/workforce-frontend/backend/
+ExecStartPre=/home/ubuntu/.local/bin/pipenv install
+ExecStart=/home/ubuntu/.local/bin/pipenv run deploy
+Restart=always
+
+[Install]
+WantedBy=multiuser.target
