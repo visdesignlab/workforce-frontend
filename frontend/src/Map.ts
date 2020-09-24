@@ -200,10 +200,14 @@ class Map{
 					this.updateMapType(this.controller.prov.current().getState().scaleType, 0);
 				});
 				console.log(this.results)
-				this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 
 		});
 		return Promise.all([promise, innerPromise]);
+	}
+
+	initLineChart()
+	{
+		this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 	}
 	/**
 	 *
@@ -456,7 +460,6 @@ class Map{
 
 						this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
 						console.log("HEREEREREREE")
-						this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 				})
 			});
 		return Promise.all([promise1, promise2]);
@@ -476,16 +479,6 @@ class Map{
 			return !counties.includes((d as any).properties.NAME)
 		})
 			.classed("selectedCounty", false)
-
-		console.log("HEREEREREREE")
-
-		console.log(this.results)
-		if(this.results)
-		{
-			this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
-			this.controller.setAllHighlights();
-
-		}
 
 	}
 

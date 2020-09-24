@@ -188,7 +188,13 @@ class MapController{
 			this.secondMap.destroy();
 		}
 
-		promise = promise.then(() => this.setAllHighlights());
+		promise = promise.then(() => {
+      this.originalMap.initLineChart();
+      if(this.comparisonMode){
+        this.secondMap.initLineChart();
+      }
+      this.setAllHighlights()
+    });
 
 		return promise;
 	}
@@ -255,11 +261,14 @@ class MapController{
 		this.prov.addObserver(['countiesSelected'], () => {
 			this.sidebar.highlightAllCounties(this.prov.current().getState().countiesSelected)
 			this.originalMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
+      this.originalMap.initLineChart();
 
 			if(this.comparisonMode)
 			{
 				this.secondMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
+        this.secondMap.initLineChart();
 			}
+      this.setAllHighlights()
 
 			this.sidebar.updateProfessions();
 		})
