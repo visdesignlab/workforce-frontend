@@ -62,8 +62,6 @@ let arr = Array.from(removedProfessions) as string[];
     axios
       .post(`${process.env.API_ROOT}/file-upload`, formData)
       .then(() => {
-        //setUploadComplete(true);
-        //goToNextStep();
 		alert('Uploaded successfully!')
       })
       .catch(err => {
