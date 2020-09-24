@@ -93,7 +93,7 @@ class Linechart{
 		let professions = Object.keys(this.controller.originalMap.results[2019]['State of Utah']['supply']);
 		if(this.controller.comparisonMode)
 		{
-			professions.push(Object.keys(this.controller.secondMap.results[2019]['State of Utah']['supply']))
+			professions.concat(Object.keys(this.controller.secondMap.results[2019]['State of Utah']['supply']))
 		}
 
 		for (let k in professions) {
