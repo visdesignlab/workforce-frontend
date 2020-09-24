@@ -28,7 +28,26 @@ promise.then(()=>{
     mapController.drawSidebar();
     mapController.prov.done();
 
-    api_request('whoami')
+		alert('The current model is based on dummy data.');
+  });
+});
+
+
+function logout() {
+  api_request('logout')
+    .then((response) => {
+      if(response.status === 200) {
+        d3.select("#login").select("a").attr("href", `${process.env.API_ROOT}/login`).html("Login");
+        d3
+          .select("#logout")
+          .remove();
+      } else{
+        console.log("failed to logout")
+      }
+    })
+}
+
+api_request('whoami')
       .then((response) => {
         if(response.status === 200)
         {
@@ -59,25 +78,6 @@ promise.then(()=>{
         const rows = Object.values(myJson);
         SimpleTableCreator(document.getElementById('modelPage'), rows);
       })
-
-		alert('The current model is based on dummy data.');
-  });
-});
-
-
-function logout() {
-  api_request('logout')
-    .then((response) => {
-      if(response.status === 200) {
-        d3.select("#login").select("a").attr("href", `${process.env.API_ROOT}/login`).html("Login");
-        d3
-          .select("#logout")
-          .remove();
-      } else{
-        console.log("failed to logout")
-      }
-    })
-}
 
 // Set up undo/redo hotkey to typical buttons
 document.onkeydown = function(e){
