@@ -103,7 +103,6 @@ class Linechart{
 				{
 					counter += this.controller.originalMap.results[i][j]['demand'][professions[k]]
 				}
-				console.log(counter)
 				d.push(counter);
 			}
 
@@ -116,14 +115,12 @@ class Linechart{
 					{
 						counter += this.controller.secondMap.results[i][j]['demand'][professions[k]]
 					}
-					console.log(counter);
 					d.push(counter);
 				}
 			}
 		}
 
 		this.data.series = demand;
-		console.log(d);
 
 		var x = d3.scaleLinear()
 			.domain([+d3.min(this.data.dates), +d3.max(this.data.dates)])

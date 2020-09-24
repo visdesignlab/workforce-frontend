@@ -287,7 +287,6 @@ class MapController{
 	 */
 	 updateMapType(newMapType: string)
 	 {
-     console.log(newMapType)
      let action = this.prov.addAction("Map Shape Changed", (state: AppState) => {
 			 state.mapType = newMapType;
 			 return state;

@@ -47,10 +47,6 @@ class Map{
 		const map = this.controller.prov.current().getState().mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
-		console.log(this.controller.serverModels)
-		console.log(this.modelData)
-		console.log(modelFile)
-
 		let promise;
 		// if (!customModel) {
 		promise = api_request(modelFile).then(response => response.json());
@@ -59,7 +55,6 @@ class Map{
 
 		promise = promise.then((results)=> {
 
-			console.log(results);
 
 			results = results[map];
 			this.results = results;
@@ -168,7 +163,7 @@ class Map{
 						.enter().append("path")
 						.attr("d", path)
 						.attr('fill', colorScale)
-						.attr('stroke', 'black')
+						.attr('stroke', 'white')
 						.on('click', d => this.controller.updateSelectedCounty(d.properties.NAME))
 						.on("mouseover", (d)=>{
 							var f = d3.format(".2f");
@@ -199,7 +194,6 @@ class Map{
 
 					this.updateMapType(this.controller.prov.current().getState().scaleType, 0);
 				});
-				console.log(this.results)
 
 		});
 		return Promise.all([promise, innerPromise]);
@@ -399,8 +393,6 @@ class Map{
 		const map = this.controller.prov.current().getState().mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
-		console.log(map)
-		console.log(modelFile)
 
 		let replacementJson = undefined;
 
@@ -459,7 +451,6 @@ class Map{
 						}
 
 						this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
-						console.log("HEREEREREREE")
 				})
 			});
 		return Promise.all([promise1, promise2]);
@@ -471,16 +462,27 @@ class Map{
 
 	highlightAllCounties(counties: string[])
 	{
+
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => counties.includes((d as any).properties.NAME))
-			.classed('selectedCounty', true);
+			.classed('selectedCounty', true)
+			.classed('notSelectedCounty', false)
 
-		d3.selectAll('.selectedCounty').filter(d => {
-			return !counties.includes((d as any).properties.NAME)
+		d3.selectAll('svg .counties').selectAll('path')
+		.filter(d => {
+			return !(counties.includes((d as any).properties.NAME))
 		})
 			.classed("selectedCounty", false)
+			.classed('notSelectedCounty', true);
+
+		if(counties.length === 1 && counties[0] === "State of Utah")
+		{
+			d3.selectAll('svg .counties').selectAll('path')
+				.classed("notSelectedCounty", false);
+		}
 
 	}
+
 
 	removeProfessionsFromData(results, replacementJson)
 	{

@@ -150,9 +150,13 @@ body {
 }
 
 .selectedCounty {
-	stroke: #00ffcc;
-	stroke-width: 4px;
-	opacity: 0.8;
+	stroke: #333333;
+	stroke-width: 2px;
+	opacity: 1;
+}
+
+.notSelectedCounty {
+	opacity: 0.3;
 }
 
 #sidebar {

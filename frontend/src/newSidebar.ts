@@ -59,8 +59,6 @@ class Sidebar {
 			.on("click", function() {
 				let clicked = (this as HTMLElement).innerHTML;
 
-				console.log(clicked);
-
 				if(clicked === "Need")
 				{
 					that.countiesAscending = !that.countiesAscending;
