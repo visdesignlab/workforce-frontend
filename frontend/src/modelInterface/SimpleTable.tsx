@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
 import { withStyles, Theme, createStyles, makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -89,7 +88,6 @@ if (!count || count == 0) {
 		onClick={() => {
 			isDone = false;
 setCount(count + 1)
-console.log( isDone)
 		}}
       >
         Upload

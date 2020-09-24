@@ -13,7 +13,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormLabel from '@material-ui/core/FormLabel';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
 import Checkbox from '@material-ui/core/Checkbox';
 
 
@@ -54,20 +53,15 @@ const SimpleForm = () => {
   const handleFormSubmission = (info: ModelConfig) => {
     const formData = new FormData();
 
-console.log( 'info')
     formData.append('file', info.file);
 let arr = Array.from(removedProfessions) as string[];
     //info.removedProfessions = arr as string[];
     di.removedProfessions = arr;
-	console.log(info)
     formData.append('metadata', JSON.stringify(info));
 
     axios
-      .post(`/api/file-upload`, formData)
+      .post(`${process.env.API_ROOT}/file-upload`, formData)
       .then(() => {
-        //setUploadComplete(true);
-        //goToNextStep();
-		console.log( 'succccc')
 		alert('Uploaded successfully!')
       })
       .catch(err => {

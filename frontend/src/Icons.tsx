@@ -1,16 +1,10 @@
 import React from 'react';
-// import { symbol, symbols } from 'd3';
 
 interface AddTaskGlyphProps {
   size?: number;
   fill?: string;
   scale?: number;
 }
-
-function translate(x: number, y: number): string {
-  return `translate(${x}, ${y})`;
-}
-
 
 //Occurs on clear all click ???
 export function CountiesChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
@@ -32,7 +26,6 @@ export function CountiesChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphProps)
   );
 }
 
-//Occurs on clear all click ???
 export function ProfessionsChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   return (
     <g>
@@ -52,7 +45,6 @@ export function ProfessionsChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphPro
   );
 }
 
-//Occurs on clear all click ???
 export function YearChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   return (
     <g>
@@ -72,7 +64,6 @@ export function YearChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   );
 }
 
-//Occurs on clear all click ???
 export function ModelChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   return (
     <g>
@@ -92,7 +83,6 @@ export function ModelChanged({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   );
 }
 
-//Occurs on clear all click ???
 export function MapTypeChange({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   return (
     <g>
@@ -112,7 +102,6 @@ export function MapTypeChange({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   );
 }
 
-//Occurs on clear all click ???
 export function MapShapeChange({ size = 15, fill = "#ccc" }: AddTaskGlyphProps) {
   return (
     <g>

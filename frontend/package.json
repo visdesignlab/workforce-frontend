@@ -10,15 +10,13 @@
     "@types/react": "^16.9.38",
     "@types/react-dom": "^16.9.8",
     "@visdesignlab/provenance-lib-core": "^5.0.0",
+    "@visdesignlab/trrack": "^1.2.0",
     "awesome-typescript-loader": "^5.2.1",
     "axios": "^0.19.2",
     "bootstrap": "^4.3.1",
     "cool-checkboxes-for-bulma.io": "^1.1.0",
     "d3": "^5.11.0",
     "d3-svg-legend": "^2.25.6",
-    "d3fc": "^14.1.30",
-    "express": "^4.17.1",
-    "express-session": "^1.17.1",
     "jquery": "^3.4.1",
     "popper.js": "^1.15.0",
     "react": "^16.13.1",
@@ -43,9 +41,8 @@
     "typescript": "^3.5.3"
   },
   "scripts": {
-    "build": "webpack",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "build": "webpack --env.API_ROOT=/api --progress --colors",
+    "start": "webpack-dev-server --env.API_ROOT=http://localhost:5000/api --watch --progress --colors"
   },
   "repository": {
     "type": "git",

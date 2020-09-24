@@ -19,8 +19,6 @@ class Sidebar {
   constructor(map:MapController) {
     this.cell = {height: 30, width: 150, margin:10}
     this.map = map;
-    // this.countiesSortingFunction = this.getSortingOptions(0, true);
-    // this.professionsSortingFunction = this.getSortingOptions(0, true);
 
     this.countiesSvg = d3.select('#counties').select('svg');
 
@@ -67,9 +65,6 @@ class Sidebar {
   updateTable()
   {
     this.updateCounties();
-
-    //NOW ADDING THE PROFESSIONS TABLE
-
     this.updateProfessions();
   }
 
@@ -110,66 +105,6 @@ class Sidebar {
       return sortingFunction;
     }
   }
-	//
-  // highlightRect(id) {
-	// 	console.log(id);
-  //   if(id == "State of Utah")
-  //   {
-  //     this.currentlySelected.forEach(id => {
-  //       if(id == "State of Utah")
-  //         return;
-  //       this.map.unHighlightPath(id);
-  //     })
-	//
-  //     this.currentlySelected = new Set<string>().add("State of Utah");
-	// 		this.map.highlightPath("State of Utah");
-  //     return;
-  //   }
-	//
-	// 	if(this.currentlySelected.has("State of Utah"))
-	// 	{
-	// 		this.map.unHighlightPath("State of Utah");
-	// 	}
-	//
-	//
-  //   if(this.currentlySelected.has(id))
-  //   {
-  //     this.currentlySelected.delete(id);
-	//
-  //     if(this.currentlySelected.size == 0)
-  //     {
-  //       this.currentlySelected = new Set<string>().add("State of Utah");
-	// 			this.map.highlightPath("State of Utah")
-  //     }
-	//
-	// 		this.map.unHighlightPath(id);
-	//
-  //     return;
-  //   }
-	//
-	//
-  //   this.currentlySelected.add(id);
-  //   this.map.highlightPath(id);
-  // }
-	//
-  // highlightBar(id){
-    // id = this.removeSpaces(id);
-		//
-    // this.updateProfessions();
-		//
-    // d3.select(`#${id}_checkBox`)
-    //   .property('checked', true);
-  // }
-	//
-  // unHighlightBar(id){
-  //   id = this.removeSpaces(id);
-	//
-  //   this.updateProfessions();
-	//
-  //   //
-  //   d3.select(`#${id}_checkBox`)
-  //     .property('checked', false);
-  // }
 
   removeSpaces(s) : string{
     return s.replace(/\s/g, '');
@@ -209,7 +144,6 @@ class Sidebar {
 				return d.value
 			})
 			.classed("selectedBox", d => d.value)
-			// .attr("class", "styled")
 			.attr("type", "checkbox")
 			.attr("id", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
 			.on("click", d => {
@@ -333,7 +267,6 @@ class Sidebar {
 
   doubleMapRows(td, xScale, domainMax)
   {
-		console.log("double map row!");
 		let that = this;
     let labels = td.filter((d) => {
        return d.vis == 'text' && ((d.type !== "supplyChangeable" && d.type !== "needChangeable") || !this.map.removedProfessions.has(d.name));
@@ -356,7 +289,6 @@ class Sidebar {
 				else{
 					that.map.removedMapSupply[d.name] = d3.select(this).node().value;
 				}
-				// that.map.updateSelections(that.selectedProfessions);
 			})
 
 		let doubleLabels = td.filter((d) => {
@@ -387,20 +319,6 @@ class Sidebar {
 				d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
 			});
 
-	// circlesSvg.append("circle")
-	// 	.attr("cx", 10)
-	// 	.attr("cy", 30)
-	// 	.style("fill", "#7570B3")
-	// 	.attr("r", 5)
-	// 	.on("mouseover", () => {
-	// 		d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
-	// 		d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.modelsUsed[0]].name + "</h5>")
-	// 			.style("left", (d3.event.pageX) + "px")
-	// 			.style("top", (d3.event.pageY - 28) + "px");
-	// 	})
-	// 	.on("mouseout", () => {
-	// 		d3.select("#modelNameTooltip").transition().duration(200).style("opacity", 0);
-	// 	});
 		let button = td.filter(d => {
 			return d.vis == "button";
 		})
@@ -493,7 +411,6 @@ class Sidebar {
         return (d.value[0] - d.value[1]) < 0 ? "#cb181d" : "#034e7b"
       });
 
-
     let goalsCircleScored = barCircleGroups
       .append("circle")
       .attr("cx", function(d){
@@ -521,47 +438,11 @@ class Sidebar {
 
   changeProfession(profName)
   {
-    // let allFlag = true;
-    //
-    // for(let j of this.selectedProfessions)
-    // {
-    //   if(!j)
-    //   {
-    //     allFlag = false;
-    //   }
-    // }
-
 		this.map.updateSelectedProf(profName);
-
-
-    // if(false)
-    // {
-		//
-    //   for( let k in this.selectedProfessions)
-    //   {
-    //     this.selectedProfessions[k] = false;
-    //   }
-		//
-    //   this.selectedProfessions[profName] = true;
-		//
-    //   this.map.updateSelections(this.selectedProfessions);
-    // }
-    // else if (!this.selectedProfessions.hasOwnProperty(profName)
-    //     || this.selectedProfessions[profName]) {
-		//
-    //       this.selectedProfessions[profName] = false;
-    //       this.map.updateSelections(this.selectedProfessions);
-		//
-    // }
-    // else {
-    //   this.selectedProfessions[profName] = true;
-    //   this.map.updateSelections(this.selectedProfessions);
-    // }
   }
 
   updateCounties()
   {
-
     d3.select("#countiesTable").select("tbody").selectAll('.notState').remove();
     d3.select("#countiesTable").attr("class", this.map.comparisonMode ? "doubleShade svgTable" : "singleShade svgTable")
 
@@ -604,15 +485,12 @@ class Sidebar {
       .domain([0, domainMax])
       .range([0, this.cell.width - this.cell.margin * 2]);
 
-
-
     let check = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().getState().countiesSelected.includes(stateData[0]), name:stateData[0]}
     let name = {type:"name", vis:"text", value:stateData[0]}
     let supply = {type:"supply", vis:"text", value:stateData[1]}
     let need = {type:"need", vis:"text", value:stateData[2]}
     let gap = {type:"axis", vis:"axis", value:[stateData[1], stateData[2]]}
 		let fakeSpot = {type:"name", vis:"text", value:''}
-
 
 		let check2 = {type:"selectedCheck", vis:"allCheck", value:this.map.prov.current().getState().countiesSelected.includes(stateData[0]), name:stateData[0]}
 		let name2 = {type:"name", vis:"text", value:stateData[0]}
@@ -646,7 +524,6 @@ class Sidebar {
 
     if(this.map.comparisonMode)
     {
-
       for(let i = 0; i < countiesData.length; i++)
       {
         doubleCountyData.push(countiesData[i]);
@@ -661,8 +538,6 @@ class Sidebar {
       .enter()
       .append("tr")
       .classed("notState", true)
-      // .on("mouseover", this.tree.updateTree)
-      // .on("mouseout", this.tree.clearTree);
 
     let td = tr.selectAll("td").data((d, i) => {
 
@@ -762,7 +637,6 @@ class Sidebar {
       doubleProfData.push(profData[i]);
       doubleProfData.push(profData[i]);
     }
-
 
     let profScale = d3.scaleLinear()
     		.domain([0, d3.max(profData, (d) => d3.max([d[1], d[2], d[4], d[5]]))])

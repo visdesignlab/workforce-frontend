@@ -1,10 +1,8 @@
 import * as d3 from 'd3';
-import * as topojson from 'topojson-client';
-import {legendColor} from 'd3-svg-legend'
 import {Sidebar} from './newSidebar';
 import {Map} from './Map';
 
-import { ProvVis, EventConfig, Config, ProvVisConfig, ProvVisCreator } from './ProvVis/provvis';
+import { EventConfig, ProvVisCreator } from './ProvVis/provvis';
 
 import {
   CountiesChanged,
@@ -18,22 +16,9 @@ import {
 import
 {
   initProvenance,
-  ProvenanceGraph,
   Provenance,
-  ActionFunction,
-  SubscriberFunction,
-  NodeMetadata,
-  NodeID,
-  Diff,
-  RootNode,
-  StateNode,
-  ProvenanceNode,
-  isStateNode,
-  Nodes,
-  CurrentNode,
-  Artifacts,
-  Extra
-} from '@visdesignlab/provenance-lib-core';
+  NodeID
+} from '@visdesignlab/trrack';
 
 export interface EditedCounties{
   supply: {
@@ -190,7 +175,6 @@ class MapController{
 		if(this.comparisonMode)
 		{
 			promise = promise.then(() => this.secondMap.drawMap(this.prov.current().getState().modelsSelected[1]));
-			// promise = promise.then(() => this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType));
 			d3.select("#comparisonView")
 				.style("display", "block")
 			d3.select("#map")
@@ -211,13 +195,11 @@ class MapController{
 
 	drawSidebar()
 	{
-
 		this.sidebar.initSideBar(this.originalMap.currentYearData, this.secondMap.currentYearData);
 	}
 
 	setupObservers()
 	{
-
     this.prov.addGlobalObserver(() => {
       ProvVisCreator(
         document.getElementById("provDiv")!,
@@ -232,20 +214,13 @@ class MapController{
 		this.prov.addObserver(['year'], () => {
 
 			let state = this.prov.current().getState();
-			console.log(state.year)
 
 			let promise = this.originalMap.updateMapYear(state.year)
 			.then(() => {
 				return this.secondMap.updateMapYear(state.year);
 			})
 
-
 			return Promise.all([promise]);
-		})
-
-		this.prov.addObserver(['mapType'], () => {
-
-			console.log("updating map type", this.prov.current().getState().mapType);
 		})
 
 		this.prov.addObserver(['modelsSelected'], () => {
@@ -264,7 +239,6 @@ class MapController{
 		})
 
 		this.prov.addObserver(['scaleType'], () => {
-			console.log(this.prov.current().getState().scaleType);
 			this.originalMap.updateMapType(this.prov.current().getState().scaleType, 1000);
 			if(this.comparisonMode)
 			{
@@ -275,7 +249,6 @@ class MapController{
 		})
 
 		this.prov.addObserver(['countiesSelected'], () => {
-
 			this.sidebar.highlightAllCounties(this.prov.current().getState().countiesSelected)
 			this.originalMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
 
@@ -285,7 +258,6 @@ class MapController{
 			}
 
 			this.sidebar.updateProfessions();
-
 		})
 
 		this.prov.addObserver(['professionsSelected'], () => {
@@ -293,10 +265,7 @@ class MapController{
 				this.drawSidebar();
 				this.setAllHighlights();
 			});
-
 		})
-
-    console.log("observers set")
 	}
 
 	/**
@@ -359,19 +328,6 @@ class MapController{
       .applyAction();
 	 }
 
-	// updateMapType(mapData:string):void{
-	// 	this.mapData = mapData;
-	//
-	// 	this.originalMap.updateMapType(mapData, 1000);
-	// 	if(this.comparisonMode)
-	// 	{
-	// 		this.secondMap.updateMapType(mapData, 1000);
-	//
-	// 	}
-	// 	this.drawSidebar();
-	// }
-
-
 	/**
 	 * This handles when the user selects a new year
 	 * @param year this is the new year selected by the user
@@ -382,8 +338,6 @@ class MapController{
 		{
 			this.comparisonMode = true;
 		}
-
-    console.log(this.comparisonMode);
 
 		let promise = this.originalMap.updateMapYear(year)
 		.then(() => {
@@ -428,7 +382,6 @@ class MapController{
 
 	updateSelectedCounty(selectCounty: string)
 	{
-
     let label = '';
     if(this.prov.current().getState().countiesSelected.includes(selectCounty))
     {
@@ -502,62 +455,8 @@ class MapController{
 	mouseOut(){
 		d3.select("#tooltip").transition().duration(500).style("opacity", 0);
 	}
-	//
-	// highlightPath(name:string) {
-	//
-	// 	console.log(this.selectedCounties)
-	//
-	// 	if(!this.selectedCounties.has(name) && this.selectedCounties.has("State of Utah"))
-	// 	{
-	// 		this.sidebar.currentlySelected.delete("State of Utah")
-	// 		this.sidebar.currentlySelected.add(name)
-	//
-	// 	}
-	//
-	// 	else if(this.selectedCounties.has(name) && this.selectedCounties.size == 1)
-	// 	{
-	// 		this.sidebar.currentlySelected = new Set<string>();
-	// 		this.sidebar.currentlySelected.add("State of Utah");
-	// 	}
-	//
-	// 	if(this.selectedCounties.has(name))
-	// 	{
-	// 		this.unHighlightPath(name);
-	// 		this.setAllHighlights();
-	//
-	// 		return;
-	// 	}
-	//
-	// 	this.selectedCounties.add(name);
-	// 	this.originalMap.highlightPath(name);
-	// 	if(this.comparisonMode)
-	// 	{
-	// 		this.secondMap.highlightPath(name);
-	// 	}
-	// 	this.setAllHighlights();
-	//
-	// 	if(this.comparisonMode)
-	// 	{
-	// 		// this.modelComparison.drawComparison(this.originalMap.results, this.secondMap.results, this.comparisonType);
-	// 	}
-	//
-	// 	this.sidebar.highlightBar(name);
-	// }
-	//
-	// unHighlightPath(name:string) {
-	// 	this.selectedCounties.delete(name);
-	// 	this.originalMap.unHighlightPath(name);
-	// 	if(this.comparisonMode)
-	// 	{
-	// 		this.secondMap.unHighlightPath(name);
-	// 	}
-	// 	this.setAllHighlights();
-	//
-	// 	this.sidebar.unHighlightBar(name);
-	// }
 
 	setAllHighlights(){
-
 		for(let prof in this.prov.current().getState().professionsSelected)
 		{
 			if(this.prov.current().getState().professionsSelected[prof])
@@ -570,11 +469,6 @@ class MapController{
 		}
 	}
 
-  editSupplyNeed(name:string)
-  {
-
-  }
-
 	highlightProfession(name:string){
 		d3.selectAll(`.${name}rect`)
 			.classed('highlightProfRect', true)
@@ -585,10 +479,5 @@ class MapController{
 		d3.selectAll(`.${name}rect`)
 			.classed('highlightProfRect', false)
 	}
-
-	removeSpaces(s) : string{
-		return s.replace(/\s/g, '');
-	}
-
 }
 export{MapController};

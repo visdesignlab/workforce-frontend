@@ -19,7 +19,6 @@ class Linechart{
 		this.margin = {top: 20, right: 20, bottom: 40, left: 40};
 		this.lineChartSvg = d3.select('#linechart').append("svg").attr("width", 600).attr('height', 800);
 		this.clipPathID = 0;
-
 	}
 
 	public updateLineChart(selectedCounties:string[]) {
@@ -32,17 +31,9 @@ class Linechart{
 	}
 
 	public initLineChart(results, selectedCounties:string[]) {
-
 		this.lineChartSvg.selectAll('*').remove();
 		this.lineChartSvg.attr('height', 800)
 
-		// this.lineChartSvg.append('line')
-		// 	.attr('stroke', 'black')
-		// 	.attr('stroke-width', 2)
-		// 	.attr('x1', 600)
-		// 	.attr('x2', 600)
-		// 	.attr('y1', 0)
-		// 	.attr('y2', 800);
 		this.results = results;
 		var supply = [];
 		var demand = [];
@@ -50,7 +41,6 @@ class Linechart{
 
 		var professions = Object.keys(results[2019]['State of Utah']['supply']);
 		var max = 1;
-
 
 		for (let k in professions) {
 			supply = [];
@@ -83,7 +73,6 @@ class Linechart{
 			supply_demand.push([supply, demand, profession]);
 
 			max = d3.max([d3.max(demand), d3.max(supply), max])
-
 		}
 
 		for (let i in supply_demand) {
@@ -214,10 +203,6 @@ class Linechart{
 		lineChartGroup.append("g")
 			.call(yAxis);
 
-		// lineChartGroup.on('mouseover', d=> {
-		// 	console.log(profession);
-		// })
-
 		lineChartGroup.on('click', d=>{
 			this.controller.updateSelectedProf(profession);
 		})
@@ -286,8 +271,6 @@ class Linechart{
 			.style("mix-blend-mode", "multiply")
 			.attr("d", d => line(d));
 	}
-
-
 }
 
 export {Linechart};
