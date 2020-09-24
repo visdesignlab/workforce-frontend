@@ -9,4 +9,4 @@ ExecStart=/home/ubuntu/.local/bin/pipenv run deploy
 Restart=always
 
 [Install]
-WantedBy=default.target
+WantedBy=multiuser.target
