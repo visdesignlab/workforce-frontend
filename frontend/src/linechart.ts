@@ -39,6 +39,7 @@ class Linechart{
 		var demand = [];
 		var supply_demand = [];
 
+		console.log(results);
 		var professions = Object.keys(results[2019]['State of Utah']['supply']);
 		var max = 1;
 

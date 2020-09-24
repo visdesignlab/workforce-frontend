@@ -76,12 +76,14 @@ class MapEvents{
 		document.getElementById("mapData").addEventListener('change',()=>{
 			let mapData:string = (document.getElementById('mapData') as HTMLInputElement).value;
 			this.map.updateComparisonType(mapData);
+			console.log(mapData)
 		})
 	}
 
 	changeMapType() {
 		document.getElementById("mapType").addEventListener('change',()=>{
 			this.map.updateMapType((document.getElementById('mapType') as HTMLInputElement).value);
+			console.log((document.getElementById('mapType') as HTMLInputElement).value)
 		})
 	}
 

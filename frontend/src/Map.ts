@@ -49,6 +49,7 @@ class Map{
 
 		console.log(this.controller.serverModels)
 		console.log(this.modelData)
+		console.log(modelFile)
 
 		let promise;
 		// if (!customModel) {
@@ -57,6 +58,8 @@ class Map{
 		let innerPromise = d3.json("data/UT-49-utah-counties.json");
 
 		promise = promise.then((results)=> {
+
+			console.log(results);
 
 			results = results[map];
 			this.results = results;
@@ -196,6 +199,7 @@ class Map{
 
 					this.updateMapType(this.controller.prov.current().getState().scaleType, 0);
 				});
+				console.log(this.results)
 				this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 
 		});
@@ -400,15 +404,6 @@ class Map{
 			replacementJson = res;
 		})
 
-		api_request(`${modelFile}`)
-			.then((response) => {
-				return response.json();
-			})
-			.then((myJson) => {
-				console.log(myJson)
-			})
-
-
 		let promise2 = api_request(`${modelFile}`)
 			.then((response) => {
 					return response.json()
@@ -460,6 +455,7 @@ class Map{
 						}
 
 						this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
+						console.log("HEREEREREREE")
 						this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 				})
 			});
@@ -481,8 +477,16 @@ class Map{
 		})
 			.classed("selectedCounty", false)
 
-		this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
-		this.controller.setAllHighlights();
+		console.log("HEREEREREREE")
+
+		console.log(this.results)
+		if(this.results)
+		{
+			this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
+			this.controller.setAllHighlights();
+
+		}
+
 	}
 
 	removeProfessionsFromData(results, replacementJson)

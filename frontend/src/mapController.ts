@@ -248,6 +248,10 @@ class MapController{
 
 		})
 
+    this.prov.addObserver(['mapType'], () => {
+      this.drawMap().then(() => this.drawSidebar());
+    })
+
 		this.prov.addObserver(['countiesSelected'], () => {
 			this.sidebar.highlightAllCounties(this.prov.current().getState().countiesSelected)
 			this.originalMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
@@ -274,7 +278,8 @@ class MapController{
 	 */
 	 updateMapType(newMapType: string)
 	 {
-     let action = this.prov.addAction("Map Type Changed", (state: AppState) => {
+     console.log(newMapType)
+     let action = this.prov.addAction("Map Shape Changed", (state: AppState) => {
 			 state.mapType = newMapType;
 			 return state;
 		 })
