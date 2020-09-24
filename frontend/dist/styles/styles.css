@@ -437,7 +437,11 @@ th {
     text-align: right;
     padding-right: 6px;
 		padding-bottom: 12px;
+		background: white;
     min-width: 120px;
+		position:sticky;
+		top: 0;
+		z-index: 100000
 }
 
 thead td , th{

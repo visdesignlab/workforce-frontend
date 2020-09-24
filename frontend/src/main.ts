@@ -68,7 +68,7 @@ api_request('whoami')
   })
 
 
-  api_request('models')
+api_request('models')
 	.then((response) => {
 		return response.json();
 	})
