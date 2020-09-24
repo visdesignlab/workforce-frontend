@@ -47,6 +47,9 @@ class Map{
 		const map = this.controller.prov.current().getState().mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
+		console.log(this.controller.serverModels)
+		console.log(this.modelData)
+
 		let promise;
 		// if (!customModel) {
 		promise = api_request(modelFile).then(response => response.json());
@@ -388,62 +391,78 @@ class Map{
 		const map = this.controller.prov.current().getState().mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
+		console.log(map)
+		console.log(modelFile)
+
 		let replacementJson = undefined;
 
 		let promise1 = d3.json('data/profReplacements.json').then((res) => {
 			replacementJson = res;
 		})
 
-		let promise2 = d3.json(`{process.env.API_ROOT}/${modelFile}`).then((results)=> {
-
-			promise1.then(() => {
-
-				results = results[map];
-				this.results = results;
-
-				if(this.firstMap)
-				{
-					if(this.controller.removedProfessions.size > 0 && !this.controller.modelRemovedComparison)
-					{
-						this.controller.createDuplicateMap()
-						d3.select("#onlyTitle")
-							.style("fill", "#1B9E77")
-					}
-					else if(this.controller.removedProfessions.size == 0 && this.controller.modelRemovedComparison)
-					{
-						this.controller.removeDuplicateMap();
-					}
-				}
-				else{
-					if(this.controller.modelRemovedComparison)
-					{
-						this.removeProfessionsFromData(this.results, replacementJson);
-					}
-				}
-
-				this.currentYearData = results[year]
-					var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
-					for (let county in this.currentYearData) {
-						let totalSupply = 0;
-						let totalDemand = 0;
-						for (let profession of professions) {
-							if (this.controller.prov.current().getState().professionsSelected[profession]) {
-								totalSupply += this.currentYearData[county]['supply'][profession];
-								totalDemand += this.currentYearData[county]['demand'][profession];
-							}
-						}
-							let population = this.currentYearData[county].population;
-							this.currentYearData[county]['totalSupply'] = totalSupply;
-							this.currentYearData[county]['totalDemand'] = totalDemand;
-							this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
-							this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
-							this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
-					}
-
-					this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
-					this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
+		api_request(`${modelFile}`)
+			.then((response) => {
+				return response.json();
 			})
-		});
+			.then((myJson) => {
+				console.log(myJson)
+			})
+
+
+		let promise2 = api_request(`${modelFile}`)
+			.then((response) => {
+					return response.json()
+				})
+			.then(results => {
+
+				promise1.then(() => {
+
+					results = results[map];
+					this.results = results;
+
+					if(this.firstMap)
+					{
+						if(this.controller.removedProfessions.size > 0 && !this.controller.modelRemovedComparison)
+						{
+							this.controller.createDuplicateMap()
+							d3.select("#onlyTitle")
+								.style("fill", "#1B9E77")
+						}
+						else if(this.controller.removedProfessions.size == 0 && this.controller.modelRemovedComparison)
+						{
+							this.controller.removeDuplicateMap();
+						}
+					}
+					else{
+						if(this.controller.modelRemovedComparison)
+						{
+							this.removeProfessionsFromData(this.results, replacementJson);
+						}
+					}
+
+					this.currentYearData = results[year]
+						var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
+						for (let county in this.currentYearData) {
+							let totalSupply = 0;
+							let totalDemand = 0;
+							for (let profession of professions) {
+								if (this.controller.prov.current().getState().professionsSelected[profession]) {
+									totalSupply += this.currentYearData[county]['supply'][profession];
+									totalDemand += this.currentYearData[county]['demand'][profession];
+								}
+							}
+								let population = this.currentYearData[county].population;
+								this.currentYearData[county]['totalSupply'] = totalSupply;
+								this.currentYearData[county]['totalDemand'] = totalDemand;
+								this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
+								this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
+								this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
+						}
+
+						this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
+						this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
+				})
+			});
 		return Promise.all([promise1, promise2]);
 	}
 
