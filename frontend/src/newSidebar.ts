@@ -334,14 +334,13 @@ class Sidebar {
       });
   }
 
-
   doubleMapRows(td, xScale, domainMax)
   {
 		let that = this;
     let labels = td.filter((d) => {
        return d.vis == 'text' && ((d.type !== "supplyChangeable" && d.type !== "needChangeable") || !this.map.removedProfessions.has(d.name));
       })
-      .text(function(d){return d.value;});
+      .text(function(d){return isNaN(d.value) ? "--" : d.value;});
 
 		let inputLabels = td.filter((d) => {
 			 return d.vis == 'text' && (d.type === 'needChangeable' || d.type === "supplyChangeable") && this.map.removedProfessions.has(d.name);
@@ -365,7 +364,7 @@ class Sidebar {
 			 return d.vis == 'textDouble';
 			})
 			.attr("rowspan", 2)
-			.text(function(d){return d.value;});
+			.text(function(d){return d.value});
 
 		let circlesSvg = td.filter((d) => {
        return d.vis == 'svg';
