@@ -70,14 +70,37 @@ api_request('whoami')
       })
 
 
-    api_request('models')
-      .then((response) => {
-        return response.json();
-      })
-      .then((myJson) => {
-        const rows = Object.values(myJson);
-        SimpleTableCreator(document.getElementById('modelPage'), rows);
-      })
+api_request('models')
+  .then((response) => {
+    return response.json();
+  })
+  .then((myJson) => {
+    const rows = Object.values(myJson);
+    SimpleTableCreator(document.getElementById('modelPage'), rows);
+
+    let counter = 0;
+
+    for(let mod in myJson)
+    {
+      if(counter == 0)
+      {
+        d3.select('#modelData')
+          .append('option')
+          .attr("value", mod)
+          .attr("selected", "")
+          .html(myJson[mod].name ? myJson[mod].name : myJson[mod].model_name)
+      }
+      else
+      {
+        d3.select('#modelData')
+          .append('option')
+          .attr("value", mod)
+          .html(myJson[mod].name ? myJson[mod].name : myJson[mod].model_name)
+      }
+      counter++;
+
+    }
+  })
 
 // Set up undo/redo hotkey to typical buttons
 document.onkeydown = function(e){
