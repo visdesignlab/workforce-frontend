@@ -441,7 +441,7 @@ th {
     min-width: 120px;
 		position:sticky;
 		top: 0;
-		z-index: 100000
+		z-index: 1
 }
 
 thead td , th{
