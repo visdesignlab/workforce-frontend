@@ -21,9 +21,12 @@ from workforceAPI import auth_views
 
 urlpatterns = [
     path('api/admin/', admin.site.urls),
+
     path('api', views.root),
     path('api/models', views.models),
     path('api/models/<str:model_id>', views.get_model),
+    path('api/file-upload', views.file_upload),
+    path('api/rerun-model', views.rerun_model),
 
     path('api/whoami', auth_views.whoami),
     path('api/login', auth_views.login),

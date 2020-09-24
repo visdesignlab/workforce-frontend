@@ -1,8 +1,16 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, JsonResponse
-from workforceAPI import settings
+from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
+from pathlib import Path
 import pickle
 import json
+
+from workforceAPI import settings
+from workforceAPI.model_files.model_utils import run_model
+
+from django.views.decorators.csrf import csrf_exempt # TODO: Remove
+
+REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions"]
+
 
 
 def root(request):
@@ -25,3 +33,50 @@ def get_model(request, model_id):
     model = json.load(json_file)
 
   return JsonResponse(model)
+
+@csrf_exempt
+# @login_required
+def file_upload(request):
+  if request.method == 'POST':
+    # Check that file exists and is properly formatted
+    file = request.FILES.get("file")
+
+    if not file:
+      return HttpResponse("File missing from upload", status=400)
+
+    if not Path(file.name).suffix == '.xlsx':
+      return HttpResponse("File must be .xlsx", status=400)
+
+    # Check that metadata exists and is properly formatted
+    metadata = request.POST.get("metadata")
+
+    if metadata:
+      metadata = json.loads(metadata)
+    else:
+      return HttpResponse("Metadata is missing from request", status=400)
+
+    req_param_exists = [x in metadata for x in REQUIRED_METADATA_FIELDS]
+    if not all(req_param_exists):
+      return HttpResponse(f"Metadata does not contain all required parameters: {REQUIRED_METADATA_FIELDS}", status=400)
+
+    # Generate unique identifier
+
+    # Save the file
+    print(file.name)
+
+    # Run the model
+    success, error = run_model(path, model_id, metadata)
+
+    if success:
+      return HttpResponse("File successfully uploaded", status=201)
+    else:
+      return HttpResponse(str(error), status=500)
+  else:
+    return HttpResponseNotAllowed(["POST"], "Method Not Allowed")
+
+@login_required
+def rerun_model(request):
+  if request.method == 'POST':
+    pass
+  else:
+    return HttpResponseNotAllowed(["POST"], "Method Not Allowed")
