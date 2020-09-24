@@ -31,8 +31,6 @@ promise.then(()=>{
 });
 
 
-
-
 function logout() {
   api_request('logout')
     .then((response) => {

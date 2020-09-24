@@ -42,10 +42,8 @@ class Map{
 	 * initial drawing of map.
 	 */
 	drawMap(modelUsed: any):Promise<any>{
-			// d3.select('#spinner')
-			// 	.classed('d-flex', true)
-
 		this.modelData = modelUsed;
+
 		const map = this.controller.prov.current().getState().mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
@@ -54,15 +52,11 @@ class Map{
 		promise = api_request(modelFile).then(response => response.json());
 
 		let innerPromise = d3.json("data/UT-49-utah-counties.json");
-		// }
-		// else {
 
 		promise = promise.then((results)=> {
 
-
 			results = results[map];
 			this.results = results;
-
 
 			this.svg.selectAll('*').remove();
 			this.svg.append('line')
@@ -137,18 +131,10 @@ class Map{
 					.domain(['Undersupplied', 'Balanced', 'Oversupplied'])
 					.range([d3.interpolateRdBu(0), d3.interpolateRdBu(0.5), d3.interpolateRdBu(1)]);
 
-
-				// var legendLinear = legendColor()
-				// 	.shapeWidth(115)
-				// 	.labelFormat(d3.format(".0f"))
-				// 	.orient('horizontal')
-				// 	.scale(linear);
-
 				this.svg.append("g")
 					.attr("class", "legendLinear")
 					.attr("transform", "translate(20,20)");
-				// this.svg.select(".legendLinear")
-				// 	.call(legendLinear);
+
 				function getSupplyPer100k(county) {
 					return county['totalSupply'] / county['population'] * 100000;
 				};
@@ -163,9 +149,7 @@ class Map{
 				innerPromise.then((us: any)=> {
 					var topojsonFeatures = topojson.feature(us, us.objects[map]);
 					var mapCenter = d3.geoCentroid(topojsonFeatures);
-					// var projection = d3.geoAlbersUsa()
-					// 	.scale(200)
-					// 	.translate([300,300]);
+
 					let projection = d3.geoMercator().scale(4000).translate([520/2, 600/2])
 					projection.center(mapCenter);
 					var path = d3.geoPath(projection);
@@ -385,7 +369,6 @@ class Map{
 			}
 		}
 
-
 		this.svg.select('g.counties').selectAll('path').each(function(d){
 			d3.select(this).transition().duration(duration).attr('fill',colorScale(d,that,mapData));
 		});
@@ -459,7 +442,6 @@ class Map{
 
 					this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
 					this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
-
 			})
 		});
 		return Promise.all([promise1, promise2]);
@@ -484,26 +466,6 @@ class Map{
 		this.controller.setAllHighlights();
 	}
 
-	// highlightPath(name:string) {
-	// 	// d3.selectAll('path').classed('selected', false);
-	// 	this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
-	// 	// should be moved it id-based paths
-	// 	d3.selectAll('svg .counties').selectAll('path')
-	// 		.filter(d => (d as any).properties.NAME == name)
-	// 		.classed('selected', true);
-	// }
-	//
-	// unHighlightPath(name:string) {
-	// 	// d3.selectAll('path').classed('selected', false);
-	// 	this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
-	//
-	// 	// this.linechart.initLineChart(this.results, name);
-	// 	// should be moved it id-based paths
-	// 	d3.selectAll('svg .counties').selectAll('path')
-	// 		.filter(d => (d as any).properties.NAME == name)
-	// 		.classed('selected', false);
-	// }
-
 	removeProfessionsFromData(results, replacementJson)
 	{
 		let profTotalDemand = {}
@@ -527,7 +489,6 @@ class Map{
 				}
 			}
 		}
-
 
 		for(let year in this.results)
 		{
@@ -587,22 +548,12 @@ class Map{
 						}
 					}
 
-					// let redistributeSupply = newSupply[i];
-					//
-					// redistributeSupply /= redistributeList.length;
-					//
-					// for (let newProfDist of redistributeList)
-					// {
-					// 	newSupply[newProfDist] += redistributeSupply;
-					// }
-					//
 					newSupply[i] = this.controller.removedMapSupply[i] ? newSupply[i] - redistributeSupply : newSupply[i];
 
 					if(!allCounties)
 					{
 						this.results[year]["State of Utah"].supply[i] -= redistributeSupply;
 					}
-					// newSupply[i] = 0;
 				}
 
 				this.results[year][local].demand = newDemand
@@ -614,13 +565,7 @@ class Map{
 		this.controller.removedMapSupply = {};
 	}
 
-
-	removeSpaces(s) : string{
-		return s.replace(/\s/g, '');
-	}
-
 	continuous(selector_id, colorscale, label, domain) {
-
 	  var legendheight = 200,
 	      legendwidth = 76,
 	      margin = {top: 10, right: 60, bottom: 10, left: 2};
@@ -683,6 +628,5 @@ class Map{
 	    .attr("transform", "translate(380, 60) ")
 	    .call(legendaxis);
 	};
-
 }
 export{Map};
