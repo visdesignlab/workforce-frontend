@@ -89,28 +89,28 @@ class MapEvents{
 		let promise = api_request('models').then(response => response.json())
 		let counter = 0;
 
-		promise = promise.then((results: any[])=> {
+		promise = Promise.resolve(promise).then((results: any[])=> {
 			this.map.serverModels = results;
-			// for(let mod in results)
-			// {
-			// 	if(counter == 0)
-			// 	{
-			// 		d3.select('#modelData')
-			// 			.append('option')
-			// 			.attr("value", mod)
-			// 			.attr("selected", "")
-			// 			.html(results[mod].name ? results[mod].name : results[mod].model_name)
-			// 	}
-			// 	else
-			// 	{
-			// 		d3.select('#modelData')
-			// 			.append('option')
-			// 			.attr("value", mod)
-			// 			.html(results[mod].name ? results[mod].name : results[mod].model_name)
-			// 	}
-			// 	counter++;
+			for(let mod in results)
+			{
+				if(counter == 0)
+				{
+					d3.select('#modelData')
+						.append('option')
+						.attr("value", mod)
+						.attr("selected", "")
+						.html(results[mod].name ? results[mod].name : results[mod].model_name)
+				}
+				else
+				{
+					d3.select('#modelData')
+						.append('option')
+						.attr("value", mod)
+						.html(results[mod].name ? results[mod].name : results[mod].model_name)
+				}
+				counter++;
 
-			// }
+			}
 		})
 
 		document.getElementById("modelData").addEventListener('change',()=>{
