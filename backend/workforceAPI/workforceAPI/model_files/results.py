@@ -64,14 +64,14 @@
 
 import pickle
 import datetime
-import server.workforce_pandas as wfpd
+import workforceAPI.model_files.workforce_pandas as wfpd
 import json
 import sys
 import pickle
 import os
 import pandas as pd
-from server import app
-from server.my_allocation import main
+from workforceAPI.model_files.my_allocation import main
+from workforceAPI.settings import MODELS_ROOT
 command="null"
 provider_type="null"
 
@@ -120,7 +120,7 @@ collapse_group = False
 # In[5]:
 
 
-wfpd.sheets
+# wfpd.sheets
 
 
 # The model takes the input of a JSON string from stdin
@@ -682,19 +682,20 @@ elif command == "run_model":
     #    file.close()
     result = process_result(result) # process complex result into a JSON string
 
-geo_area = wfpd.dataframes['geo_area_list'].geo_area.tolist()
+
 
 
 
 def run_model_for_range(model_id, model_type, start, end, step, removedProfessions):
     year_range = list(range(int(start), int(end)+1, int(step)))
     dataframes, sheets = wfpd.get_dataframes_sheets()
+    geo_area = dataframes[f"{model_id}_geo_area_list"].geo_area.tolist()
     df = dataframes[f"{model_id}_provider_list"]
     dataframes[f"{model_id}_provider_list"] = df.loc[~df["provider_abbr"].isin(removedProfessions)]
 
     results = {}
     for i in year_range:
-        file = open(os.path.join(app.root_path, "results.pkl"), "wb")
+        file = open(MODELS_ROOT / "results.pkl", "wb")
         results[i] = {}
         for j in geo_area:
             out  = run_model(model_id, j, str(i), model_type, "all_combination", 0, 0)

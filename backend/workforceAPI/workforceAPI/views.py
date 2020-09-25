@@ -1,6 +1,8 @@
+from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from pathlib import Path
+from uuid import uuid1
 import pickle
 import json
 
@@ -18,7 +20,7 @@ def root(request):
 
 @login_required
 def models(request):
-  models_path = settings.STATIC_ROOT / 'models.pkl'
+  models_path = settings.MODELS_ROOT / 'models.pkl'
 
   with open(models_path, "rb") as f:
     metadata = pickle.load(f)
@@ -27,7 +29,7 @@ def models(request):
 
 @login_required
 def get_model(request, model_id):
-  model_path = settings.STATIC_ROOT / 'models' / model_id
+  model_path = settings.MODELS_ROOT / model_id
 
   with open(model_path, 'r') as json_file:
     model = json.load(json_file)
@@ -60,12 +62,15 @@ def file_upload(request):
       return HttpResponse(f"Metadata does not contain all required parameters: {REQUIRED_METADATA_FIELDS}", status=400)
 
     # Generate unique identifier
+    model_id = str(uuid1())
 
     # Save the file
-    print(file.name)
+    file_name = f"{model_id}_{file.name}"
+    default_storage.save(file_name, file)
+    file_path = settings.MEDIA_ROOT / file_name
 
     # Run the model
-    success, error = run_model(path, model_id, metadata)
+    success, error = run_model(file_path, model_id, metadata)
 
     if success:
       return HttpResponse("File successfully uploaded", status=201)
