@@ -7,7 +7,7 @@ import pickle
 import json
 
 from workforceAPI import settings
-from workforceAPI.model_files.model_utils import run_model
+from workforceAPI.model_files.model_utils import run_model, clean_up
 
 from django.views.decorators.csrf import csrf_exempt # TODO: Remove
 
@@ -71,6 +71,7 @@ def file_upload(request):
 
     # Run the model
     success, error = run_model(file_path, model_id, metadata)
+    clean_up(model_id)
 
     if success:
       return HttpResponse("File successfully uploaded", status=201)

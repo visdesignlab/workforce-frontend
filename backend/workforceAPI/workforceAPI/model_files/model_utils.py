@@ -1,6 +1,7 @@
 from workforceAPI.settings import MEDIA_ROOT, MODELS_ROOT
 from workforceAPI.model_files.results import run_model_for_range
 from workforceAPI.model_files.process_results import process_results
+from glob import glob
 import pandas as pd
 import pickle
 
@@ -50,3 +51,6 @@ def update_model_status(model_id, status):
   with open(MODELS_ROOT / "models.pkl", 'wb') as f:
     models = pickle.dump(models, f)
 
+def clean_up(model_id):
+  # Unlink (delete) files that match the model ID, except the xlsx
+  [p.unlink() for p in MEDIA_ROOT.glob(f"{model_id}_*.csv")]
