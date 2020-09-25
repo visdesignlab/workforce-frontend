@@ -33,7 +33,7 @@ docker run \
   mysql:5
 ```
 
-Once `pipenv` is set up and the .env file is set correctly, run `pipenv run serve` to run a local development server at http://127.0.0.1:8000/.
+Once `pipenv` is set up and the .env file is set correctly, run `pipenv run serve` to run a local development server at http://localhost:8000/.
 
 ## Deploying In Production
 
@@ -49,7 +49,7 @@ There are several routes set up for accessing the model data. Here are the names
   - Description: Base API endpoint. Returns text and a 200 to verify everything is working. Doesn't return data.
   - Example:
     ```
-    curl '127.0.0.1:8000/api'
+    curl 'localhost:8000/api'
     ```
 
 - Name:`/api/file-upload`
@@ -72,8 +72,8 @@ There are several routes set up for accessing the model data. Here are the names
     curl \
       -X POST \
       -F 'metadata={"model_name": "new_model", "author": "me", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2020, "step_size": 1, "removed_professions": []}' \
-      -F 'file=@server/uploads/Workforce_Optimization_Tool_-_Input_Data.xlsx' \
-      '127.0.0.1:8000/api/file-upload'
+      -F 'file=@workforceAPI/workforceAPI/test_data/Workforce_Optimization_Tool_-_Input_Data.xlsx' \
+      'localhost:8000/api/file-upload'
     ```
 
 - Name: `/api/models`
@@ -83,7 +83,7 @@ There are several routes set up for accessing the model data. Here are the names
   - Return: JSON object, array of objects of model metadata.
   - Example:
     ```
-    curl '127.0.0.1:8000/api/models'
+    curl 'localhost:8000/api/models'
     ```
 
 - Name:`/api/rerun-model`
@@ -109,7 +109,7 @@ There are several routes set up for accessing the model data. Here are the names
       -F 'model_id=f5cff71b-b869-423d-937f-01df7bfba48e' \
       -F 'removed_professions=NP' \
       -F 'model_name=updated model' \
-      '127.0.0.1:8000/api/rerun-model'
+      'localhost:8000/api/rerun-model'
     ```
 
 ## Testing
