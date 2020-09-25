@@ -132,6 +132,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATIC_ROOT = BASE_DIR / 'static'
+MEDIA_ROOT = BASE_DIR / 'uploads'
+MODELS_ROOT = BASE_DIR / 'models'
 
 LOGIN_URL = '/api/login'
 
