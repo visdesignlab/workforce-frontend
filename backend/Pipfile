@@ -12,6 +12,11 @@ authlib = "*"
 django-cors-headers = "*"
 uwsgi = "*"
 requests = "*"
+pandas = "*"
+xlrd = "*"
+pulp = "*"
+cvxopt = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3.7"
