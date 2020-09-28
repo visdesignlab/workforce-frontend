@@ -142,7 +142,7 @@ AUTHLIB_OAUTH_CLIENTS = {
     }
 }
 
-CORS_ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS').split(',') if os.getenv('ALLOWED_ORIGINS') else []
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',
