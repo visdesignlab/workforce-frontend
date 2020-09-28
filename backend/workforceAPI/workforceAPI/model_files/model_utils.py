@@ -30,8 +30,7 @@ def run_model(path, model_id, metadata):
   return True, None
 
 def add_model_to_pkl(model_id, metadata):
-  with open(MODELS_ROOT / "models.pkl", 'rb') as f:
-    models = pickle.load(f)
+  models = open_models()
 
   models[model_id] = metadata
   models.get(model_id)["status"] = "Running"
@@ -40,8 +39,7 @@ def add_model_to_pkl(model_id, metadata):
     models = pickle.dump(models, f)
 
 def update_model_status(model_id, status):
-  with open(MODELS_ROOT / "models.pkl", 'rb') as f:
-    models = pickle.load(f)
+  models = open_models()
 
   models.get(model_id)["status"] = status
 
@@ -54,3 +52,12 @@ def update_model_status(model_id, status):
 def clean_up(model_id):
   # Unlink (delete) files that match the model ID, except the xlsx
   [p.unlink() for p in MEDIA_ROOT.glob(f"{model_id}_*.csv")]
+
+def open_models():
+  with open(MODELS_ROOT / "models.pkl", 'rb') as f:
+    models = pickle.load(f)
+  
+  return models
+
+def get_model(model_id):
+  models = open_models()

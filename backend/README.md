@@ -56,8 +56,7 @@ There are several routes set up for accessing the model data. Here are the names
   - Allowed Methods: `POST`
   - Parameters:
       - `metadata`: a json serializable object containing the following required fields:  
-          `model_name`: Model name, used in visualization.  
-          `author`  
+          `model_name`: Model name, used in visualization. 
           `description`  
           `model_type`: One of: "ideal_staffing", "ideal_staffing_current", or "service_allocation".  
           `start_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
@@ -71,7 +70,7 @@ There are several routes set up for accessing the model data. Here are the names
     ```
     curl \
       -X POST \
-      -F 'metadata={"model_name": "new_model", "author": "me", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2020, "step_size": 1, "removed_professions": []}' \
+      -F 'metadata={"model_name": "new_model", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2020, "step_size": 1, "removed_professions": []}' \
       -F 'file=@workforceAPI/workforceAPI/test_data/Workforce_Optimization_Tool_-_Input_Data.xlsx' \
       'localhost:8000/api/file-upload'
     ```
@@ -91,10 +90,9 @@ There are several routes set up for accessing the model data. Here are the names
   - Parameters:
       - Required:  
            `model_id`: A model id for the model that will be re-run.  
+           `model_name`: Model name, used in visualization.  
+           `description`  
       - Optional:  
-          `model_name`: Model name, used in visualization.  
-          `author`  
-          `description`  
           `model_type`: One of: "ideal_staffing", "ideal_staffing_current", or "service_allocation".  
           `start_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
           `end_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
@@ -106,9 +104,10 @@ There are several routes set up for accessing the model data. Here are the names
     ```
     curl \
       -X POST \
-      -F 'model_id=f5cff71b-b869-423d-937f-01df7bfba48e' \
+      -F 'model_id=8bcaed56-89aa-4d24-9d6c-732f2eb35fd7' \
       -F 'removed_professions=NP' \
-      -F 'model_name=updated model' \
+      -F 'model_name=updated model original remove NP' \
+      -F 'description=test_update, remove NP' \
       'localhost:8000/api/rerun-model'
     ```
 
