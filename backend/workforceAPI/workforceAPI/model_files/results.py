@@ -687,7 +687,7 @@ elif command == "run_model":
 
 def run_model_for_range(model_id, model_type, start, end, step, removedProfessions):
     year_range = list(range(int(start), int(end)+1, int(step)))
-    dataframes, sheets = wfpd.get_dataframes_sheets()
+    dataframes, sheets = wfpd.get_dataframes_sheets(model_id)
     geo_area = dataframes[f"{model_id}_geo_area_list"].geo_area.tolist()
     df = dataframes[f"{model_id}_provider_list"]
     dataframes[f"{model_id}_provider_list"] = df.loc[~df["provider_abbr"].isin(removedProfessions)]
