@@ -96,6 +96,11 @@ def rerun_model(request):
     metadata["author"] = request.user.username
     metadata["name"] = model_name
     metadata["description"] = description
+    metadata["model_type"] = request.POST.get("model_type") or old_model.get("model_type")
+    metadata["start_year"] = request.POST.get("start_year") or old_model.get("start_year")
+    metadata["end_year"] = request.POST.get("end_year") or old_model.get("end_year")
+    metadata["step_size"] = request.POST.get("step_size") or old_model.get("step_size")
+    metadata["removed_professions"] = request.POST.get("removed_professions", "").split(",") or old_model.get("removed_professions")
     del metadata["path"]
     del metadata["status"]
 
@@ -107,7 +112,7 @@ def rerun_model(request):
     # Generate new model_id and run model
     new_model_id = str(uuid1())
     success, error = run_model(file_path, new_model_id, metadata)
-    clean_up(model_id)
+    clean_up(new_model_id)
 
     if success:
       return HttpResponse("File successfully uploaded", status=201)
