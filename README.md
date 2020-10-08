@@ -18,16 +18,20 @@ to also serve the static frontend.
 To build and run the containers, do the following:
 
 ```
-# On a fresh ubuntu system
+# On a fresh ubuntu 20.04 system
+sudo apt install curl
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo apt-key fingerprint 0EBFCD88
 sudo add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
    stable"
+sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose
+sudo apt-get install docker-ce pipenv python3.7 python3.7-dev mysql-server libmysqlclient-dev
 sudo usermod -aG docker ubuntu
+
+# Re-login
 
 cd ~
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
@@ -35,33 +39,39 @@ sudo apt-get install -y nodejs
 git clone https://github.com/visdesignlab/workforce-frontend.git
 cd workforce-frontend
 
-# Assemble necessary backend resources
-cd backend
-pipenv install
-pipenv run pip freeze > requirements.txt
-cd ..
-
 # Assemble necessary frontend resources
 cd frontend
 npm install
 npm run build
 cd ..
 
-# Build the docker container and start it (If on a new system and you get a permissions error, log out and in)
-sudo chmod -R ubuntu:docker ~/workforce-frontend
-docker-compose up -d --build
-docker exec -it workforcefrontend_db_1 bash
-- mysql -u root -p
-- # pass = initial
-- # run the commands in setup.prod.sql in the terminal
-# verify deploy is working
+# Assemble necessary backend resources
+mkdir /home/ubuntu/workforce-db-data/
+cd backend
+pipenv install
+cd ..
+
+docker stop workforce-mysql
+docker rm workforce-mysql
+
+# Replace these vars when doing production work look at .env.prod
+docker run \
+  --name workforce-mysql \
+  -e MYSQL_ROOT_PASSWORD=password \
+  -e MYSQL_USER=workforceuser \
+  -e MYSQL_PASSWORD=password \
+  -e MYSQL_DATABASE=workforcewebapp \
+  -v /home/ubuntu/workforce-db-data/:/var/lib/mysql \
+  -d \
+  -p 3306:3306 \
+  mysql:5
+
+pipenv run migrate
+sudo systemctl enable /home/ubuntu/workforce-frontend/api.service
+
+cd ..
+
+# Set up nginx (requires the SSL certs from backend)
+cp backend/nginx.conf /etc/nginx/nginx.conf
 ```
 
-The container redirects the nginx error logs to stderr and stdout, not to a file, so you 
-can attach to the container to debug. However, if you want to poke around the file system
-you can use the following command:
-
-```
-docker exec -it workforcefrontend_web_1 bash
-docker exec -it workforcefrontend_db_1 bash
-```
