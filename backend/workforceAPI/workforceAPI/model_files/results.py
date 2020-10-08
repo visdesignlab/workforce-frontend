@@ -550,7 +550,7 @@ def load_model(filename):
 # In[20]:
 
 
-def run_model(model_id,geo,year,option,sub_option,wage_max,wage_weight):
+def run_model(model_id,geo,year,option,sub_option,wage_max,wage_weight,dataframes,sheets):
     """Runs the model optimizers based on a series of UI deltas overlaid on
         the dictionary of pandas dataframes (which represent the Excel model input) 
 
@@ -585,7 +585,6 @@ def run_model(model_id,geo,year,option,sub_option,wage_max,wage_weight):
     # gets the latest version of the dictionary dataframes to pass into the 
     # optimizer model.  This ensures that any deltas processed from the UI are taken
     # into account
-    dataframes, sheets = wfpd.get_dataframes_sheets()
     pop_chronic_trend = dataframes[f'{model_id}_pop_chronic_trend']
     pop_chronic_prev = dataframes[f'{model_id}_pop_chronic_prev']
     chron_care_freq = dataframes[f'{model_id}_chron_care_freq']
@@ -698,7 +697,7 @@ def run_model_for_range(model_id, model_type, start, end, step, removedProfessio
         file = open(MODELS_ROOT / "results.pkl", "wb")
         results[i] = {}
         for j in geo_area:
-            out  = run_model(model_id, j, str(i), model_type, "all_combination", 0, 0)
+            out  = run_model(model_id, j, str(i), model_type, "all_combination", 0, 0, dataframes, sheets)
             results[i][j] = out;
         pickle.dump(results, file)
         file.close()
