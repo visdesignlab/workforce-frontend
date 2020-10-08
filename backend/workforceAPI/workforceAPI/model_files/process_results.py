@@ -2,24 +2,22 @@ import os
 import pickle
 import json
 
-from server import app
+from workforceAPI.settings import MODELS_ROOT
 
 def process_results(path):
-    with open(os.path.join(app.root_path, "results.pkl"), "rb") as f:
+    with open(MODELS_ROOT / "results.pkl", "rb") as f:
         results = pickle.load(f)
 
-    with open(os.path.join(app.root_path, "population.pkl"), "rb") as f:
+    with open(MODELS_ROOT / "population.pkl", "rb") as f:
         population = pickle.load(f)
 
 
     pd = {}
     for year in results:
-        print(year)
         pd[year] = {}
         for county in results[year]:
             if "MCD" not in county:
                 county_clean = county.replace(" County", "")
-                print(results[year][county]["detail_f2f_mini"])
                 pd[year][county_clean] = {}
                 pd[year][county_clean]["demand"] = list(results[year][county]["demand"].values())[0] if type(list(results[year][county]["demand"].values())[0]) is dict else results[year][county]["demand"]
                 pd[year][county_clean]["supply"] = results[year][county]["supply"]

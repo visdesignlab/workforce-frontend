@@ -33,7 +33,7 @@ docker run \
   mysql:5
 ```
 
-Once `pipenv` is set up and the .env file is set correctly, run `pipenv run serve` to run a local development server at http://127.0.0.1:8000/.
+Once `pipenv` is set up and the .env file is set correctly, run `pipenv run serve` to run a local development server at http://localhost:8000/.
 
 ## Deploying In Production
 
@@ -49,15 +49,14 @@ There are several routes set up for accessing the model data. Here are the names
   - Description: Base API endpoint. Returns text and a 200 to verify everything is working. Doesn't return data.
   - Example:
     ```
-    curl '127.0.0.1:8000/api'
+    curl 'localhost:8000/api'
     ```
 
 - Name:`/api/file-upload`
   - Allowed Methods: `POST`
   - Parameters:
       - `metadata`: a json serializable object containing the following required fields:  
-          `model_name`: Model name, used in visualization.  
-          `author`  
+          `model_name`: Model name, used in visualization. 
           `description`  
           `model_type`: One of: "ideal_staffing", "ideal_staffing_current", or "service_allocation".  
           `start_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
@@ -71,9 +70,9 @@ There are several routes set up for accessing the model data. Here are the names
     ```
     curl \
       -X POST \
-      -F 'metadata={"model_name": "new_model", "author": "me", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2020, "step_size": 1, "removed_professions": []}' \
-      -F 'file=@server/uploads/Workforce_Optimization_Tool_-_Input_Data.xlsx' \
-      '127.0.0.1:8000/api/file-upload'
+      -F 'metadata={"model_name": "new_model", "description": "a model", "model_type": "ideal_staffing", "start_year": 2019, "end_year": 2020, "step_size": 1, "removed_professions": []}' \
+      -F 'file=@workforceAPI/workforceAPI/test_data/Workforce_Optimization_Tool_-_Input_Data.xlsx' \
+      'localhost:8000/api/file-upload'
     ```
 
 - Name: `/api/models`
@@ -83,7 +82,7 @@ There are several routes set up for accessing the model data. Here are the names
   - Return: JSON object, array of objects of model metadata.
   - Example:
     ```
-    curl '127.0.0.1:8000/api/models'
+    curl 'localhost:8000/api/models'
     ```
 
 - Name:`/api/rerun-model`
@@ -91,10 +90,9 @@ There are several routes set up for accessing the model data. Here are the names
   - Parameters:
       - Required:  
            `model_id`: A model id for the model that will be re-run.  
+           `model_name`: Model name, used in visualization.  
+           `description`  
       - Optional:  
-          `model_name`: Model name, used in visualization.  
-          `author`  
-          `description`  
           `model_type`: One of: "ideal_staffing", "ideal_staffing_current", or "service_allocation".  
           `start_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
           `end_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
@@ -106,10 +104,11 @@ There are several routes set up for accessing the model data. Here are the names
     ```
     curl \
       -X POST \
-      -F 'model_id=f5cff71b-b869-423d-937f-01df7bfba48e' \
+      -F 'model_id=8bcaed56-89aa-4d24-9d6c-732f2eb35fd7' \
       -F 'removed_professions=NP' \
-      -F 'model_name=updated model' \
-      '127.0.0.1:8000/api/rerun-model'
+      -F 'model_name=updated model original remove NP' \
+      -F 'description=test_update, remove NP' \
+      'localhost:8000/api/rerun-model'
     ```
 
 ## Testing

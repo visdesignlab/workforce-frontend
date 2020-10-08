@@ -35,14 +35,12 @@ def authorize(request):
     # Get the user info
     token = oauth.UtahID.authorize_access_token(request)
     userinfo = oauth.UtahID.parse_id_token(request, token)
-    print(userinfo)
 
     if not userinfo:
         return HttpResponse('Authentication Failed', status=400)
 
     # Check if user exists
     user = User.objects.filter(username=userinfo.get('sub')).first()
-    print(user)
 
     # Create a user if they don't exist
     if not user:

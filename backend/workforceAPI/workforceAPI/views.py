@@ -1,13 +1,13 @@
+from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from pathlib import Path
+from uuid import uuid1
 import pickle
 import json
 
 from workforceAPI import settings
-from workforceAPI.model_files.model_utils import run_model
-
-from django.views.decorators.csrf import csrf_exempt # TODO: Remove
+from workforceAPI.model_files.model_utils import run_model, clean_up, open_models
 
 REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions"]
 
@@ -18,24 +18,20 @@ def root(request):
 
 @login_required
 def models(request):
-  models_path = settings.STATIC_ROOT / 'models.pkl'
+  models = open_models()
 
-  with open(models_path, "rb") as f:
-    metadata = pickle.load(f)
-
-  return JsonResponse(metadata)
+  return JsonResponse(models)
 
 @login_required
 def get_model(request, model_id):
-  model_path = settings.STATIC_ROOT / 'models' / model_id
+  model_path = settings.MODELS_ROOT / model_id
 
   with open(model_path, 'r') as json_file:
     model = json.load(json_file)
 
   return JsonResponse(model)
 
-@csrf_exempt
-# @login_required
+@login_required
 def file_upload(request):
   if request.method == 'POST':
     # Check that file exists and is properly formatted
@@ -52,6 +48,7 @@ def file_upload(request):
 
     if metadata:
       metadata = json.loads(metadata)
+      metadata["author"] = request.user.username
     else:
       return HttpResponse("Metadata is missing from request", status=400)
 
@@ -60,12 +57,17 @@ def file_upload(request):
       return HttpResponse(f"Metadata does not contain all required parameters: {REQUIRED_METADATA_FIELDS}", status=400)
 
     # Generate unique identifier
+    model_id = str(uuid1())
 
     # Save the file
-    print(file.name)
+    file_name = f"{model_id}_{file.name}"
+    default_storage.save(file_name, file)
+    metadata["filename"] = file_name
+    file_path = settings.MEDIA_ROOT / file_name
 
     # Run the model
-    success, error = run_model(path, model_id, metadata)
+    success, error = run_model(file_path, model_id, metadata)
+    clean_up(model_id)
 
     if success:
       return HttpResponse("File successfully uploaded", status=201)
@@ -77,6 +79,40 @@ def file_upload(request):
 @login_required
 def rerun_model(request):
   if request.method == 'POST':
-    pass
+    model_id = request.POST.get("model_id")
+    model_name = request.POST.get("model_name")
+    description = request.POST.get("description")
+
+    if not (model_id and model_name and description):
+      return HttpResponse("You must supply model_id, model_name, and description", status=400)
+
+    old_model = open_models().get(model_id)
+
+    if not old_model:
+      return HttpResponse("Model not found", status=404)
+
+    # Update model
+    metadata = old_model
+    metadata["author"] = request.user.username
+    metadata["name"] = model_name
+    metadata["description"] = description
+    del metadata["path"]
+    del metadata["status"]
+
+    # Get the old file path and check the file exists still
+    file_path = settings.MEDIA_ROOT / old_model.get("filename")
+    if not file_path.is_file():
+      return HttpResponse("Original model file not found. Contact an admin", status=500)
+
+    # Generate new model_id and run model
+    new_model_id = str(uuid1())
+    success, error = run_model(file_path, new_model_id, metadata)
+    clean_up(model_id)
+
+    if success:
+      return HttpResponse("File successfully uploaded", status=201)
+    else:
+      print(error)
+      return HttpResponse(str(error), status=500)
   else:
     return HttpResponseNotAllowed(["POST"], "Method Not Allowed")

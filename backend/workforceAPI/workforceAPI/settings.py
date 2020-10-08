@@ -26,9 +26,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG') == 'True'
 
-ALLOWED_HOSTS = [
-    'teamcare.utah.gov'
-]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
 
 # Application definition
@@ -132,6 +130,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATIC_ROOT = BASE_DIR / 'static'
+MEDIA_ROOT = BASE_DIR / 'uploads'
+MODELS_ROOT = BASE_DIR / 'models'
 
 LOGIN_URL = '/api/login'
 
@@ -142,7 +142,7 @@ AUTHLIB_OAUTH_CLIENTS = {
     }
 }
 
-CORS_ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS').split(',') if os.getenv('ALLOWED_ORIGINS') else []
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',
