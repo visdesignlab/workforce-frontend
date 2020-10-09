@@ -58,13 +58,19 @@ class MapEvents{
 
 				let headers = {}
 				if (process.env.API_ROOT.includes('http://localhost:8000')) {
-						headers = {
-								'Accept': 'application/x-www-form-urlencoded',
-								'Content-Type': 'application/x-www-form-urlencoded',
-								'X-CSRFToken': csrftoken || '',
-								"Access-Control-Allow-Origin": 'http://localhost:8080',
-								"Access-Control-Allow-Credentials": "true"
-						}
+					headers = {
+						'Accept': 'application/x-www-form-urlencoded',
+						'Content-Type': 'application/x-www-form-urlencoded',
+						'X-CSRFToken': csrftoken || '',
+						"Access-Control-Allow-Origin": 'http://localhost:8080',
+						"Access-Control-Allow-Credentials": "true"
+					}
+				} else {
+					headers = {
+						'Accept': 'application/x-www-form-urlencoded',
+						'Content-Type': 'application/x-www-form-urlencoded',
+						'X-CSRFToken': csrftoken || '',
+					}
 				}
 
 				fetch(
