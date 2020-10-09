@@ -94,7 +94,7 @@ def rerun_model(request):
     # Update model
     metadata = old_model
     metadata["author"] = request.user.username
-    metadata["name"] = model_name
+    metadata["model_name"] = model_name
     metadata["description"] = description
     metadata["model_type"] = request.POST.get("model_type") or old_model.get("model_type")
     metadata["start_year"] = request.POST.get("start_year") or old_model.get("start_year")
