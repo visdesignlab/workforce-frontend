@@ -52,7 +52,7 @@ class MapEvents{
 				if (process.env.API_ROOT.includes('http://localhost:8000')) {
 						headers = {
 								'Accept': 'application/json',
-								'Content-Type': 'multipart/form-data',
+								'Content-Type': 'application/json',
 								'X-CSRFToken': csrftoken || '',
 								"Access-Control-Allow-Origin": 'http://localhost:8000',
 								"Access-Control-Allow-Credentials": "true"
