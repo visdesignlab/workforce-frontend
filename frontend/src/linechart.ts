@@ -85,7 +85,7 @@ class Linechart{
 
 		if(this.controller.comparisonMode)
 		{
-			this.data.dates.push(Object.keys(this.controller.secondMap.results))
+			this.data.dates = this.data.dates.concat(Object.keys(this.controller.secondMap.results))
 		}
 
 		let d = []
@@ -103,7 +103,10 @@ class Linechart{
 				{
 					counter += this.controller.originalMap.results[i][j]['demand'][professions[k]]
 				}
-				d.push(counter);
+				if(!isNaN(counter))
+				{
+					d.push(counter);
+				}
 			}
 
 			if(this.controller.comparisonMode)
@@ -115,13 +118,17 @@ class Linechart{
 					{
 						counter += this.controller.secondMap.results[i][j]['demand'][professions[k]]
 					}
-					d.push(counter);
+					if(!isNaN(counter))
+					{
+						d.push(counter);
+					}
 				}
 			}
 		}
 
 		this.data.series = demand;
 
+		
 		var x = d3.scaleLinear()
 			.domain([+d3.min(this.data.dates), +d3.max(this.data.dates)])
 			.range([this.margin.left, this.width - this.margin.right])

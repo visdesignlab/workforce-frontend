@@ -233,11 +233,18 @@ class MapController{
 			if(this.comparisonMode && this.prov.current().getState().modelsSelected.length < 2)
 			{
 				this.secondMap.destroy();
+				d3.select("#runModelButton")
+					.style("display", "block")
 			}
 			else if (this.prov.current().getState().modelsSelected.length === 0)
 			{
 				this.originalMap.destroy();
 				return;
+			}
+			else{
+				console.log("here")
+				d3.select("#runModelButton")
+					.style("display", "none")
 			}
 			this.comparisonMode = this.prov.current().getState().modelsSelected.length > 1;
 			this.drawMap().then(() => this.drawSidebar());

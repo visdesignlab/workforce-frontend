@@ -1,4 +1,4 @@
-function getCookie(name: string) {
+export function getCookie(name: string) {
     var cookieValue = null;
 
     if (document.cookie && document.cookie !== '') {
@@ -29,7 +29,7 @@ export function api_request(route: string): Promise<any> {
     }
 
     return fetch(
-        `${process.env.API_ROOT}/${route}`, 
+        `${process.env.API_ROOT}/${route}`,
         {
           method: 'GET',
           credentials: 'include',

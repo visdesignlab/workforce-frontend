@@ -1,8 +1,11 @@
 import * as d3 from 'd3';
 import {MapController} from './mapController'
-import { api_request } from './API_utils'
+import { api_request, getCookie } from './API_utils'
+import $ from "jquery";
 
 import axios from 'axios'
+
+// declare var $: any;
 
 class MapEvents{
 	map: MapController;
@@ -18,10 +21,11 @@ class MapEvents{
 		d3.select("#runModelButton")
 			.on('click', () => {
 
-				let bodyFormData = new FormData();
+				let bodyFormData = {};
 
-				bodyFormData.set('model_id', this.map.prov.current().getState().modelsSelected[0]);
-
+				bodyFormData['model_id'] = this.map.prov.current().getState().modelsSelected[0];
+				bodyFormData['model_name'] = "fakeName";
+				bodyFormData['description'] = "fakeDesc";
 				let removedString = "";
 				for(let j in this.map.prov.current().getState().professionsSelected)
 				{
@@ -31,15 +35,40 @@ class MapEvents{
 					}
 				}
 
-				bodyFormData.set('removed_professions', removedString.slice(0, removedString.length - 2));
+				bodyFormData['removed_professions'] = removedString.slice(0, removedString.length - 2);
 
-				axios({
-			    method: 'post',
-			    url: `${process.env.API_ROOT}/rerun-model`,
-			    data: bodyFormData,
-			    headers: {'Content-Type': 'multipart/form-data', 'Access-Control-Allow-Origin': '*' }
-			    })
-			    .then(function (response) {
+
+				let csrftoken = getCookie('csrftoken') || ''
+
+				console.log(bodyFormData);
+
+				//
+				// axios.defaults.headers.common =
+				// {
+				// 	'X-CSRF-TOKEN': token
+				// };
+
+				let headers = {}
+				if (process.env.API_ROOT.includes('http://localhost:8000')) {
+						headers = {
+								'Accept': 'application/json',
+								'Content-Type': 'multipart/form-data',
+								'X-CSRFToken': csrftoken || '',
+								"Access-Control-Allow-Origin": 'http://localhost:8000',
+								"Access-Control-Allow-Credentials": "true"
+						}
+				}
+
+				fetch(
+						`${process.env.API_ROOT}/rerun-model`,
+						{
+							method: 'POST',
+							credentials: 'include',
+							headers: headers,
+							body: JSON.stringify(bodyFormData)
+						}
+					)
+				  .then(function (response) {
 			        //handle success
 			        console.log(response);
 			    })
@@ -47,6 +76,21 @@ class MapEvents{
 			        //handle error
 			        console.log(response);
 			    });
+
+				// axios({
+			  //   method: 'post',
+			  //   url: `${process.env.API_ROOT}/rerun-model`,
+			  //   data: bodyFormData,
+			  //   headers: {'Content-Type': 'multipart/form-data', 'Access-Control-Allow-Origin': '*' }
+			  //   })
+			  //   .then(function (response) {
+			  //       //handle success
+			  //       console.log(response);
+			  //   })
+			  //   .catch(function (response) {
+			  //       //handle error
+			  //       console.log(response);
+			  //   });
 
 				alert("Your model is being rerun! This may take some time.")
 			})
@@ -93,13 +137,16 @@ class MapEvents{
 			this.map.serverModels = results;
 			for(let mod in results)
 			{
-				if(counter == 0)
+				if(results[mod].name ? results[mod].name : results[mod].model_name == "Original Model")
 				{
 					d3.select('#modelData')
 						.append('option')
 						.attr("value", mod)
 						.attr("selected", "")
 						.html(results[mod].name ? results[mod].name : results[mod].model_name)
+
+						$('.selectpicker').selectpicker('refresh');
+						// console.log(($(".selectpicker") as any).selectpicker)
 				}
 				else
 				{
@@ -107,9 +154,15 @@ class MapEvents{
 						.append('option')
 						.attr("value", mod)
 						.html(results[mod].name ? results[mod].name : results[mod].model_name)
+						$('.selectpicker').selectpicker('refresh');
+						$('.selectpicker').selectpicker({
+					      maxOptions:2
+					  });
+
+
+						// console.log(($(".selectpicker") as any).selectpicker)
 				}
 				counter++;
-
 			}
 		})
 
