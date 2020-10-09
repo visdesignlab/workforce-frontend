@@ -188,7 +188,13 @@ class MapController{
 			this.secondMap.destroy();
 		}
 
-		promise = promise.then(() => this.setAllHighlights());
+		promise = promise.then(() => {
+      this.originalMap.initLineChart();
+      if(this.comparisonMode){
+        this.secondMap.initLineChart();
+      }
+      this.setAllHighlights()
+    });
 
 		return promise;
 	}
@@ -227,11 +233,18 @@ class MapController{
 			if(this.comparisonMode && this.prov.current().getState().modelsSelected.length < 2)
 			{
 				this.secondMap.destroy();
+				d3.select("#runModelButton")
+					.style("display", "block")
 			}
 			else if (this.prov.current().getState().modelsSelected.length === 0)
 			{
 				this.originalMap.destroy();
 				return;
+			}
+			else{
+				console.log("here")
+				d3.select("#runModelButton")
+					.style("display", "none")
 			}
 			this.comparisonMode = this.prov.current().getState().modelsSelected.length > 1;
 			this.drawMap().then(() => this.drawSidebar());
@@ -248,14 +261,21 @@ class MapController{
 
 		})
 
+    this.prov.addObserver(['mapType'], () => {
+      this.drawMap().then(() => this.drawSidebar());
+    })
+
 		this.prov.addObserver(['countiesSelected'], () => {
 			this.sidebar.highlightAllCounties(this.prov.current().getState().countiesSelected)
 			this.originalMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
+      this.originalMap.initLineChart();
 
 			if(this.comparisonMode)
 			{
 				this.secondMap.highlightAllCounties(this.prov.current().getState().countiesSelected)
+        this.secondMap.initLineChart();
 			}
+      this.setAllHighlights()
 
 			this.sidebar.updateProfessions();
 		})
@@ -274,7 +294,7 @@ class MapController{
 	 */
 	 updateMapType(newMapType: string)
 	 {
-     let action = this.prov.addAction("Map Type Changed", (state: AppState) => {
+     let action = this.prov.addAction("Map Shape Changed", (state: AppState) => {
 			 state.mapType = newMapType;
 			 return state;
 		 })

@@ -76,87 +76,65 @@ class Linechart{
 		}
 
 		for (let i in supply_demand) {
-			this.createAreaChart(results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
+			this.createAreaChart(selectedCounties, results, supply_demand[i][0], supply_demand[i][1], supply_demand[i][2], max, +i % 3, Math.floor(+i / 3));
 		}
 	}
 
-	private createLineChart(results, supply, demand, profession, max, xi = 0, yi = 0) {
-		this.data.dates = Object.keys(results);
+	private createAreaChart(selectedCounties, results, supply, demand, profession, max, xi = 0, yi = 0) {
+		this.data.dates = Object.keys(this.controller.originalMap.results);
+
+		if(this.controller.comparisonMode)
+		{
+			this.data.dates = this.data.dates.concat(Object.keys(this.controller.secondMap.results))
+		}
+
+		let d = []
+
+		let professions = Object.keys(this.controller.originalMap.results[2019]['State of Utah']['supply']);
+		if(this.controller.comparisonMode)
+		{
+			professions.concat(Object.keys(this.controller.secondMap.results[2019]['State of Utah']['supply']))
+		}
+
+		for (let k in professions) {
+			for (let i of Object.keys(this.controller.originalMap.results)) {
+				let counter = 0;
+				for(let j of selectedCounties)
+				{
+					counter += this.controller.originalMap.results[i][j]['demand'][professions[k]]
+				}
+				if(!isNaN(counter))
+				{
+					d.push(counter);
+				}
+			}
+
+			if(this.controller.comparisonMode)
+			{
+				for (let i of Object.keys(this.controller.secondMap.results)) {
+
+					let counter = 0;
+					for(let j of selectedCounties)
+					{
+						counter += this.controller.secondMap.results[i][j]['demand'][professions[k]]
+					}
+					if(!isNaN(counter))
+					{
+						d.push(counter);
+					}
+				}
+			}
+		}
+
 		this.data.series = demand;
 
+		
 		var x = d3.scaleLinear()
 			.domain([+d3.min(this.data.dates), +d3.max(this.data.dates)])
 			.range([this.margin.left, this.width - this.margin.right])
 
 		var y = d3.scaleLinear()
-			.domain([0, d3.max([max, d3.max(demand), d3.max(supply)])])
-			.range([this.height - this.margin.bottom, this.margin.top])
-
-		var xAxis = g => g
-			.attr("transform", `translate(0,${this.height - this.margin.bottom})`)
-			.call(d3.axisBottom(x).ticks(4).tickSize(1.5).tickFormat(d3.format(".0f")))
-
-		var yAxis = g => g
-			.attr("transform", `translate(${this.margin.left},0)`)
-			.call(d3.axisLeft(y).tickSize(1.5).tickFormat(d3.format(".2s")))
-
-		var line = d3.line()
-			.x((d, i) => x(this.data.dates[i]))
-			.y(d => y(d as any))
-
-
-
-		var lineChartGroup = this.lineChartSvg.append('g')
-			.attr('transform', `translate(${xi * this.width}, ${yi * this.height})`)
-
-		lineChartGroup.append('text')
-			.attr("x", (this.width / 2))
-			.attr("y", (this.margin.top))
-			.attr("text-anchor", "middle")
-			.style("font-size", "16px")
-			.text(profession);
-
-		this.data.dates = Object.keys(results);
-		this.data.series = supply;
-		lineChartGroup.append("g")
-			.call(xAxis);
-
-		lineChartGroup.append("g")
-			.call(yAxis);
-
-		const chartgroup = lineChartGroup.append("g")
-			.attr("fill", "none")
-			.attr("stroke-linejoin", "round")
-			.attr("stroke-linecap", "round")
-
-		chartgroup
-			.append("path")
-			.datum(this.data.series)
-			.attr("stroke", "#086fad")
-			.style("mix-blend-mode", "multiply")
-			.attr("d", d => line(d));
-
-		this.data.series = demand;
-		chartgroup
-			.append("path")
-			.attr("stroke-dasharray", ("3, 3"))
-			.datum(this.data.series)
-			.attr("stroke", "#c7001e")
-			.style("mix-blend-mode", "multiply")
-			.attr("d", d => line(d));
-	}
-
-	private createAreaChart(results, supply, demand, profession, max, xi = 0, yi = 0) {
-		this.data.dates = Object.keys(results);
-		this.data.series = demand;
-
-
-		var x = d3.scaleLinear()
-			.domain([+d3.min(this.data.dates), +d3.max(this.data.dates)])
-			.range([this.margin.left, this.width - this.margin.right])
-
-		var y = d3.scaleLinear()
-			.domain([0, d3.max([max, d3.max(demand), d3.max(supply)])]).nice()
+			.domain([0, d3.max([max, d3.max(d), d3.max(supply)])]).nice()
 			.range([this.height - this.margin.bottom, this.margin.top])
 
 		var xAxis = g => g

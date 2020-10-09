@@ -23,7 +23,7 @@
 			</ul>
 
 			<ul id="loginOut" class= "is-right" style="margin-bottom:0; font-size:18px">
-				<li id="login"><a href="/api/login">Login</a></li>
+				<li id="login"><a>Login</a></li>
 			</ul>
 		</div>
 
@@ -108,7 +108,7 @@
 								<h3>Counties</h3>
 								<table id="countiesTable" class="svgTable">
 										<thead>
-										<tr>
+										<tr id="countiesHeaderRow">
 												<th style="max-width: 30px; min-width:30px;"></th>
 												<th>County</th>
 												<!-- <th style="max-width: 10px; min-width:10px;"><span class="glyphicon glyphicon-sort"></span><br/></th> -->
@@ -134,7 +134,7 @@
 							<h3>Professions</h3>
 							<table id="professionsTable" class="svgTable">
 									<thead>
-									<tr>
+									<tr id="profHeaderRow">
 											<th style="max-width: 30px; min-width:30px;"></th>
 											<th>Profession</th>
 											<th style="max-width: 90px; min-width:90px;"> Supply <span class="glyphicon glyphicon-sort"></span><br/></th>
@@ -171,9 +171,6 @@
 		</div>
 
 	<script src="bundle.js"></script>
-	<script>
-		alert('The current model is based on dummy data.');
-	</script>
 
 </body>
 </html>

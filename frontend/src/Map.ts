@@ -55,6 +55,7 @@ class Map{
 
 		promise = promise.then((results)=> {
 
+
 			results = results[map];
 			this.results = results;
 
@@ -162,7 +163,7 @@ class Map{
 						.enter().append("path")
 						.attr("d", path)
 						.attr('fill', colorScale)
-						.attr('stroke', 'black')
+						.attr('stroke', 'white')
 						.on('click', d => this.controller.updateSelectedCounty(d.properties.NAME))
 						.on("mouseover", (d)=>{
 							var f = d3.format(".2f");
@@ -193,10 +194,14 @@ class Map{
 
 					this.updateMapType(this.controller.prov.current().getState().scaleType, 0);
 				});
-				this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 
 		});
 		return Promise.all([promise, innerPromise]);
+	}
+
+	initLineChart()
+	{
+		this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
 	}
 	/**
 	 *
@@ -388,62 +393,66 @@ class Map{
 		const map = this.controller.prov.current().getState().mapType;
 		const modelFile = this.controller.serverModels[this.modelData].path;
 
+
 		let replacementJson = undefined;
 
 		let promise1 = d3.json('data/profReplacements.json').then((res) => {
 			replacementJson = res;
 		})
 
-		let promise2 = d3.json(`{process.env.API_ROOT}/${modelFile}`).then((results)=> {
+		let promise2 = api_request(`${modelFile}`)
+			.then((response) => {
+					return response.json()
+				})
+			.then(results => {
 
-			promise1.then(() => {
+				promise1.then(() => {
 
-				results = results[map];
-				this.results = results;
+					results = results[map];
+					this.results = results;
 
-				if(this.firstMap)
-				{
-					if(this.controller.removedProfessions.size > 0 && !this.controller.modelRemovedComparison)
+					if(this.firstMap)
 					{
-						this.controller.createDuplicateMap()
-						d3.select("#onlyTitle")
-							.style("fill", "#1B9E77")
-					}
-					else if(this.controller.removedProfessions.size == 0 && this.controller.modelRemovedComparison)
-					{
-						this.controller.removeDuplicateMap();
-					}
-				}
-				else{
-					if(this.controller.modelRemovedComparison)
-					{
-						this.removeProfessionsFromData(this.results, replacementJson);
-					}
-				}
-
-				this.currentYearData = results[year]
-					var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
-					for (let county in this.currentYearData) {
-						let totalSupply = 0;
-						let totalDemand = 0;
-						for (let profession of professions) {
-							if (this.controller.prov.current().getState().professionsSelected[profession]) {
-								totalSupply += this.currentYearData[county]['supply'][profession];
-								totalDemand += this.currentYearData[county]['demand'][profession];
-							}
+						if(this.controller.removedProfessions.size > 0 && !this.controller.modelRemovedComparison)
+						{
+							this.controller.createDuplicateMap()
+							d3.select("#onlyTitle")
+								.style("fill", "#1B9E77")
 						}
-							let population = this.currentYearData[county].population;
-							this.currentYearData[county]['totalSupply'] = totalSupply;
-							this.currentYearData[county]['totalDemand'] = totalDemand;
-							this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
-							this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
-							this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
+						else if(this.controller.removedProfessions.size == 0 && this.controller.modelRemovedComparison)
+						{
+							this.controller.removeDuplicateMap();
+						}
+					}
+					else{
+						if(this.controller.modelRemovedComparison)
+						{
+							this.removeProfessionsFromData(this.results, replacementJson);
+						}
 					}
 
-					this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
-					this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
-			})
-		});
+					this.currentYearData = results[year]
+						var professions = Object.keys(this.currentYearData['State of Utah']['supply']);
+						for (let county in this.currentYearData) {
+							let totalSupply = 0;
+							let totalDemand = 0;
+							for (let profession of professions) {
+								if (this.controller.prov.current().getState().professionsSelected[profession]) {
+									totalSupply += this.currentYearData[county]['supply'][profession];
+									totalDemand += this.currentYearData[county]['demand'][profession];
+								}
+							}
+								let population = this.currentYearData[county].population;
+								this.currentYearData[county]['totalSupply'] = totalSupply;
+								this.currentYearData[county]['totalDemand'] = totalDemand;
+								this.currentYearData[county]['totalSupplyPer100K'] = totalSupply / population * 100000;
+								this.currentYearData[county]['totalDemandPer100K'] = totalDemand / population * 100000;
+								this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
+						}
+
+						this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
+				})
+			});
 		return Promise.all([promise1, promise2]);
 	}
 
@@ -453,18 +462,27 @@ class Map{
 
 	highlightAllCounties(counties: string[])
 	{
+
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => counties.includes((d as any).properties.NAME))
-			.classed('selectedCounty', true);
+			.classed('selectedCounty', true)
+			.classed('notSelectedCounty', false)
 
-		d3.selectAll('.selectedCounty').filter(d => {
-			return !counties.includes((d as any).properties.NAME)
+		d3.selectAll('svg .counties').selectAll('path')
+		.filter(d => {
+			return !(counties.includes((d as any).properties.NAME))
 		})
 			.classed("selectedCounty", false)
+			.classed('notSelectedCounty', true);
 
-		this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
-		this.controller.setAllHighlights();
+		if(counties.length === 1 && counties[0] === "State of Utah")
+		{
+			d3.selectAll('svg .counties').selectAll('path')
+				.classed("notSelectedCounty", false);
+		}
+
 	}
+
 
 	removeProfessionsFromData(results, replacementJson)
 	{

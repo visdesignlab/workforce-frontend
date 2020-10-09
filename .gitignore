@@ -8,6 +8,7 @@ frontend/dist/bundle.js*
 frontend/node_modules
 
 # Backend
+backend/workforceAPI/static
 .coverage
 .vscode
 __pycache__

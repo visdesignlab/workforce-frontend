@@ -27,6 +27,8 @@ promise.then(()=>{
   mapController.drawMap().then(() => {
     mapController.drawSidebar();
     mapController.prov.done();
+
+		// alert('The current model is based on dummy data.');
   });
 });
 
@@ -46,37 +48,36 @@ function logout() {
 }
 
 api_request('whoami')
-  .then((response) => {
-    if(response.status === 200)
-    {
-      response.text().then((t) => {
-        let e = t.substring(14)
-        d3.select("#login").select("a").attr("href", null).html("Logged in: " + e);
-        d3
-          .select("#loginOut")
-          .append("li")
-          .on("click", () => {
-            logout()
+      .then((response) => {
+        if(response.status === 200)
+        {
+          response.text().then((t) => {
+            d3.select("#login").select("a").attr("href", null).html(`Logged in: ${t}`);
+            d3
+              .select("#loginOut")
+              .append("li")
+              .on("click", () => {
+                logout()
+              })
+              .attr("id", "logout")
+              .append("a")
+              .html("Logout")
           })
-          .attr("id", "logout")
-          .append("a")
-          .html("Logout")
+        }
+        else{
+          d3.select("#login").select("a").attr("href", `${process.env.API_ROOT}/login`).html("Login");
+        }
       })
-    }
-    else{
-      d3.select("#login").select("a").html("Login");
-    }
+
+
+api_request('models')
+  .then((response) => {
+    return response.json();
   })
-
-
-  api_request('models')
-	.then((response) => {
-		return response.json();
-	})
-	.then((myJson) => {
-		const rows = Object.values(myJson);
-		SimpleTableCreator(document.getElementById('modelPage'), rows);
-	})
+  .then((myJson) => {
+    const rows = Object.values(myJson);
+    SimpleTableCreator(document.getElementById('modelPage'), rows);
+  })
 
 // Set up undo/redo hotkey to typical buttons
 document.onkeydown = function(e){

@@ -1,8 +1,8 @@
-function getCookie(name: string) {
+export function getCookie(name: string) {
     var cookieValue = null;
 
     if (document.cookie && document.cookie !== '') {
-        var cookies = document.cookie.split(';');
+        var cookies = document.cookie.split('; ');
         for (var i = 0; i < cookies.length; i++) {
             var cookie = cookies[i];
             if (cookie.substring(0, name.length + 1) === (name + '=')) {
@@ -29,7 +29,7 @@ export function api_request(route: string): Promise<any> {
     }
 
     return fetch(
-        `${process.env.API_ROOT}/${route}`, 
+        `${process.env.API_ROOT}/${route}`,
         {
           method: 'GET',
           credentials: 'include',

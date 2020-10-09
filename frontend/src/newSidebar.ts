@@ -15,10 +15,16 @@ class Sidebar {
   currentYearData:any;
   otherCurrentYearData:any;
   mapData:any;
+	countiesAscending: boolean;
+	profAscending: boolean;
 
   constructor(map:MapController) {
     this.cell = {height: 30, width: 150, margin:10}
     this.map = map;
+    this.countiesSortingFunction = this.getSortingOptions(0, true);
+    this.professionsSortingFunction = this.getSortingOptions(0, true);
+		this.countiesAscending = true;
+		this.profAscending = true;
 
     this.countiesSvg = d3.select('#counties').select('svg');
 
@@ -45,6 +51,70 @@ class Sidebar {
         .attr('height', 50)
         .attr('width', 510)
     }
+
+		let that = this;
+
+		d3.select("#countiesHeaderRow")
+			.selectAll("th")
+			.on("click", function() {
+				let clicked = (this as HTMLElement).innerHTML;
+
+				if(clicked === "Need")
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(2, that.countiesAscending);
+					that.updateCounties();
+				}
+				else if (clicked === ("County"))
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(0, that.countiesAscending);
+					that.updateCounties();
+				}
+				else if (clicked === "Gap")
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(3, that.countiesAscending);
+					that.updateCounties();
+				}
+				else if (clicked.includes("Supply"))
+				{
+					that.countiesAscending = !that.countiesAscending;
+					that.countiesSortingFunction = that.getSortingOptions(1, that.countiesAscending);
+					that.updateCounties();
+				}
+			})
+
+		d3.select("#profHeaderRow")
+			.selectAll("th")
+			.on("click", function() {
+				let clicked = (this as HTMLElement).innerHTML;
+
+				if(clicked === "Need")
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(2, that.profAscending);
+					that.updateProfessions();
+				}
+				else if (clicked === "Profession")
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(0, that.profAscending);
+					that.updateProfessions();
+				}
+				else if (clicked === "Gap")
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(3, that.profAscending);
+					that.updateProfessions();
+				}
+				else if (clicked.includes("Supply"))
+				{
+					that.profAscending = !that.profAscending;
+					that.professionsSortingFunction = that.getSortingOptions(1, that.profAscending);
+					that.updateProfessions();
+				}
+			})
   }
 
   destroy()
@@ -264,14 +334,20 @@ class Sidebar {
       });
   }
 
-
   doubleMapRows(td, xScale, domainMax)
   {
 		let that = this;
     let labels = td.filter((d) => {
        return d.vis == 'text' && ((d.type !== "supplyChangeable" && d.type !== "needChangeable") || !this.map.removedProfessions.has(d.name));
       })
-      .text(function(d){return d.value;});
+      .text(function(d){
+				if(d.value == "State of Utah")
+				{
+					return d.value;
+				}
+				return isNaN(d.value) ? "--" : d.value;
+
+			});
 
 		let inputLabels = td.filter((d) => {
 			 return d.vis == 'text' && (d.type === 'needChangeable' || d.type === "supplyChangeable") && this.map.removedProfessions.has(d.name);
@@ -295,7 +371,7 @@ class Sidebar {
 			 return d.vis == 'textDouble';
 			})
 			.attr("rowspan", 2)
-			.text(function(d){return d.value;});
+			.text(function(d){return d.value});
 
 		let circlesSvg = td.filter((d) => {
        return d.vis == 'svg';
@@ -336,6 +412,34 @@ class Sidebar {
 			.attr("class", "icon is-small")
 			.append("i")
 			.attr("class", "far fa-edit editIcon")
+
+		let allCheckbox = td.filter((d) => {
+			 return d.vis == 'allCheck' && d.type == 'selectedCheck';
+			})
+			.append("input")
+			.property("checked", d => {
+				return d.value
+			})
+			.classed("selectedBox", d => d.value)
+			.attr("type", "checkbox")
+			.attr("id", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
+			.on("click", d => {
+				if(d.type == "selectedCheck")
+				{
+					this.map.updateSelectedCounty(d.name);
+				}
+				else if (d.type == "profSelected")
+				{
+					this.changeProfession(d.name)
+				}
+				else if(d.type == "profIncluded")
+				{
+					this.changeProfession(d.name)
+				}
+			})
+			.append("label")
+			.attr("for", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
+
 
     let checkbox = td.filter((d) => {
        return d.vis == 'check';
@@ -534,7 +638,7 @@ class Sidebar {
 
     let tr = d3.select("#countiesTable").select("tbody")
       .selectAll("tr .notState")
-      .data(this.map.comparisonMode ? doubleCountyData : countiesData)
+      .data(this.map.comparisonMode ? doubleCountyData.sort(this.countiesSortingFunction) : countiesData.sort(this.countiesSortingFunction))
       .enter()
       .append("tr")
       .classed("notState", true)
@@ -661,7 +765,7 @@ class Sidebar {
 
     let profTr = d3.select("#professionsTable").select("tbody")
       .selectAll("tr .notState")
-      .data(this.map.comparisonMode ? doubleProfData : profData)
+      .data(this.map.comparisonMode ? doubleProfData.sort(this.professionsSortingFunction) : profData.sort(this.professionsSortingFunction))
       .enter()
       .append("tr")
       .classed("notState", true)
