@@ -340,7 +340,14 @@ class Sidebar {
     let labels = td.filter((d) => {
        return d.vis == 'text' && ((d.type !== "supplyChangeable" && d.type !== "needChangeable") || !this.map.removedProfessions.has(d.name));
       })
-      .text(function(d){return isNaN(d.value) ? "--" : d.value;});
+      .text(function(d){
+				if(d.value == "State of Utah")
+				{
+					return d.value;
+				}
+				return isNaN(d.value) ? "--" : d.value;
+
+			});
 
 		let inputLabels = td.filter((d) => {
 			 return d.vis == 'text' && (d.type === 'needChangeable' || d.type === "supplyChangeable") && this.map.removedProfessions.has(d.name);
@@ -405,6 +412,34 @@ class Sidebar {
 			.attr("class", "icon is-small")
 			.append("i")
 			.attr("class", "far fa-edit editIcon")
+
+		let allCheckbox = td.filter((d) => {
+			 return d.vis == 'allCheck' && d.type == 'selectedCheck';
+			})
+			.append("input")
+			.property("checked", d => {
+				return d.value
+			})
+			.classed("selectedBox", d => d.value)
+			.attr("type", "checkbox")
+			.attr("id", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
+			.on("click", d => {
+				if(d.type == "selectedCheck")
+				{
+					this.map.updateSelectedCounty(d.name);
+				}
+				else if (d.type == "profSelected")
+				{
+					this.changeProfession(d.name)
+				}
+				else if(d.type == "profIncluded")
+				{
+					this.changeProfession(d.name)
+				}
+			})
+			.append("label")
+			.attr("for", (d,i) => { return this.removeSpaces(d.name +"_checkBox"); })
+
 
     let checkbox = td.filter((d) => {
        return d.vis == 'check';
