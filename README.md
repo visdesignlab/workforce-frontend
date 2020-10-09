@@ -28,7 +28,7 @@ sudo add-apt-repository \
    stable"
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt-get update
-sudo apt-get install docker-ce pipenv python3.7 python3.7-dev mysql-server libmysqlclient-dev
+sudo apt-get install docker-ce pipenv python3.7 python3.7-dev mysql-server libmysqlclient-dev glpk-utils
 sudo usermod -aG docker ubuntu
 
 # Re-login
