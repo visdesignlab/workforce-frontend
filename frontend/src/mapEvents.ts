@@ -48,13 +48,21 @@ class MapEvents{
 				// 	'X-CSRF-TOKEN': token
 				// };
 
+				const formBody = [];
+				for (const property in bodyFormData) {
+					const encodedKey = encodeURIComponent(property);
+					const encodedValue = encodeURIComponent(bodyFormData[property]);
+					formBody.push(encodedKey + "=" + encodedValue);
+				}
+				const formBodyString = formBody.join("&");
+
 				let headers = {}
 				if (process.env.API_ROOT.includes('http://localhost:8000')) {
 						headers = {
-								'Accept': 'application/json',
-								'Content-Type': 'application/json',
+								'Accept': 'application/x-www-form-urlencoded',
+								'Content-Type': 'application/x-www-form-urlencoded',
 								'X-CSRFToken': csrftoken || '',
-								"Access-Control-Allow-Origin": 'http://localhost:8000',
+								"Access-Control-Allow-Origin": 'http://localhost:8080',
 								"Access-Control-Allow-Credentials": "true"
 						}
 				}
@@ -65,7 +73,7 @@ class MapEvents{
 							method: 'POST',
 							credentials: 'include',
 							headers: headers,
-							body: JSON.stringify(bodyFormData)
+							body: formBodyString
 						}
 					)
 				  .then(function (response) {
