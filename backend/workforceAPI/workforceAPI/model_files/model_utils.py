@@ -4,6 +4,7 @@ from workforceAPI.model_files.process_results import process_results
 from glob import glob
 import pandas as pd
 import pickle
+import traceback
 
 def run_model(path, model_id, metadata):
   df = pd.read_excel(path, sheet_name=None)
@@ -24,6 +25,7 @@ def run_model(path, model_id, metadata):
     process_results(MODELS_ROOT / f"{model_id}.json")
   except Exception as e:
     update_model_status(model_id, "Failed")
+    traceback.print_exc()
     return False, e
 
   update_model_status(model_id, "Completed")

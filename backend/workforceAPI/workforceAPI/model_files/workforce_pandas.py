@@ -24,11 +24,11 @@ from workforceAPI.settings import MEDIA_ROOT
 # Trimming the length first (according to an easy to use human clip point) then makes trimming the columns much more reliable...
 # In[13]:
 
-def get_dataframes_sheets():
+def get_dataframes_sheets(model_id):
     dataframes = {}
     sheets = []
     for f in os.listdir(MEDIA_ROOT):
-        if f.endswith(".csv"):
+        if f.endswith(".csv") and f.startswith(model_id):
             sheet = os.path.splitext(f)[0]
             sheets.append(sheet)
             dataframes[sheet] = pd.read_csv(MEDIA_ROOT / f)

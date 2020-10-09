@@ -22,12 +22,14 @@ Now run MySQL through docker using:
 docker stop workforce-mysql
 docker rm workforce-mysql
 
+# Replace these vars when doing production work look at .env.prod
 docker run \
   --name workforce-mysql \
   -e MYSQL_ROOT_PASSWORD=password \
   -e MYSQL_USER=workforceuser \
   -e MYSQL_PASSWORD=password \
   -e MYSQL_DATABASE=workforcewebapp \
+  -v /home/ubuntu/workforce-db-data/:/var/lib/mysql \
   -d \
   -p 3306:3306 \
   mysql:5
@@ -97,17 +99,17 @@ There are several routes set up for accessing the model data. Here are the names
           `start_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
           `end_year`: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  
           `step_size`: The step size for the model in years.  
-          `removed_professions`: Comma separated list of professions to remove.
+          `removed_professions`: Comma separated list (without spaces) of professions to remove.
   - Description:
   - Return: Either "File uploaded successfully" and 201 if the model runs successfully. 400 for a bad request (missing model_id) or 500 for a failure in running the model.
   - Example:
     ```
     curl \
       -X POST \
-      -F 'model_id=8bcaed56-89aa-4d24-9d6c-732f2eb35fd7' \
-      -F 'removed_professions=NP' \
-      -F 'model_name=updated model original remove NP' \
-      -F 'description=test_update, remove NP' \
+      -F 'model_id=fdbb2a92-4531-4395-91d2-1b495b6566d5' \
+      -F 'removed_professions=NP,MA' \
+      -F 'model_name=updated model NP removed to remove NP + MA' \
+      -F 'description=test_update, remove NP + MA' \
       'localhost:8000/api/rerun-model'
     ```
 
