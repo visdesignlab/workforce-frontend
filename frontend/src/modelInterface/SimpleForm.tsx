@@ -2,6 +2,8 @@ import React, {FC, useState, ChangeEvent, useEffect} from 'react';
 import Button from '@material-ui/core/Button';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
+import Popover from '@material-ui/core/Popover';
+import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import {ModelConfig, getDefaultModelConfig} from './ModelConfig';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
@@ -31,6 +33,15 @@ const useStyles = makeStyles((theme: Theme) =>
     },
   }),
 );
+
+const useStylesPopover = makeStyles((theme) => ({
+  typography: {
+    padding: theme.spacing(2),
+  },
+  button: {
+    marginTop: theme.spacing(2),
+  }
+}));
 
 const removedProfessions = new Set();
 const SimpleForm = () => {
@@ -75,6 +86,21 @@ let arr = Array.from(removedProfessions) as string[];
     setCount(0)
   };
 
+  // Popover logic
+  const classesPopover = useStylesPopover();
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? 'simple-popover' : undefined;
+
   return (
     <Grid container justify="center" alignItems="center">
       <form style={{display: 'table'}} onSubmit={handleSubmit}>
@@ -116,21 +142,6 @@ let arr = Array.from(removedProfessions) as string[];
                 name="name"
                 label="Model Name"
                 variant="outlined"
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                onChange={(event: ChangeEvent<{value: string}>) => {
-                  setDi({...di, author: event.target.value});
-                }}
-                value={di.author}
-				required
-                id="author"
-                name="author"
-                label="Author"
-                variant="outlined"
-                placeholder="Organizations/Persons"
                 fullWidth
               />
             </Grid>
@@ -238,6 +249,36 @@ let arr = Array.from(removedProfessions) as string[];
           </Grid>
         </Grid>
       </form>
+      
+
+      <Button aria-describedby={id} variant="contained" color="primary" onClick={handleClick} className={classesPopover.button}>
+        Click for help
+      </Button>
+      <Popover
+        id={id}
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+      >
+      <Typography className={classesPopover.typography}>
+        File Upload: The data file that the model will use to compute supply and needs. <br /> 
+        Model Name: A descriptive name for your model. <br />
+        From: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  <br />
+        To: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  <br />
+        Interval: The step size for the model in years. This should be 1 or 2.  <br />
+        Model Typ: One of: "ideal_staffing", "ideal_staffing_current", or "service_allocation".  <br />
+        Professions: List of professions to include.<br />
+        Description: A longer form description to describe your data and goals. <br />
+      </Typography>
+      </Popover>
     </Grid>
   );
 };
