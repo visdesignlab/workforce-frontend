@@ -8,6 +8,7 @@ import json
 
 from workforceAPI import settings
 from workforceAPI.model_files.model_utils import run_model, clean_up, open_models
+from workforceAPI.models import WorkforceModel
 
 REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions"]
 
@@ -18,9 +19,9 @@ def root(request):
 
 @login_required
 def models(request):
-  models = open_models()
+  models = list(WorkforceModel.objects.all().values())
 
-  return JsonResponse(models)
+  return JsonResponse(models, safe = False)
 
 @login_required
 def get_model(request, model_id):
