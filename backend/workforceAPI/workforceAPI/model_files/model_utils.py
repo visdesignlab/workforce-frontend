@@ -1,9 +1,8 @@
 from workforceAPI.settings import MEDIA_ROOT, MODELS_ROOT
+from workforceAPI.models import WorkforceModel
 from workforceAPI.model_files.results import run_model_for_range
 from workforceAPI.model_files.process_results import process_results
-from glob import glob
 import pandas as pd
-import pickle
 import traceback
 
 def run_model(path, model_id, metadata):
@@ -31,35 +30,18 @@ def run_model(path, model_id, metadata):
   update_model_status(model_id, "Completed")
   return True, None
 
-def add_model_to_pkl(model_id, metadata):
-  models = open_models()
-
-  models[model_id] = metadata
-  models.get(model_id)["status"] = "Running"
-
-  with open(MODELS_ROOT / "models.pkl", 'wb') as f:
-    models = pickle.dump(models, f)
+def add_model_to_db(model_id, metadata):
+  metadata["status"] = "Running"
+  new_model = WorkforceModel(**metadata)
+  new_model.save()
 
 def update_model_status(model_id, status):
-  models = open_models()
-
-  models.get(model_id)["status"] = status
+  model_to_update = WorkforceModel.objects.filter(model_id=model_id)
+  model_to_update.update(status=status)
 
   if status == "Completed":
-    models.get(model_id)["path"] = f"models/{model_id}.json"
-
-  with open(MODELS_ROOT / "models.pkl", 'wb') as f:
-    models = pickle.dump(models, f)
+    model_to_update.update(path=f"models/{model_id}.json")
 
 def clean_up(model_id):
-  # Unlink (delete) files that match the model ID, except the xlsx
+  # Unlink (delete) files that match <model_id>.csv
   [p.unlink() for p in MEDIA_ROOT.glob(f"{model_id}_*.csv")]
-
-def open_models():
-  with open(MODELS_ROOT / "models.pkl", 'rb') as f:
-    models = pickle.load(f)
-  
-  return models
-
-def get_model(model_id):
-  models = open_models()
