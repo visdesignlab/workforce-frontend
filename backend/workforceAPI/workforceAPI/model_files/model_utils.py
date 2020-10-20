@@ -10,7 +10,7 @@ def run_model(path, model_id, metadata):
   for key in df.keys():
     df[key].to_csv(MEDIA_ROOT / f"{model_id}_{key}.csv")
   
-  add_model_to_pkl(model_id, metadata)
+  add_model_to_db(model_id, metadata)
 
   try:
     run_model_for_range(
