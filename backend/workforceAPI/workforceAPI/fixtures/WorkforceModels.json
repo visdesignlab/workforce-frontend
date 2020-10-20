@@ -5,6 +5,7 @@
         "fields": {
             "author": "Michael K. Magill, MD",
             "description": "Team with Phys, MA, NP, PA",
+            "model_id": "12cd99d7-fb67-47eb-bb2d-1cb49a86782c",
             "model_name": "Moderate Team",
             "model_type": "ideal_staffing",
             "start_year": 2019,
@@ -22,6 +23,7 @@
         "fields": {
             "author": "IBM",
             "description": "Original model by IBM based on dummy data.",
+            "model_id": "8bcaed56-89aa-4d24-9d6c-732f2eb35fd7",
             "model_name": "Original Model",
             "model_type": "ideal_staffing",
             "start_year": 2014,
@@ -39,6 +41,7 @@
         "fields": {
             "author": "Michael K. Magill, MD",
             "description": "Team with MA and Phys only",
+            "model_id": "a91c2801-7d0b-4de6-8562-0112ac654a8d",
             "model_name": "Minimal team",
             "model_type": "ideal_staffing",
             "start_year": 2014,
@@ -56,6 +59,7 @@
         "fields": {
             "author": "Zach Cutler",
             "description": "Original model with the MA type completely removed from the excel sheet.",
+            "model_id": "e9237171-ba7d-4f24-a37d-555de8186b4d",
             "model_name": "Original model, no MA",
             "model_type": "ideal_staffing",
             "start_year": 2019,
@@ -73,6 +77,7 @@
         "fields": {
             "author": "Zach Cutler",
             "description": "Original model with the NP type completely removed from the excel sheet.",
+            "model_id": "fdbb2a92-4531-4395-91d2-1b495b6566d5",
             "model_name": "Original model, no NP",
             "model_type": "ideal_staffing",
             "start_year": 2019,

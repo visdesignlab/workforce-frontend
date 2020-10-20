@@ -32,6 +32,7 @@ def run_model(path, model_id, metadata):
 
 def add_model_to_db(model_id, metadata):
   metadata["status"] = "Running"
+  metadata["model_id"] = model_id
   new_model = WorkforceModel(**metadata)
   new_model.save()
 

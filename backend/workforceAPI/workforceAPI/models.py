@@ -14,6 +14,7 @@ class WorkforceModel(models.Model):
 
     author = models.EmailField()
     description = models.TextField()
+    model_id = models.CharField(max_length=36)
     model_name = models.CharField(max_length=256)
     model_type = models.CharField(max_length=22, choices=ModelTypes.choices)
     start_year = models.IntegerField()
