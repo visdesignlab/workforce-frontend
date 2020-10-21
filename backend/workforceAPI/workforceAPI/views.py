@@ -1,5 +1,6 @@
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.forms.models import model_to_dict
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from pathlib import Path
@@ -73,7 +74,7 @@ def file_upload(request):
 
     if metadata:
       metadata = json.loads(metadata)
-      metadata["author"] = request.user.username
+      metadata["author"] = User.objects.get(username = request.user.username).email
     else:
       return HttpResponse("Metadata is missing from request", status=400)
 
@@ -122,7 +123,7 @@ def rerun_model(request):
 
     # Update model
     metadata = model_to_dict(old_model)
-    metadata["author"] = request.user.username
+    metadata["author"] = User.objects.get(username = request.user.username).email
     metadata["model_name"] = model_name
     metadata["description"] = description
     metadata["model_type"] = request.POST.get("model_type") or metadata.get("model_type")
