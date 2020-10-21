@@ -12,7 +12,7 @@ from workforceAPI import settings
 from workforceAPI.model_files.model_utils import run_model, clean_up, delete_all_model_files
 from workforceAPI.models import WorkforceModel
 
-REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions"]
+REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions", "is_public"]
 
 
 
@@ -131,6 +131,7 @@ def rerun_model(request):
     metadata["end_year"] = request.POST.get("end_year") or metadata.get("end_year")
     metadata["step_size"] = request.POST.get("step_size") or metadata.get("step_size")
     metadata["removed_professions"] = list(set(removed_professions.split(",") + metadata.get("removed_professions"))) if removed_professions else metadata.get("removed_professions")
+    metadata["is_public"] = request.POST.get("is_public") or metadata.get("is_public")
     del metadata["path"]
     del metadata["status"]
     del metadata["id"]
