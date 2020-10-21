@@ -1,6 +1,7 @@
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.forms.models import model_to_dict
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from pathlib import Path
@@ -19,9 +20,12 @@ REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type",
 def root(request):
   return HttpResponse("Healthcare Workforce API")
 
-@login_required
 def models(request):
-  models = list(WorkforceModel.objects.all().values())
+  if request.user.is_authenticated:
+    user_email = User.objects.get(username = request.user.username).email
+    models = list(WorkforceModel.objects.filter(Q(is_public=True) | Q(author=user_email)).values())
+  else:
+    models = list(WorkforceModel.objects.filter(is_public=True).values())
 
   return JsonResponse(models, safe = False)
 
