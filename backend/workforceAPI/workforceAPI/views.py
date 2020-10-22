@@ -24,6 +24,9 @@ def models(request):
 
   return JsonResponse(models, safe = False)
 
+def delete_model(request):
+  pass
+
 @login_required
 def get_model(request, model_id):
   model_path = settings.MODELS_ROOT / model_id
