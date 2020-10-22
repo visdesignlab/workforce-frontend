@@ -45,6 +45,7 @@ class Map{
 		this.modelData = modelUsed;
 
 		const map = this.controller.prov.current().getState().mapType;
+		console.log(this.controller.serverModels)
 		const model = this.controller.serverModels.find(d => d.model_id === this.modelData) || this.controller.serverModels[this.modelData]
 		const modelFile = model.path;
 

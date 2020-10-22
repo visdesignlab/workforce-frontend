@@ -90,3 +90,9 @@ document.onkeydown = function(e){
     mapController.prov.goForwardOneStep();
   }
 }
+
+d3.select("#historyButton")
+  .on("click", () => {
+    mapController.historyClick()
+  })
+  
