@@ -8,7 +8,7 @@ import pickle
 import json
 
 from workforceAPI import settings
-from workforceAPI.model_files.model_utils import run_model, clean_up
+from workforceAPI.model_files.model_utils import run_model, clean_up, delete_all_model_files
 from workforceAPI.models import WorkforceModel
 
 REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions"]
@@ -24,8 +24,28 @@ def models(request):
 
   return JsonResponse(models, safe = False)
 
+@login_required
 def delete_model(request):
-  pass
+  model_id = request.GET.get("model_id")
+
+  if not model_id:
+    return HttpResponse("model_id is missing from request", status=400)
+
+  # If count is zero, the model doesn't exist
+  model = WorkforceModel.objects.filter(model_id=model_id)
+  if not model.count():
+    return HttpResponse("Model not found", status=404)
+
+  # Now, if model doens't exist, user is not the owner of the model
+  user_email = User.objects.get(username = request.user.username).email
+  model = model.filter(author=user_email).first()
+  if not model:
+    return HttpResponse("User is not the owner of the model", status=400)
+
+  delete_all_model_files(model)
+  model.delete()
+
+  return HttpResponse("Model deleted", status=200)
 
 @login_required
 def get_model(request, model_id):

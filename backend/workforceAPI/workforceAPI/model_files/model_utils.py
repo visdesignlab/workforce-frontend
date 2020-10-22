@@ -46,3 +46,14 @@ def update_model_status(model_id, status):
 def clean_up(model_id):
   # Unlink (delete) files that match <model_id>.csv
   [p.unlink() for p in MEDIA_ROOT.glob(f"{model_id}_*.csv")]
+
+def delete_all_model_files(model_to_delete):
+  filename_to_delete = model_to_delete.filename
+  model_id_to_delete = model_to_delete.model_id
+
+  models_with_filename = WorkforceModel.objects.filter(filename=filename_to_delete)
+
+  if models_with_filename.count() is 1:
+    (MEDIA_ROOT / filename_to_delete).unlink()
+
+  (MODELS_ROOT / f"{model_id_to_delete}.json").unlink()
