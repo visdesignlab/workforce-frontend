@@ -310,11 +310,12 @@ h3{
 		opacity: .9;
 }
 
-#runModelButton
+#runModelButton,#deleteModelButton
 {
 	max-height: 50px;
 	max-width: 110px;
 	margin-top: 20px;
+	margin-left: 10px;
 	position: relative;
 	float:left;
 }
