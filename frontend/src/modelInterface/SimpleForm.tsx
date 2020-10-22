@@ -274,7 +274,7 @@ let arr = Array.from(removedProfessions) as string[];
         From: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  <br />
         To: Currently, one of: 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.  <br />
         Interval: The step size for the model in years. This should be 1 or 2.  <br />
-        Model Typ: One of: "ideal_staffing", "ideal_staffing_current", or "service_allocation".  <br />
+        Model Type: One of: "ideal_staffing", "ideal_staffing_current", or "service_allocation".  <br />
         Professions: List of professions to include.<br />
         Description: A longer form description to describe your data and goals. <br />
       </Typography>
