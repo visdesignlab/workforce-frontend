@@ -260,42 +260,57 @@ class MapController {
     });
 
     this.prov.addObserver(["firstModelSelected"], () => {
+		console.log("observer called")
+
+	this.comparisonMode =
+      this.prov.current().getState().secondModelSelected !== undefined;
+
       if (
-        this.comparisonMode &&
         !this.prov.current().getState().secondModelSelected
       ) {
-        this.secondMap.destroy();
-        d3.select("#runModelButton").style("display", "flex");
+		this.secondMap.destroy();
+		console.log("flexing")
+		d3.select("#runModelButtonDiv").style("display", "flex");
+		d3.select("#deleteModelButton").style("display", "flex");
+
       } else if (!this.prov.current().getState().firstModelSelected) {
         this.originalMap.destroy();
         return;
       } else {
         console.log("here");
-        d3.select("#runModelButton").style("display", "none");
+		d3.select("#runModelButtonDiv").style("display", "none");
+		d3.select("#deleteModelButton").style("display", "none");
+
       }
-      this.comparisonMode =
-        this.prov.current().getState().secondModelSelected !== undefined;
+      
       this.drawMap().then(() => this.drawSidebar());
 	});
 	
 	this.prov.addObserver(["secondModelSelected"], () => {
-		if (
-			this.comparisonMode &&
-			!this.prov.current().getState().secondModelSelected
-		) {
-			this.secondMap.destroy();
-			d3.select("#runModelButton").style("display", "flex");
-		} else if (!this.prov.current().getState().firstModelSelected) {
-			this.originalMap.destroy();
-			return;
-		} else {
-			console.log("here");
-			d3.select("#runModelButton").style("display", "none");
-		}
-		this.comparisonMode =
-			this.prov.current().getState().secondModelSelected !== undefined;
-		this.drawMap().then(() => this.drawSidebar());
-	});
+
+		    this.comparisonMode =
+          this.prov.current().getState().secondModelSelected !== undefined;
+    if (
+      !this.prov.current().getState().secondModelSelected
+    ) {
+      this.secondMap.destroy();
+		d3.select("#runModelButtonDiv").style("display", "flex");
+		d3.select("#deleteModelButton").style("display", "flex");
+
+
+    } else if (!this.prov.current().getState().firstModelSelected) {
+      this.originalMap.destroy();
+      return;
+	}
+	else{
+		d3.select("#runModelButtonDiv").style("display", "none");
+		d3.select("#deleteModelButton").style("display", "none");
+
+	}
+
+
+    this.drawMap().then(() => this.drawSidebar());
+  });
 
     this.prov.addObserver(["scaleType"], () => {
       this.originalMap.updateMapType(

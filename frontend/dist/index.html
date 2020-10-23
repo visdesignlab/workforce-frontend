@@ -71,7 +71,7 @@
 
 					<ul class="navbar-nav ml-auto">
 						<li class="nav-item">
-							<button id="historyButton">Show History</button>
+							<button id="historyButton" class="button is-info">Show History</button>
 						</li>
 						<li class="nav-item">
 							<a class="nav-link"  href="about.html">About</a>
@@ -156,8 +156,16 @@
 										<tr id="allProfRow">
 									</tbody>
 							</table>
-							<button id='runModelButton' class="button is-info is-light">Rerun Model</button>
+							
 							<button id='deleteModelButton' class="button is-info is-light">Delete Model</button>
+
+							<div id="runModelButtonDiv" style="position: relative">
+								<button id='runModelButton' class="button is-info is-light">Rerun Model</button>
+								<div style="position:relative; float:left" class="field">
+									<input id="publicSwitch" type="checkbox" name="switchRoundedDefault" class="switch is-rounded" checked="checked">
+									<label for="switchRoundedDefault">Make Model Public</label>
+								</div>
+							</div>
 
 						</div>
 					</div>

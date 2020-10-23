@@ -20,6 +20,10 @@ class MapEvents {
 
     d3.select("#runModelButton").on("click", () => {
 
+		let checked = d3.select("#publicSwitch")
+			.property("checked")
+
+
 		api_request("whoami").then((response) => {
 			if (response.status !== 200) {
 				alert("You Must be Logged in to Rerun a Model")
@@ -32,8 +36,13 @@ class MapEvents {
     bodyFormData[
       "model_id"
     ] = this.map.prov.current().getState().firstModelSelected.model_id;
-    bodyFormData["model_name"] = "fakeName";
-    bodyFormData["description"] = "fakeDesc";
+    bodyFormData["model_name"] =
+      "Rerunning " +
+      this.map.prov.current().getState().firstModelSelected.model_id;
+	bodyFormData["description"] =
+    "Rerunning " +
+    this.map.prov.current().getState().firstModelSelected.model_id;
+	bodyFormData["is_public"] = checked;
     let removedString = "";
     for (let j in this.map.prov.current().getState().professionsSelected) {
       if (!this.map.prov.current().getState().professionsSelected[j]) {
@@ -92,7 +101,7 @@ class MapEvents {
         console.log(response);
       })
       .catch(function (response) {
-        //handle error
+        alert("Rerun failed")
         console.log(response);
       });
 
@@ -120,7 +129,12 @@ class MapEvents {
     d3.select("#deleteModelButton")
 			.on('click', () => {
 				const model_id = this.map.prov.current().getState().firstModelSelected.model_id
-				api_request(`delete_model?model_id=${model_id}`)
+				api_request(`delete_model?model_id=${model_id}`).then((response) => {
+					if(response.status !== 200)
+					{
+						alert("Model Deletion Failed");
+					}
+				})
 			})
 
     d3.selectAll(".plusClass").on("click", function () {
