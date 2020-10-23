@@ -23,7 +23,7 @@ def root(request):
 def models(request):
   if request.user.is_authenticated:
     user_email = User.objects.get(username = request.user.username).email
-    models = list(WorkforceModel.objects.filter(Q(is_public=True) | Q(author=user_email)).values())
+    models = list(WorkforceModel.objects.filter(Q(is_public=True) | Q(author=user_email) | Q(shared_with__icontains=user_email)).values())
   else:
     models = list(WorkforceModel.objects.filter(is_public=True).values())
 
