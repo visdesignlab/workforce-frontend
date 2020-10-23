@@ -71,51 +71,60 @@ const SimpleForm = ({setCount}) => {
   };
 
   const email = di.email;
-  const handleFormSubmission = (info: ModelConfig) => {
+  const handleFormSubmission = (info: any) => {
 
-    console.log(pub);
+    const formData = new FormData;
 
-    const formData = {}
+    formData.append('file', info.file);
+    delete info.file;
 
-    formData['file'] = info.file;
-    formData["is_public"] = String(pub);
-  let arr = Array.from(removedProfessions) as string[];
+    info.model_name = info.modelname;
+    info.start_year = info.from;
+    info.end_year = info.to;
+    info.model_type = info.model;
+    info.step_size = info.stepSize;
+    info.removed_professions = info.removedProfessions;
+    delete info.modelname;
+    delete info.from;
+    delete info.to;
+    delete info.model;
+    delete info.stepSize;
+    delete info.removedProfessions;
+
+    delete info.email;
+    delete info.name;
+    delete info.header;
+    delete info.separator;
+    delete info.skip;
+    delete info.source;
+
+    info['is_public'] = String(pub);
+
+    let arr = Array.from(removedProfessions) as string[];
     //info.removedProfessions = arr as string[];
-    di.removedProfessions = arr;
-    formData['metadata'] = JSON.stringify(info);
+    info.removed_professions = arr;
+    formData.append('metadata', JSON.stringify(info));
 
     let csrftoken = getCookie("csrftoken") || "";
 
     let headers = {};
     if (process.env.API_ROOT.includes("http://localhost:8000")) {
       headers = {
-        Accept: "application/x-www-form-urlencoded",
-        "Content-Type": "application/x-www-form-urlencoded",
         "X-CSRFToken": csrftoken || "",
         "Access-Control-Allow-Origin": "http://localhost:8080",
         "Access-Control-Allow-Credentials": "true",
       };
     } else {
       headers = {
-        Accept: "application/x-www-form-urlencoded",
-        "Content-Type": "application/x-www-form-urlencoded",
         "X-CSRFToken": csrftoken || "",
       };
     }
-
-    const formBody = [];
-    for (const property in formData) {
-      const encodedKey = encodeURIComponent(property);
-      const encodedValue = encodeURIComponent(formData[property]);
-      formBody.push(encodedKey + "=" + encodedValue);
-    }
-    const formBodyString = formBody.join("&");
 
     fetch(`${process.env.API_ROOT}/file-upload`, {
       method: "POST",
       credentials: "include",
       headers: headers,
-      body: formBodyString,
+      body: formData,
     })
       .then(function (response) {
         //handle success
@@ -161,6 +170,7 @@ const SimpleForm = ({setCount}) => {
                   id="contained-button-file"
                   multiple
                   onChange={(event) => {
+                    console.log(event.target.files)
                     setDi({ ...di, file: event.target.files[0] });
                   }}
                   type="file"
