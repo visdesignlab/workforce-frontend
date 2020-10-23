@@ -14,6 +14,7 @@ import {
 } from "./Icons";
 
 import { initProvenance, Provenance, NodeID } from "@visdesignlab/trrack";
+import { api_request } from "./API_utils";
 
 export interface EditedCounties {
   supply: {};
@@ -34,6 +35,7 @@ interface Model {
 	path:string;
 	filename:string;
 	status:string;
+	shared_with:string[]
 }
 
 export interface AppState {
@@ -64,7 +66,8 @@ const initialState: AppState = {
     removed_professions: [],
     path: "models/8bcaed56-89aa-4d24-9d6c-732f2eb35fd7.json",
     filename: "8bcaed56-89aa-4d24-9d6c-732f2eb35fd7_Workforce_Optimization_Tool_-_Input_Data.xlsx",
-    status: "Completed"
+	status: "Completed",
+	shared_with:["zach.t.cutler@gmail.com", "alex@sci.utah.edu"]
   },
   secondModelSelected: undefined,
   scaleType: "supply_need",
@@ -260,9 +263,21 @@ class MapController {
     });
 
     this.prov.addObserver(["firstModelSelected"], () => {
-		console.log("observer called")
 
-	this.comparisonMode =
+		api_request("whoami").then((response) => {
+			response.text().then((t) => {
+				if(t === this.prov.current().getState().firstModelSelected.author){
+					d3.select("#modelShareContent")
+						.selectAll("p")
+						.data(this.prov.current().getState().firstModelSelected.shared_with)
+						.enter()
+						.append("p")
+						.html(d => d);
+				}
+			})
+		})
+
+		this.comparisonMode =
       this.prov.current().getState().secondModelSelected !== undefined;
 
       if (
@@ -272,6 +287,8 @@ class MapController {
 		console.log("flexing")
 		d3.select("#runModelButtonDiv").style("display", "flex");
 		d3.select("#deleteModelButton").style("display", "flex");
+		d3.select("#hiddenShareButton").style("display", "flex");
+
 
       } else if (!this.prov.current().getState().firstModelSelected) {
         this.originalMap.destroy();
@@ -280,6 +297,8 @@ class MapController {
         console.log("here");
 		d3.select("#runModelButtonDiv").style("display", "none");
 		d3.select("#deleteModelButton").style("display", "none");
+		d3.select("#hiddenShareButton").style("display", "none");
+
 
       }
       
@@ -296,6 +315,8 @@ class MapController {
       this.secondMap.destroy();
 		d3.select("#runModelButtonDiv").style("display", "flex");
 		d3.select("#deleteModelButton").style("display", "flex");
+		d3.select("#hiddenShareButton").style("display", "flex");
+
 
 
     } else if (!this.prov.current().getState().firstModelSelected) {
@@ -305,6 +326,7 @@ class MapController {
 	else{
 		d3.select("#runModelButtonDiv").style("display", "none");
 		d3.select("#deleteModelButton").style("display", "none");
+		d3.select("#hiddenShareButton").style("display", "none");
 
 	}
 
@@ -356,6 +378,15 @@ class MapController {
         this.setAllHighlights();
       });
 	});
+
+	d3.select("#modelShareContent")
+		.selectAll("p")
+		.data(
+		this.prov.current().getState().firstModelSelected.shared_with
+		)
+		.enter()
+		.append("p")
+		.html((d) => d);
 	
 	ProvVisCreator(
     document.getElementById("provDiv")!,
