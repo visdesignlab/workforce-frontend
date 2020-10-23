@@ -119,8 +119,7 @@ class MapEvents {
 
     d3.select("#deleteModelButton")
 			.on('click', () => {
-				const model_id = this.map.prov.current().getState()
-				console.log(model_id)
+				const model_id = this.map.prov.current().getState().firstModelSelected.model_id
 				api_request(`delete_model?model_id=${model_id}`)
 			})
 
