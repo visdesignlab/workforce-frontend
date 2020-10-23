@@ -19,6 +19,11 @@ d3.select('#modelCreate').on('click', () => {
   d3.select('#modelPage').style('display', 'block');
 });
 
+d3.select('#userDocs').on('click', () => {
+  window.open('https://github.com/visdesignlab/workforce-frontend/blob/master/frontend/userDocs.md','_blank');
+});
+
+
 let mapController = new MapController();
 let myMapEvents:MapEvents = new MapEvents(mapController);
 let promise = myMapEvents.changeModelData();
