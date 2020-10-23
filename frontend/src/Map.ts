@@ -45,8 +45,8 @@ class Map{
 		this.modelData = modelUsed;
 
 		const map = this.controller.prov.current().getState().mapType;
-		console.log(this.controller.serverModels)
-		const model = this.controller.serverModels.find(d => d.model_id === this.modelData) || this.controller.serverModels[this.modelData]
+		console.log(this.modelData)
+		const model = this.controller.serverModels.find(d => d.model_id === this.modelData)
 		const modelFile = model.path;
 
 		let promise;
@@ -393,7 +393,7 @@ class Map{
 		}
 
 		const map = this.controller.prov.current().getState().mapType;
-		const model = this.controller.serverModels.find(d => d.model_id === this.modelData)  || this.controller.serverModels[this.modelData]
+		const model = this.controller.serverModels.find(d => d.model_id === this.modelData)
 		const modelFile = model.path;
 
 
