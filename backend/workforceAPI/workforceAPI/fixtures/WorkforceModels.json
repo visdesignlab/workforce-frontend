@@ -95,7 +95,7 @@
             "path": "models/fdbb2a92-4531-4395-91d2-1b495b6566d5.json",
             "filename": "fdbb2a92-4531-4395-91d2-1b495b6566d5_NP_removed.xlsx",
             "status": "Completed",
-            "is_public": true,
+            "is_public": false,
             "shared_with": []
         }
     }
