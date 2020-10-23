@@ -13,7 +13,7 @@ from workforceAPI import settings
 from workforceAPI.model_files.model_utils import run_model, clean_up, delete_all_model_files
 from workforceAPI.models import WorkforceModel
 
-REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions", "is_public"]
+REQUIRED_METADATA_FIELDS = ["model_name", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions", "is_public"]
 
 
 
@@ -94,13 +94,15 @@ def file_upload(request):
 
     if metadata:
       metadata = json.loads(metadata)
-      metadata["author"] = User.objects.get(username = request.user.username).email
     else:
       return HttpResponse("Metadata is missing from request", status=400)
 
     req_param_exists = [x in metadata for x in REQUIRED_METADATA_FIELDS]
     if not all(req_param_exists):
       return HttpResponse(f"Metadata does not contain all required parameters: {REQUIRED_METADATA_FIELDS}", status=400)
+
+    metadata["author"] = User.objects.get(username = request.user.username).email
+    metadata["is_public"] = metadata["is_public"] == "true"
 
     # Generate unique identifier
     model_id = str(uuid1())
