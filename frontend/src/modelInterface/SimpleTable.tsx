@@ -63,6 +63,7 @@ if (!count || count == 0) {
             <StyledTableCell align="left">Author</StyledTableCell>
             <StyledTableCell align="left">Description</StyledTableCell>
             <StyledTableCell align="left">Status</StyledTableCell>
+            
           </TableRow>
         </TableHead>
         <TableBody>
@@ -106,7 +107,7 @@ if (!count || count == 0) {
   );
 }
 return (
-<SimpleForm/>
+<SimpleForm setCount={setCount}/>
 );
 
 }

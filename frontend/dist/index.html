@@ -15,6 +15,31 @@
 	</head>
 
 	<body id = "bootstrap-overrides">
+				<!-- Modal -->
+		<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Share Model</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5>Enter Email to Share</h5>
+				<input type="email" class="form-control" id="shareInputEmail" aria-describedby="emailHelp" placeholder="Enter email">
+
+				<h5>Currently shared with</h5>
+				<div id="modelShareContent"></div>
+
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary" id="shareButton">Share</button>
+			</div>
+			</div>
+		</div>
+		</div>
 
 		<div class="tabs" style="margin-bottom:0">
 			<ul style="margin-bottom:0; font-size:18px">
@@ -71,7 +96,13 @@
 
 					<ul class="navbar-nav ml-auto">
 						<li class="nav-item">
-							<button id="historyButton">Show History</button>
+							<button id="historyButton" class="button is-info">Show History</button>
+						</li>
+						<li class="nav-item">
+							<button type="button" id="hiddenShareButton" class="button is-info" data-toggle="modal" data-target="#exampleModal" style="margin-left:15px">
+								Share Model
+							</button>
+
 						</li>
 						<li class="nav-item">
 							<a class="nav-link"  href="about.html">About</a>
@@ -156,13 +187,27 @@
 										<tr id="allProfRow">
 									</tbody>
 							</table>
-							<button id='runModelButton' class="button is-info is-light">Rerun Model</button>
+							
 							<button id='deleteModelButton' class="button is-info is-light">Delete Model</button>
+
+							<div id="runModelButtonDiv" style="position: relative">
+								<button id='runModelButton' class="button is-info is-light">Rerun Model</button>
+								<div style="position:relative; float:left" class="field checkbox">
+									
+									<div class="checkbox">
+										<label>
+											<input id="publicSwitch" type="checkbox" data-toggle="toggle">
+											Make Rerun Model Public
+										</label>
+									</div>
+
+								</div>
+							</div>
 
 						</div>
 					</div>
 
-					<div id="provDiv" class='flex-row' style='width:250px;'>
+					<div id="provDiv" class='flex-row' style='margin-top:10px; width:250px;'>
 					</div>
 				</div>
 
@@ -174,6 +219,8 @@
 				width="100%"
 				height="100%"
 		</div>
+
+
 
 	<script src="bundle.js"></script>
 

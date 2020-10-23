@@ -13,7 +13,7 @@ export type ModelConfig = {
   to: string;
   stepSize: string;
   model: string;
-  removedProfessions: Array<string>
+  removedProfessions: Array<string>;
 };
 
 export function getDefaultModelConfig(): ModelConfig {
@@ -32,6 +32,6 @@ export function getDefaultModelConfig(): ModelConfig {
     to: '2029',
     stepSize: '5',
     model: 'ideal_staffing',
-    removedProfessions: [],
+    removedProfessions: []
   };
 }

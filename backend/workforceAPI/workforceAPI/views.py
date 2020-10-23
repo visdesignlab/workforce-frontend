@@ -13,7 +13,7 @@ from workforceAPI import settings
 from workforceAPI.model_files.model_utils import run_model, clean_up, delete_all_model_files
 from workforceAPI.models import WorkforceModel
 
-REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions", "is_public"]
+REQUIRED_METADATA_FIELDS = ["model_name", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions", "is_public"]
 
 
 
@@ -29,6 +29,39 @@ def models(request):
 
   return JsonResponse(models, safe = False)
 
+def get_model(request, model_id):
+  model_id_q = Path(model_id).with_suffix('')
+
+  if not request.user.is_authenticated:
+    # Check that model is public
+    model = WorkforceModel.objects.filter(model_id=model_id_q).first()
+    
+    if not model:
+      return HttpResponse("Model not found", status=404)
+
+    if not model.is_public:
+      return HttpResponse("You don't have authorization to view that model", status=401)
+
+  else:
+    # Check that user has permission
+    model = WorkforceModel.objects.filter(model_id=model_id_q)
+
+    if not model.first():
+      return HttpResponse("Model not found", status=404)
+
+    user_email = User.objects.get(username = request.user.username).email
+    model = model.filter(Q(is_public=True) | Q(author=user_email) | Q(shared_with__icontains=user_email)).first()
+    if not model:
+      return HttpResponse("You don't have authorization to view that model", status=401)
+
+
+  model_path = settings.MODELS_ROOT / model_id
+
+  with open(model_path, 'r') as json_file:
+    model = json.load(json_file)
+
+  return JsonResponse(model)
+
 @login_required
 def share_model(request):
   model_id = request.GET.get('model_id')
@@ -39,9 +72,8 @@ def share_model(request):
   if not model:
     return HttpResponse("Model not found", status=404)
 
-  new_shared_with = list(models.shared_with).append(email_to_share_with)
-
-  model.update(shared_with=new_shared_with)
+  model.shared_with.append(email_to_share_with)
+  model.save()
 
   return HttpResponse("Shared model with recipient", status=200)
 
@@ -69,15 +101,6 @@ def delete_model(request):
   return HttpResponse("Model deleted", status=200)
 
 @login_required
-def get_model(request, model_id):
-  model_path = settings.MODELS_ROOT / model_id
-
-  with open(model_path, 'r') as json_file:
-    model = json.load(json_file)
-
-  return JsonResponse(model)
-
-@login_required
 def file_upload(request):
   if request.method == 'POST':
     # Check that file exists and is properly formatted
@@ -94,13 +117,15 @@ def file_upload(request):
 
     if metadata:
       metadata = json.loads(metadata)
-      metadata["author"] = User.objects.get(username = request.user.username).email
     else:
       return HttpResponse("Metadata is missing from request", status=400)
 
     req_param_exists = [x in metadata for x in REQUIRED_METADATA_FIELDS]
     if not all(req_param_exists):
       return HttpResponse(f"Metadata does not contain all required parameters: {REQUIRED_METADATA_FIELDS}", status=400)
+
+    metadata["author"] = User.objects.get(username = request.user.username).email
+    metadata["is_public"] = metadata["is_public"] == "true"
 
     # Generate unique identifier
     model_id = str(uuid1())
@@ -132,6 +157,7 @@ def rerun_model(request):
 
     # Optional params
     removed_professions = request.POST.get("removed_professions")
+    is_public = request.POST.get("is_public")
 
     if not (model_id and model_name and description):
       return HttpResponse("You must supply model_id, model_name, and description", status=400)
@@ -151,7 +177,7 @@ def rerun_model(request):
     metadata["end_year"] = request.POST.get("end_year") or metadata.get("end_year")
     metadata["step_size"] = request.POST.get("step_size") or metadata.get("step_size")
     metadata["removed_professions"] = list(set(removed_professions.split(",") + metadata.get("removed_professions"))) if removed_professions else metadata.get("removed_professions")
-    metadata["is_public"] = request.POST.get("is_public") or metadata.get("is_public")
+    metadata["is_public"] = is_public == "true" if is_public else metadata.get("is_public")
     del metadata["path"]
     del metadata["status"]
     del metadata["id"]
