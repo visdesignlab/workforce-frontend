@@ -132,6 +132,7 @@ def rerun_model(request):
 
     # Optional params
     removed_professions = request.POST.get("removed_professions")
+    is_public = request.POST.get("is_public")
 
     if not (model_id and model_name and description):
       return HttpResponse("You must supply model_id, model_name, and description", status=400)
@@ -151,7 +152,7 @@ def rerun_model(request):
     metadata["end_year"] = request.POST.get("end_year") or metadata.get("end_year")
     metadata["step_size"] = request.POST.get("step_size") or metadata.get("step_size")
     metadata["removed_professions"] = list(set(removed_professions.split(",") + metadata.get("removed_professions"))) if removed_professions else metadata.get("removed_professions")
-    metadata["is_public"] = request.POST.get("is_public") or metadata.get("is_public")
+    metadata["is_public"] = is_public == "true" if is_public else metadata.get("is_public")
     del metadata["path"]
     del metadata["status"]
     del metadata["id"]
