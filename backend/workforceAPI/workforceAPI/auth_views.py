@@ -37,7 +37,7 @@ def authorize(request):
     userinfo = oauth.UtahID.parse_id_token(request, token)
 
     if not userinfo:
-        return HttpResponse('Authentication Failed', status=400)
+        return HttpResponse('Authentication Failed, no userinfo', status=400)
 
     # Check if user exists
     user = User.objects.filter(username=userinfo.get('sub')).first()
@@ -45,23 +45,22 @@ def authorize(request):
     # Create a user if they don't exist
     if not user:
         # Create a new user with the user info 
-        request.session['loginToken'] = str(uuid1())
         User.objects.create_user(
             username=userinfo.get('sub'),
             email=userinfo.get('email'),
-            password=request.session.get("loginToken")
+            password=userinfo.get('email')
         )
     
     authenticated_user = authenticate(
         request,
         username=userinfo.get('sub'),
-        password=request.session.get("loginToken")
+        password=userinfo.get('email')
     )
 
     if authenticated_user is not None:
         auth_login(request, authenticated_user)
     else:
-        return HttpResponse('Authentication Failed', status=400)
+        return HttpResponse('Authentication Failed, didn\'t authenticate', status=400)
 
     return redirect(os.getenv('LOGIN_REDIRECT'))
 
