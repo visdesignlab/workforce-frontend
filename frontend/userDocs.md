@@ -36,37 +36,35 @@ The models that you can see in the right most selector are the public models, mo
 
 ### Model Visualization
 
-The model visualization is on the left half of the main panel. The model visualization show a map of Utah broken into either counties or local health districts (see [Model Selector](#model-selector)). The colors of the counties/health districts show various pieces of information. They might show a difference between supply and demand (default), the population, just the supply, or just the demand. You can toggle what is shown from the model selector.
+The model visualization is on the left half of the main panel. The model visualization shows a map of Utah broken into either counties or local health districts (see [Model Selector](#model-selector)). The colors of the counties/health districts show various pieces of information. They might show a difference between supply and demand (default), the population, just the supply, or just the demand. You can toggle what is shown from the model selector.
 
-Below the map of Utah, you'll see various plots that show year on the x-axis and supply/demand on the y axis. These are broken down by healthcare professional types. The various types are detailed in [professsions](#professions).
+Below the map of Utah, you'll see various plots that show year on the x-axis and supply/demand on the y axis. These are broken down by healthcare professional types. The various types are detailed in [professsions](#professions). If a chart is blue, that indicates an oversupply at the time period, whereas red signal an undersupply.
 
 By default all counties/health districts are visualized and selected for analysis, but you may click on one or more counties to select them for deeper inspection. Selecting counties updates the plots below the Utah map to show data from only the locations you selected.
 
 ### County/Health District Selector
 
-The county/health district selector is on the upper-right half of the main panel.
+The county/health district selector is on the upper-right half of the main panel. This shows the numeric break down of supply and demand for the county/district. Clicking on the checkbox to the left performs the same function as clicking the county/district on the map. That is, it filters the data in the model visualization charts below the map for deeper analysis. You may select 1 or more checkboxes.
 
 ### Professions Selector
 
-The professions selector is on the lower-right half of the main panel. The various types are detailed in [professsions](#professions).
+The professions selector is on the lower-right half of the main panel. The various types are detailed in [professsions](#professions). The supply and need is calculated based on the counties/districts you have selected. Clicking on the checkboxes here causes the rest of the visualization to be calculated with/without those professions. This is similar to clicking on the charts to the left. You may select many or none of the checkboxes.
 
 ### Rerun Model
 
-Below the professions selector you'll find the "Rerun Model" button.
+Below the professions selector you'll find the "Rerun Model" button. This reruns the model with the professions you selected above, while keeping all other parameters the same (including years, interval, etc.). When running a model, it can take an hour or more, during which time, you should **not** close the page or your model may not run fully.
 
 ### Delete Model
 
-Below the professions selector you'll find the "Delete Model" button.
-
-### Share Model
-
-Below the professions selector you'll find the "Share Model" button.
+Below the professions selector you'll find the "Delete Model" button. This will delete the currently selected model if you are the author of the model, otherwise, you will see an error.
 
 ## Create Model
 
 Creating a model requires that you are logged in. See [User Management](#user-management).
 
 Clicking on the "Create Model" button at the top of the page will bring you to the model creation page. The possible interactions with this page are detailed below.
+
+When running a model, it can take an hour or more, during which time, you should **not** close the page or your model may not run fully.
 
 ### Main Page
 
@@ -86,6 +84,8 @@ Clicking on the "Upload" button will bring you to the upload interface. The uplo
 - `Description`: A description for your model.
 
 These are also documented in the "Click For Help" button dialog.
+
+When running a model, it can take an hour or more, during which time, you should **not** close the page or your model may not run fully.
 
 ## User Management
 
