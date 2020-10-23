@@ -127,7 +127,7 @@ const SimpleForm = ({setCount}) => {
       body: formData,
     })
       .then(function (response) {
-        alert("Your model is running! The model typically takes about 10 minutes per year calculated.")
+        alert("Your model is running! You must keep this tab open at this page while it runs. The model typically takes about 10 minutes per year calculated, but it may be more or less than that.")
         console.log(response);
       })
       .catch(function (response) {

@@ -123,7 +123,7 @@ class MapEvents {
     //       console.log(response);
     //   });
 
-    alert("Your model is being rerun! The model typically takes 10 minutes per year calculated.");
+    alert("Your model is running! You must keep this tab open at this page while it runs. The model typically takes about 10 minutes per year calculated, but it may be more or less than that.");
 			}
 		});
 
