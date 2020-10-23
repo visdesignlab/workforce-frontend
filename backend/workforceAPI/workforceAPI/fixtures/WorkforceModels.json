@@ -63,7 +63,7 @@
         "model": "workforceAPI.WorkforceModel",
         "pk": 4,
         "fields": {
-            "author": "Zach Cutler",
+            "author": "u1025642@utah.edu",
             "description": "Original model with the MA type completely removed from the excel sheet.",
             "model_id": "e9237171-ba7d-4f24-a37d-555de8186b4d",
             "model_name": "Original model, no MA",
@@ -83,7 +83,7 @@
         "model": "workforceAPI.WorkforceModel",
         "pk": 5,
         "fields": {
-            "author": "Zach Cutler",
+            "author": "u1025642@utah.edu",
             "description": "Original model with the NP type completely removed from the excel sheet.",
             "model_id": "fdbb2a92-4531-4395-91d2-1b495b6566d5",
             "model_name": "Original model, no NP",
