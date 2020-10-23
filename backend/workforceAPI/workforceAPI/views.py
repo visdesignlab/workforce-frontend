@@ -72,9 +72,8 @@ def share_model(request):
   if not model:
     return HttpResponse("Model not found", status=404)
 
-  new_shared_with = list(models.shared_with).append(email_to_share_with)
-
-  model.update(shared_with=new_shared_with)
+  model.shared_with.append(email_to_share_with)
+  model.save()
 
   return HttpResponse("Shared model with recipient", status=200)
 
