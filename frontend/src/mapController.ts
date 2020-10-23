@@ -265,7 +265,7 @@ class MapController {
         !this.prov.current().getState().secondModelSelected
       ) {
         this.secondMap.destroy();
-        d3.select("#runModelButton").style("display", "block");
+        d3.select("#runModelButton").style("display", "flex");
       } else if (!this.prov.current().getState().firstModelSelected) {
         this.originalMap.destroy();
         return;
@@ -284,7 +284,7 @@ class MapController {
 			!this.prov.current().getState().secondModelSelected
 		) {
 			this.secondMap.destroy();
-			d3.select("#runModelButton").style("display", "block");
+			d3.select("#runModelButton").style("display", "flex");
 		} else if (!this.prov.current().getState().firstModelSelected) {
 			this.originalMap.destroy();
 			return;

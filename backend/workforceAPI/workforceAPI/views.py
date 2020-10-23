@@ -23,11 +23,27 @@ def root(request):
 def models(request):
   if request.user.is_authenticated:
     user_email = User.objects.get(username = request.user.username).email
-    models = list(WorkforceModel.objects.filter(Q(is_public=True) | Q(author=user_email)).values())
+    models = list(WorkforceModel.objects.filter(Q(is_public=True) | Q(author=user_email) | Q(shared_with__icontains=user_email)).values())
   else:
     models = list(WorkforceModel.objects.filter(is_public=True).values())
 
   return JsonResponse(models, safe = False)
+
+@login_required
+def share_model(request):
+  model_id = request.GET.get('model_id')
+  email_to_share_with = request.GET.get('email')
+
+  model = WorkforceModel.objects.filter(model_id=model_id).first()
+
+  if not model:
+    return HttpResponse("Model not found", status=404)
+
+  new_shared_with = list(models.shared_with).append(email_to_share_with)
+
+  model.update(shared_with=new_shared_with)
+
+  return HttpResponse("Shared model with recipient", status=200)
 
 @login_required
 def delete_model(request):

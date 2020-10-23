@@ -15,7 +15,8 @@
             "path": "models/12cd99d7-fb67-47eb-bb2d-1cb49a86782c.json",
             "filename": "12cd99d7-fb67-47eb-bb2d-1cb49a86782c_moderate_team.xlsx",
             "status": "Completed",
-            "is_public": true
+            "is_public": true,
+            "shared_with": []
         }
     },
     {
@@ -34,7 +35,8 @@
             "path": "models/8bcaed56-89aa-4d24-9d6c-732f2eb35fd7.json",
             "filename": "8bcaed56-89aa-4d24-9d6c-732f2eb35fd7_Workforce_Optimization_Tool_-_Input_Data.xlsx",
             "status": "Completed",
-            "is_public": true
+            "is_public": true,
+            "shared_with": []
         }
     },
     {
@@ -53,7 +55,8 @@
             "path": "models/a91c2801-7d0b-4de6-8562-0112ac654a8d.json",
             "filename": "a91c2801-7d0b-4de6-8562-0112ac654a8d_minimal_team.xlsx",
             "status": "Completed",
-            "is_public": true
+            "is_public": true,
+            "shared_with": []
         }
     },
     {
@@ -72,7 +75,8 @@
             "path": "models/e9237171-ba7d-4f24-a37d-555de8186b4d.json",
             "filename": "e9237171-ba7d-4f24-a37d-555de8186b4d_MA_removed.xlsx",
             "status": "Completed",
-            "is_public": true
+            "is_public": true,
+            "shared_with": []
         }
     },
     {
@@ -91,7 +95,8 @@
             "path": "models/fdbb2a92-4531-4395-91d2-1b495b6566d5.json",
             "filename": "fdbb2a92-4531-4395-91d2-1b495b6566d5_NP_removed.xlsx",
             "status": "Completed",
-            "is_public": true
+            "is_public": true,
+            "shared_with": []
         }
     }
 ]
