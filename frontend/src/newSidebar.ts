@@ -387,7 +387,7 @@ class Sidebar {
 			.attr("r", 5)
 			.on("mouseover", () => {
 				d3.select("#modelNameTooltip").transition().duration(200).style("opacity", .9);
-				d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.prov.current().getState().modelsSelected[0]].name + "</h5>")
+				d3.select("#modelNameTooltip").html("<h5>" + this.map.serverModels[this.map.prov.current().getState().firstModelSelected.model_id].name + "</h5>")
 					.style("left", (d3.event.pageX) + "px")
 					.style("top", (d3.event.pageY - 28) + "px");
 			})

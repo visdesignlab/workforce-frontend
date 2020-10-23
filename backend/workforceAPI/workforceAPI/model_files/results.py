@@ -694,10 +694,10 @@ def run_model_for_range(model_id, model_type, start, end, step, removedProfessio
 
     results = {}
     for i in year_range:
-        file = open(MODELS_ROOT / "results.pkl", "wb")
         results[i] = {}
         for j in geo_area:
             out  = run_model(model_id, j, str(i), model_type, "all_combination", 0, 0, dataframes, sheets)
             results[i][j] = out;
-        pickle.dump(results, file)
-        file.close()
+
+        with open(MODELS_ROOT / "results.pkl", "wb") as f:
+            pickle.dump(results, f)

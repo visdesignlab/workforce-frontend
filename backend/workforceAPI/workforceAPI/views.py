@@ -1,5 +1,6 @@
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
+from django.forms.models import model_to_dict
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from pathlib import Path
 from uuid import uuid1
@@ -7,7 +8,8 @@ import pickle
 import json
 
 from workforceAPI import settings
-from workforceAPI.model_files.model_utils import run_model, clean_up, open_models
+from workforceAPI.model_files.model_utils import run_model, clean_up
+from workforceAPI.models import WorkforceModel
 
 REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions"]
 
@@ -18,9 +20,9 @@ def root(request):
 
 @login_required
 def models(request):
-  models = open_models()
+  models = list(WorkforceModel.objects.all().values())
 
-  return JsonResponse(models)
+  return JsonResponse(models, safe = False)
 
 @login_required
 def get_model(request, model_id):
@@ -79,33 +81,39 @@ def file_upload(request):
 @login_required
 def rerun_model(request):
   if request.method == 'POST':
+    # Required params
     model_id = request.POST.get("model_id")
     model_name = request.POST.get("model_name")
     description = request.POST.get("description")
 
+    # Optional params
+    removed_professions = request.POST.get("removed_professions")
+
     if not (model_id and model_name and description):
       return HttpResponse("You must supply model_id, model_name, and description", status=400)
 
-    old_model = open_models().get(model_id)
+    old_model = WorkforceModel.objects.filter(model_id=model_id).first()
 
     if not old_model:
       return HttpResponse("Model not found", status=404)
 
     # Update model
-    metadata = old_model
+    metadata = model_to_dict(old_model)
     metadata["author"] = request.user.username
     metadata["model_name"] = model_name
     metadata["description"] = description
-    metadata["model_type"] = request.POST.get("model_type") or old_model.get("model_type")
-    metadata["start_year"] = request.POST.get("start_year") or old_model.get("start_year")
-    metadata["end_year"] = request.POST.get("end_year") or old_model.get("end_year")
-    metadata["step_size"] = request.POST.get("step_size") or old_model.get("step_size")
-    metadata["removed_professions"] = request.POST.get("removed_professions", "").split(",") or old_model.get("removed_professions")
+    metadata["model_type"] = request.POST.get("model_type") or metadata.get("model_type")
+    metadata["start_year"] = request.POST.get("start_year") or metadata.get("start_year")
+    metadata["end_year"] = request.POST.get("end_year") or metadata.get("end_year")
+    metadata["step_size"] = request.POST.get("step_size") or metadata.get("step_size")
+    metadata["removed_professions"] = list(set(removed_professions.split(",") + metadata.get("removed_professions"))) if removed_professions else metadata.get("removed_professions")
     del metadata["path"]
     del metadata["status"]
+    del metadata["id"]
+    del metadata["model_id"]
 
     # Get the old file path and check the file exists still
-    file_path = settings.MEDIA_ROOT / old_model.get("filename")
+    file_path = settings.MEDIA_ROOT / metadata.get("filename")
     if not file_path.is_file():
       return HttpResponse("Original model file not found. Contact an admin", status=500)
 

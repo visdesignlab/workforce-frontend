@@ -45,7 +45,8 @@ class Map{
 		this.modelData = modelUsed;
 
 		const map = this.controller.prov.current().getState().mapType;
-		const modelFile = this.controller.serverModels[this.modelData].path;
+		const model = this.controller.serverModels.find(d => d.model_id === this.modelData)
+		const modelFile = model.path;
 
 		let promise;
 		// if (!customModel) {
@@ -70,12 +71,12 @@ class Map{
 
 			let name = ''
 
-			if(this.controller.serverModels[this.modelData].name)
+			if(model.name)
 			{
-				name = (!this.firstMap && this.controller.modelRemovedComparison) ? this.controller.serverModels[this.modelData].name + "(Modified)" : this.controller.serverModels[this.modelData].name
+				name = (!this.firstMap && this.controller.modelRemovedComparison) ? model.name + "(Modified)" : model.name
 			}
 			else{
-				name = (!this.firstMap && this.controller.modelRemovedComparison) ? this.controller.serverModels[this.modelData].model_name + "(Modified)" : this.controller.serverModels[this.modelData].model_name
+				name = (!this.firstMap && this.controller.modelRemovedComparison) ? model.model_name + "(Modified)" : model.model_name
 			}
 			this.svg.append('text')
 				.text(name)
@@ -96,7 +97,7 @@ class Map{
 				.classed("fontAwesome", true)
 				.on("mouseover", () => {
 					d3.select("#descriptionTooltip").transition().duration(200).style("opacity", .9);
-					d3.select("#descriptionTooltip").html("<h2>" + this.controller.serverModels[this.modelData].author + "</h2><h2>" + this.controller.serverModels[this.modelData].description + "</h2>")
+					d3.select("#descriptionTooltip").html("<h2>" + model.author + "</h2><h2>" + model.description + "</h2>")
 						.style("left", (d3.event.pageX) + "px")
 						.style("top", (d3.event.pageY - 28) + "px");
 				})
@@ -391,7 +392,8 @@ class Map{
 		}
 
 		const map = this.controller.prov.current().getState().mapType;
-		const modelFile = this.controller.serverModels[this.modelData].path;
+		const model = this.controller.serverModels.find(d => d.model_id === this.modelData)
+		const modelFile = model.path;
 
 
 		let replacementJson = undefined;
