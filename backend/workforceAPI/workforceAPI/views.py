@@ -49,6 +49,7 @@ def get_model(request, model_id):
     if not model.first():
       return HttpResponse("Model not found", status=404)
 
+    user_email = User.objects.get(username = request.user.username).email
     model = model.filter(Q(is_public=True) | Q(author=user_email) | Q(shared_with__icontains=user_email)).first()
     if not model:
       return HttpResponse("You don't have authorization to view that model", status=401)
