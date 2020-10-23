@@ -103,7 +103,7 @@ There are many professions that we visualize. Here's a quick reference for what 
 - `MA`: Medical Assistant
 - `MFT`: Marriage and Family Therapist
 - `NP`: Nurse Practitioner
-- `PA`: Physicians Assistant
+- `PA`: Physician's Assistant
 - `PharmD`: Doctor of Pharmacy
 - `Phys`: Physician
 - `Psych`: Psychiatrist
