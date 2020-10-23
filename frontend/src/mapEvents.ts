@@ -26,6 +26,7 @@ class MapEvents {
 
 		api_request("whoami").then((response) => {
 			if (response.status !== 200) {
+				console.log(response);
 				alert("You Must be Logged in to Rerun a Model")
 				return;
 			}
@@ -101,7 +102,7 @@ class MapEvents {
         console.log(response);
       })
       .catch(function (response) {
-        alert("Rerun failed")
+        alert("Rerun failed: " + response.statusText)
         console.log(response);
       });
 
@@ -132,7 +133,7 @@ class MapEvents {
 				api_request(`delete_model?model_id=${model_id}`).then((response) => {
 					if(response.status !== 200)
 					{
-						alert("Model Deletion Failed");
+						alert("Model Deletion Failed: " + response.statusText);
 						console.log(response)
 					}
 				})
@@ -146,7 +147,7 @@ class MapEvents {
 
            		 api_request(`share_model?model_id=${model_id}&email=${email}`).then((response) => {
                 	if (response.status !== 200) {
-						  alert("Email sharing failed");
+						  alert("Email sharing failed: " + response.statusText);
 						  console.log(response);
                 	}	
               	}
