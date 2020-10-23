@@ -22,6 +22,7 @@ urlpatterns = [
     path('api', views.root),
     path('api/models', views.models),
     path('api/models/<str:model_id>', views.get_model),
+    path('api/share_model', views.share_model),
     path('api/delete_model', views.delete_model),
     path('api/file-upload', views.file_upload),
     path('api/rerun-model', views.rerun_model),
