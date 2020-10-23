@@ -67,7 +67,7 @@ const initialState: AppState = {
     path: "models/8bcaed56-89aa-4d24-9d6c-732f2eb35fd7.json",
     filename: "8bcaed56-89aa-4d24-9d6c-732f2eb35fd7_Workforce_Optimization_Tool_-_Input_Data.xlsx",
 	status: "Completed",
-	shared_with:["zach.t.cutler@gmail.com", "alex@sci.utah.edu"]
+	shared_with:[]
   },
   secondModelSelected: undefined,
   scaleType: "supply_need",
@@ -267,6 +267,7 @@ class MapController {
 		api_request("whoami").then((response) => {
 			response.text().then((t) => {
 				if(t === this.prov.current().getState().firstModelSelected.author){
+					d3.select("#modelShareContent").selectAll("p").remove();
 					d3.select("#modelShareContent")
 						.selectAll("p")
 						.data(this.prov.current().getState().firstModelSelected.shared_with)
