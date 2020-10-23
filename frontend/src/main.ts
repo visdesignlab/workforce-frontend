@@ -23,6 +23,9 @@ d3.select('#userDocs').on('click', () => {
   window.open('https://github.com/visdesignlab/workforce-frontend/blob/master/frontend/userDocs.md','_blank');
 });
 
+d3.select('#templateFile').on('click', () => {
+  window.open('https://drive.google.com/file/d/1IcAQ3It8nDtROywGKoH6bd9m1D0O-IcO/view?usp=sharing','_blank');
+});
 
 let mapController = new MapController();
 let myMapEvents:MapEvents = new MapEvents(mapController);
