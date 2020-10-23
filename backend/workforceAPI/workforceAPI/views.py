@@ -37,7 +37,7 @@ def delete_model(request):
   if not model.count():
     return HttpResponse("Model not found", status=404)
 
-  # Now, if model doens't exist, user is not the owner of the model
+  # Now, if model doesn't exist, user is not the owner of the model
   user_email = User.objects.get(username = request.user.username).email
   model = model.filter(author=user_email).first()
   if not model:
