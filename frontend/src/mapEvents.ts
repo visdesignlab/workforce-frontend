@@ -19,91 +19,102 @@ class MapEvents {
     this.changeMapType();
 
     d3.select("#runModelButton").on("click", () => {
-      let bodyFormData = {};
 
-      bodyFormData[
-        "model_id"
-      ] = this.map.prov.current().getState().firstModelSelected.model_id;
-      bodyFormData["model_name"] = "fakeName";
-      bodyFormData["description"] = "fakeDesc";
-      let removedString = "";
-      for (let j in this.map.prov.current().getState().professionsSelected) {
-        if (!this.map.prov.current().getState().professionsSelected[j]) {
-          removedString += j + ",";
-        }
+		api_request("whoami").then((response) => {
+			if (response.status !== 200) {
+				alert("You Must be Logged in to Rerun a Model")
+				return;
+			}
+			else{
+
+	  let bodyFormData = {};
+
+    bodyFormData[
+      "model_id"
+    ] = this.map.prov.current().getState().firstModelSelected.model_id;
+    bodyFormData["model_name"] = "fakeName";
+    bodyFormData["description"] = "fakeDesc";
+    let removedString = "";
+    for (let j in this.map.prov.current().getState().professionsSelected) {
+      if (!this.map.prov.current().getState().professionsSelected[j]) {
+        removedString += j + ",";
       }
+    }
 
-      bodyFormData["removed_professions"] = removedString.slice(
-        0,
-        removedString.length - 2
-      );
+    bodyFormData["removed_professions"] = removedString.slice(
+      0,
+      removedString.length - 2
+    );
 
-      let csrftoken = getCookie("csrftoken") || "";
+    let csrftoken = getCookie("csrftoken") || "";
 
-      console.log(bodyFormData);
+    console.log(bodyFormData);
 
-      //
-      // axios.defaults.headers.common =
-      // {
-      // 	'X-CSRF-TOKEN': token
-      // };
+    //
+    // axios.defaults.headers.common =
+    // {
+    // 	'X-CSRF-TOKEN': token
+    // };
 
-      const formBody = [];
-      for (const property in bodyFormData) {
-        const encodedKey = encodeURIComponent(property);
-        const encodedValue = encodeURIComponent(bodyFormData[property]);
-        formBody.push(encodedKey + "=" + encodedValue);
-      }
-      const formBodyString = formBody.join("&");
+    const formBody = [];
+    for (const property in bodyFormData) {
+      const encodedKey = encodeURIComponent(property);
+      const encodedValue = encodeURIComponent(bodyFormData[property]);
+      formBody.push(encodedKey + "=" + encodedValue);
+    }
+    const formBodyString = formBody.join("&");
 
-      let headers = {};
-      if (process.env.API_ROOT.includes("http://localhost:8000")) {
-        headers = {
-          Accept: "application/x-www-form-urlencoded",
-          "Content-Type": "application/x-www-form-urlencoded",
-          "X-CSRFToken": csrftoken || "",
-          "Access-Control-Allow-Origin": "http://localhost:8080",
-          "Access-Control-Allow-Credentials": "true",
-        };
-      } else {
-        headers = {
-          Accept: "application/x-www-form-urlencoded",
-          "Content-Type": "application/x-www-form-urlencoded",
-          "X-CSRFToken": csrftoken || "",
-        };
-      }
+    let headers = {};
+    if (process.env.API_ROOT.includes("http://localhost:8000")) {
+      headers = {
+        Accept: "application/x-www-form-urlencoded",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": csrftoken || "",
+        "Access-Control-Allow-Origin": "http://localhost:8080",
+        "Access-Control-Allow-Credentials": "true",
+      };
+    } else {
+      headers = {
+        Accept: "application/x-www-form-urlencoded",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": csrftoken || "",
+      };
+    }
 
-      fetch(`${process.env.API_ROOT}/rerun-model`, {
-        method: "POST",
-        credentials: "include",
-        headers: headers,
-        body: formBodyString,
+    fetch(`${process.env.API_ROOT}/rerun-model`, {
+      method: "POST",
+      credentials: "include",
+      headers: headers,
+      body: formBodyString,
+    })
+      .then(function (response) {
+        //handle success
+        console.log(response);
       })
-        .then(function (response) {
-          //handle success
-          console.log(response);
-        })
-        .catch(function (response) {
-          //handle error
-          console.log(response);
-        });
+      .catch(function (response) {
+        //handle error
+        console.log(response);
+      });
 
-      // axios({
-      //   method: 'post',
-      //   url: `${process.env.API_ROOT}/rerun-model`,
-      //   data: bodyFormData,
-      //   headers: {'Content-Type': 'multipart/form-data', 'Access-Control-Allow-Origin': '*' }
-      //   })
-      //   .then(function (response) {
-      //       //handle success
-      //       console.log(response);
-      //   })
-      //   .catch(function (response) {
-      //       //handle error
-      //       console.log(response);
-      //   });
+    // axios({
+    //   method: 'post',
+    //   url: `${process.env.API_ROOT}/rerun-model`,
+    //   data: bodyFormData,
+    //   headers: {'Content-Type': 'multipart/form-data', 'Access-Control-Allow-Origin': '*' }
+    //   })
+    //   .then(function (response) {
+    //       //handle success
+    //       console.log(response);
+    //   })
+    //   .catch(function (response) {
+    //       //handle error
+    //       console.log(response);
+    //   });
 
-      alert("Your model is being rerun! This may take some time.");
+    alert("Your model is being rerun! This may take some time.");
+			}
+		});
+
     });
 
     d3.selectAll(".plusClass").on("click", function () {

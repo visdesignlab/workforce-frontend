@@ -11,6 +11,8 @@ import Button from '@material-ui/core/Button';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import Container from '@material-ui/core/Container';
 import SimpleForm from './SimpleForm';
+import { api_request, getCookie } from "../API_utils";
+
 
 const useStyles = makeStyles({
   table: {
@@ -86,8 +88,16 @@ if (!count || count == 0) {
 	  	component="span"
         startIcon={<CloudUploadIcon />}
 		onClick={() => {
-			isDone = false;
-setCount(count + 1)
+      api_request("whoami").then((response) => {
+        if (response.status !== 200) {
+          alert("You Must be Logged in to Upload a Model")
+          return;
+        }
+        else{
+            isDone = false;
+            setCount(count + 1)
+        }
+      })
 		}}
       >
         Upload
