@@ -29,6 +29,39 @@ def models(request):
 
   return JsonResponse(models, safe = False)
 
+def get_model(request, model_id):
+  model_id_q = Path(model_id).with_suffix('')
+
+  if not request.user.is_authenticated:
+    # Check that model is public
+    model = WorkforceModel.objects.filter(model_id=model_id_q).first()
+    
+    if not model:
+      return HttpResponse("Model not found", status=404)
+
+    if not model.is_public:
+      return HttpResponse("You don't have authorization to view that model", status=401)
+
+  else:
+    # Check that user has permission
+    model = WorkforceModel.objects.filter(model_id=model_id_q)
+
+    if not model.first():
+      return HttpResponse("Model not found", status=404)
+
+    user_email = User.objects.get(username = request.user.username).email
+    model = model.filter(Q(is_public=True) | Q(author=user_email) | Q(shared_with__icontains=user_email)).first()
+    if not model:
+      return HttpResponse("You don't have authorization to view that model", status=401)
+
+
+  model_path = settings.MODELS_ROOT / model_id
+
+  with open(model_path, 'r') as json_file:
+    model = json.load(json_file)
+
+  return JsonResponse(model)
+
 @login_required
 def share_model(request):
   model_id = request.GET.get('model_id')
@@ -67,15 +100,6 @@ def delete_model(request):
   model.delete()
 
   return HttpResponse("Model deleted", status=200)
-
-@login_required
-def get_model(request, model_id):
-  model_path = settings.MODELS_ROOT / model_id
-
-  with open(model_path, 'r') as json_file:
-    model = json.load(json_file)
-
-  return JsonResponse(model)
 
 @login_required
 def file_upload(request):
