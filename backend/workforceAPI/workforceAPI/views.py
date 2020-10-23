@@ -67,10 +67,16 @@ def share_model(request):
   model_id = request.GET.get('model_id')
   email_to_share_with = request.GET.get('email')
 
-  model = WorkforceModel.objects.filter(model_id=model_id).first()
+  model = WorkforceModel.objects.filter(model_id=model_id)
+
+  if not model.first():
+    return HttpResponse("Model not found", status=404)
+
+  user_email = User.objects.get(username = request.user.username).email
+  model = model.filter(author=user_email).first()
 
   if not model:
-    return HttpResponse("Model not found", status=404)
+    return HttpResponse("User is not the owner of the model", status=401)
 
   model.shared_with.append(email_to_share_with)
   model.save()
@@ -93,7 +99,7 @@ def delete_model(request):
   user_email = User.objects.get(username = request.user.username).email
   model = model.filter(author=user_email).first()
   if not model:
-    return HttpResponse("User is not the owner of the model", status=400)
+    return HttpResponse("User is not the owner of the model", status=401)
 
   delete_all_model_files(model)
   model.delete()
