@@ -67,10 +67,8 @@ if (!count || count == 0) {
         </TableHead>
         <TableBody>
           {props.rows.map((row:any) => (
-            <TableRow hover key={row.name}>
-              <TableCell component="th" scope="row">
-                {row.name}
-              </TableCell>
+            <TableRow hover key={row.model_name}>
+              <TableCell>{row.model_name}</TableCell>
               <TableCell align="left">{row.author}</TableCell>
               <TableCell align="left">{row.description}</TableCell>
               <TableCell align="left">{row.status}</TableCell>
