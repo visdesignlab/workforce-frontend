@@ -6,7 +6,7 @@ An API server for the Healthcare Workforce Needs application.
 
 1. [Development Environment Quick Start](#development-environment-quick-start)
 1. [Deploying In Production](#deploying-in-production)
-1. [Saving And Loading Model Data Into/From Fixtures](#saving-and-loading-model-data-into/from-fixtures)
+1. [Saving And Loading Model Data Into/From Fixtures](#saving-and-loading-model-data-intofrom-fixtures)
 1. [Route Documentation](#route-documentation)
 
 ## Development Environment Quick Start

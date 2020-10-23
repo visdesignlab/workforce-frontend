@@ -5,7 +5,7 @@
 1. [View Model](#view-model)
     - [Model Selector](#model-selector)
     - [Model Visualization](#model-visualization)
-    - [County/Health District Selector](#county/health-district-selector)
+    - [County/Health District Selector](#countyhealth-district-selector)
     - [Professions Selector](#professions-selector)
     - [Rerun Model](#rerun-model)
     - [Delete Model](#delete-model)
@@ -14,7 +14,7 @@
     - [Main Page](#main-page)
     - [Upload](#upload)
 3. [User Management](#user-management)
-4. [Index]
+4. [Index](#index)
     - [Professions](#professions)
 
 ## View Model
