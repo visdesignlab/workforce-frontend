@@ -127,12 +127,14 @@ const SimpleForm = ({setCount}) => {
       body: formData,
     })
       .then(function (response) {
-        //handle success
+        alert("Your model is running! The model typically takes about 10 minutes per year calculated.")
         console.log(response);
       })
       .catch(function (response) {
-        alert("Running failed");
-        console.log(response);
+        response.text().then((t) => {
+          console.log(response);
+          alert("Running Failed: " + t);
+        });
       });
   };
 

@@ -102,8 +102,10 @@ class MapEvents {
         console.log(response);
       })
       .catch(function (response) {
-        alert("Rerun failed: " + response.statusText)
-        console.log(response);
+        	response.text().then((t) => {
+                console.log(response);
+                alert("Rerun Model Failed: " + t);
+            });
       });
 
     // axios({
@@ -121,7 +123,7 @@ class MapEvents {
     //       console.log(response);
     //   });
 
-    alert("Your model is being rerun! This may take some time.");
+    alert("Your model is being rerun! The model typically takes 10 minutes per year calculated.");
 			}
 		});
 
@@ -133,8 +135,10 @@ class MapEvents {
 				api_request(`delete_model?model_id=${model_id}`).then((response) => {
 					if(response.status !== 200)
 					{
-						alert("Model Deletion Failed: " + response.statusText);
-						console.log(response)
+						response.text().then((t) => {
+							console.log(response);
+							alert("Model Deletion Failed: " + t);
+							});
 					}
 				})
 			})
@@ -147,8 +151,10 @@ class MapEvents {
 
            		 api_request(`share_model?model_id=${model_id}&email=${email}`).then((response) => {
                 	if (response.status !== 200) {
-						  alert("Email sharing failed: " + response.statusText);
-						  console.log(response);
+						  response.text().then((t) => {
+							console.log(response);
+							alert("Share Model Failed: " + t);
+						});
                 	}	
               	}
             	);
