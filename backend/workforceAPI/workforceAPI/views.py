@@ -1,6 +1,7 @@
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.forms.models import model_to_dict
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from pathlib import Path
@@ -12,16 +13,19 @@ from workforceAPI import settings
 from workforceAPI.model_files.model_utils import run_model, clean_up, delete_all_model_files
 from workforceAPI.models import WorkforceModel
 
-REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions"]
+REQUIRED_METADATA_FIELDS = ["model_name", "author", "description", "model_type", "start_year", "end_year", "step_size", "removed_professions", "is_public"]
 
 
 
 def root(request):
   return HttpResponse("Healthcare Workforce API")
 
-@login_required
 def models(request):
-  models = list(WorkforceModel.objects.all().values())
+  if request.user.is_authenticated:
+    user_email = User.objects.get(username = request.user.username).email
+    models = list(WorkforceModel.objects.filter(Q(is_public=True) | Q(author=user_email)).values())
+  else:
+    models = list(WorkforceModel.objects.filter(is_public=True).values())
 
   return JsonResponse(models, safe = False)
 
@@ -131,6 +135,7 @@ def rerun_model(request):
     metadata["end_year"] = request.POST.get("end_year") or metadata.get("end_year")
     metadata["step_size"] = request.POST.get("step_size") or metadata.get("step_size")
     metadata["removed_professions"] = list(set(removed_professions.split(",") + metadata.get("removed_professions"))) if removed_professions else metadata.get("removed_professions")
+    metadata["is_public"] = request.POST.get("is_public") or metadata.get("is_public")
     del metadata["path"]
     del metadata["status"]
     del metadata["id"]

@@ -24,3 +24,4 @@ class WorkforceModel(models.Model):
     path = models.CharField(max_length=512)
     filename = models.CharField(max_length=512)
     status = models.CharField(max_length=9, choices=Status.choices)
+    is_public = models.BooleanField(default=False)
