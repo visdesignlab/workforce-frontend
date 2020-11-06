@@ -42,9 +42,10 @@ class Map{
 	 * initial drawing of map.
 	 */
 	drawMap(modelUsed: any):Promise<any>{
+		console.log("redrawing map")
 		this.modelData = modelUsed;
 
-		const map = this.controller.prov.current().getState().mapType;
+		const map = this.controller.prov.getState(this.controller.prov.current).mapType;
 		const model = this.controller.serverModels.find(d => d.model_id === this.modelData)
 		const modelFile = model.path;
 
@@ -105,7 +106,9 @@ class Map{
 					d3.select("#descriptionTooltip").transition().duration(200).style("opacity", 0);
 				})
 
-			this.currentYearData = this.results[this.controller.prov.current().getState().year]
+			this.currentYearData = this.results[
+        this.controller.prov.getState(this.controller.prov.current).year
+      ];
 			d3.select('#spinner')
 				.classed('d-flex', false)
 				.style('display', 'none');
@@ -116,10 +119,13 @@ class Map{
 					let totalSupply = 0;
 					let totalDemand = 0;
 					for (let profession of professions) {
-						if (this.controller.prov.current().getState().professionsSelected[profession]) {
-							totalSupply += this.currentYearData[county]['supply'][profession];
-							totalDemand += this.currentYearData[county]['demand'][profession];
-						}
+						if (
+              this.controller.prov.getState(this.controller.prov.current)
+                .professionsSelected[profession]
+            ) {
+              totalSupply += this.currentYearData[county]["supply"][profession];
+              totalDemand += this.currentYearData[county]["demand"][profession];
+            }
 					}
 						let population = this.currentYearData[county].population;
 						this.currentYearData[county]['totalSupply'] = totalSupply;
@@ -193,7 +199,11 @@ class Map{
 						.attr("transform", "translate(20,40)")
 						.attr("d", path(topojson.mesh(us, us.objects[map], function(a, b) { return a !== b; })));
 
-					this.updateMapType(this.controller.prov.current().getState().scaleType, 0);
+					this.updateMapType(
+            this.controller.prov.getState(this.controller.prov.current)
+              .scaleType,
+            0
+          );
 				});
 
 		});
@@ -202,7 +212,11 @@ class Map{
 
 	initLineChart()
 	{
-		this.linechart.initLineChart(this.results, this.controller.prov.current().getState().countiesSelected);
+		this.linechart.initLineChart(
+      this.results,
+      this.controller.prov.getState(this.controller.prov.current)
+        .countiesSelected
+    );
 	}
 	/**
 	 *
@@ -391,7 +405,8 @@ class Map{
 			return Promise.resolve();
 		}
 
-		const map = this.controller.prov.current().getState().mapType;
+		const map = this.controller.prov.getState(this.controller.prov.current)
+      .mapType;
 		const model = this.controller.serverModels.find(d => d.model_id === this.modelData)
 		const modelFile = model.path;
 
@@ -439,10 +454,17 @@ class Map{
 							let totalSupply = 0;
 							let totalDemand = 0;
 							for (let profession of professions) {
-								if (this.controller.prov.current().getState().professionsSelected[profession]) {
-									totalSupply += this.currentYearData[county]['supply'][profession];
-									totalDemand += this.currentYearData[county]['demand'][profession];
-								}
+								if (
+                  this.controller.prov.getState(this.controller.prov.current)
+                    .professionsSelected[profession]
+                ) {
+                  totalSupply += this.currentYearData[county]["supply"][
+                    profession
+                  ];
+                  totalDemand += this.currentYearData[county]["demand"][
+                    profession
+                  ];
+                }
 							}
 								let population = this.currentYearData[county].population;
 								this.currentYearData[county]['totalSupply'] = totalSupply;
@@ -452,7 +474,11 @@ class Map{
 								this.supplyScore[county] = ((totalSupply / totalDemand) / 2) || 0.5;
 						}
 
-						this.updateMapType(this.controller.prov.current().getState().scaleType, 1000);
+						this.updateMapType(
+              this.controller.prov.getState(this.controller.prov.current)
+                .scaleType,
+              1000
+            );
 				})
 			});
 		return Promise.all([promise1, promise2]);
@@ -464,6 +490,8 @@ class Map{
 
 	highlightAllCounties(counties: string[])
 	{
+
+		console.log("highlighting", counties)
 
 		d3.selectAll('svg .counties').selectAll('path')
 			.filter(d => counties.includes((d as any).properties.NAME))
@@ -491,7 +519,9 @@ class Map{
 		let profTotalDemand = {}
 		let profTotalSupply = {}
 
-		let allCounties = this.controller.prov.current().getState().countiesSelected.includes("State of Utah");
+		let allCounties = this.controller.prov
+      .getState(this.controller.prov.current)
+      .countiesSelected.includes("State of Utah");
 
 		for(let county in this.results["2019"])
 		{
@@ -499,25 +529,42 @@ class Map{
 			{
 				continue;
 			}
-			if(allCounties || this.controller.prov.current().getState().countiesSelected.includes(county))
-			{
-				for(let prof in this.results["2019"][county].demand)
-				{
-					profTotalSupply[prof] = profTotalSupply[prof] === undefined ? this.results["2019"][county].supply[prof] : profTotalSupply[prof] + this.results["2019"][county].supply[prof];
+			if (
+        allCounties ||
+        this.controller.prov
+          .getState(this.controller.prov.current)
+          .countiesSelected.includes(county)
+      ) {
+        for (let prof in this.results["2019"][county].demand) {
+          profTotalSupply[prof] =
+            profTotalSupply[prof] === undefined
+              ? this.results["2019"][county].supply[prof]
+              : profTotalSupply[prof] +
+                this.results["2019"][county].supply[prof];
 
-					profTotalDemand[prof] = profTotalDemand[prof] === undefined ? this.results["2019"][county].demand[prof] : profTotalDemand[prof] + this.results["2019"][county].demand[prof];
-				}
-			}
+          profTotalDemand[prof] =
+            profTotalDemand[prof] === undefined
+              ? this.results["2019"][county].demand[prof]
+              : profTotalDemand[prof] +
+                this.results["2019"][county].demand[prof];
+        }
+      }
 		}
 
 		for(let year in this.results)
 		{
 			for(let local in this.results[year])
 			{
-				if(!(allCounties || this.controller.prov.current().getState().countiesSelected.includes(local)))
-				{
-					continue;
-				}
+				if (
+          !(
+            allCounties ||
+            this.controller.prov
+              .getState(this.controller.prov.current)
+              .countiesSelected.includes(local)
+          )
+        ) {
+          continue;
+        }
 
 				let newDemand = this.results[year][local].demand;
 				let newSupply = this.results[year][local].supply;

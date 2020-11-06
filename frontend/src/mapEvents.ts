@@ -34,19 +34,22 @@ class MapEvents {
 
 	  let bodyFormData = {};
 
-    bodyFormData[
-      "model_id"
-    ] = this.map.prov.current().getState().firstModelSelected.model_id;
+    bodyFormData["model_id"] = this.map.prov.getState(
+      this.map.prov.current
+    ).firstModelSelected.model_id;
     bodyFormData["model_name"] =
       "Rerunning " +
-      this.map.prov.current().getState().firstModelSelected.model_id;
+      this.map.prov.getState(this.map.prov.current).firstModelSelected.model_id;
 	bodyFormData["description"] =
     "Rerunning " +
-    this.map.prov.current().getState().firstModelSelected.model_id;
+    this.map.prov.getState(this.map.prov.current).firstModelSelected.model_id;
 	bodyFormData["is_public"] = checked;
     let removedString = "";
-    for (let j in this.map.prov.current().getState().professionsSelected) {
-      if (!this.map.prov.current().getState().professionsSelected[j]) {
+    for (let j in this.map.prov.getState(this.map.prov.current)
+      .professionsSelected) {
+      if (
+        !this.map.prov.getState(this.map.prov.current).professionsSelected[j]
+      ) {
         removedString += j + ",";
       }
     }
@@ -131,7 +134,8 @@ class MapEvents {
 
     d3.select("#deleteModelButton")
 			.on('click', () => {
-				const model_id = this.map.prov.current().getState().firstModelSelected.model_id
+				const model_id = this.map.prov.getState(this.map.prov.current)
+          .firstModelSelected.model_id;
 				api_request(`delete_model?model_id=${model_id}`).then((response) => {
 					if(response.status !== 200)
 					{
@@ -145,7 +149,8 @@ class MapEvents {
 
 	d3.select("#shareButton")
 			.on("click", () => {
-				const model_id = this.map.prov.current().getState().firstModelSelected.model_id;
+				const model_id = this.map.prov.getState(this.map.prov.current)
+          .firstModelSelected.model_id;
 				const email = (d3.select("#shareInputEmail").node() as any).value;
 				console.log(email);
 

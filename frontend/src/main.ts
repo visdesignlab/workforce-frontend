@@ -6,6 +6,7 @@ import 'bootstrap-select';
 import * as d3 from 'd3';
 import { api_request } from './API_utils'
 
+
 d3.select('#visualization').on('click', () => {
   (d3.select('#visualization').node() as HTMLElement).className = 'is-active';
   (d3.select('#modelCreate').node() as HTMLElement).className = '';
