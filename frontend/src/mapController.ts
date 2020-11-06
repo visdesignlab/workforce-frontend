@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { Sidebar } from "./newSidebar";
 import { Map } from "./Map";
 
-import { EventConfig, ProvVisCreator } from "./ProvVis/provvis";
+import { EventConfig, ProvVisCreator } from "@visdesignlab/trrack-vis";
 
 import {
   CountiesChanged,
@@ -13,8 +13,9 @@ import {
   ModelChanged,
 } from "./Icons";
 
-import { initProvenance, Provenance, NodeID } from "@visdesignlab/trrack";
+import { initProvenance, Provenance, NodeID, createAction } from "@visdesignlab/trrack";
 import { api_request } from "./API_utils";
+import { create } from "d3";
 
 export interface EditedCounties {
   supply: {};
@@ -47,7 +48,6 @@ export interface AppState {
   countiesSelected: string[];
   professionsSelected: any;
   editedCounties: EditedCounties;
-  historyOpen: boolean;
 }
 
 const initialState: AppState = {
@@ -89,7 +89,6 @@ const initialState: AppState = {
     supply: {},
     demand: {},
   },
-  historyOpen: true,
 };
 
 //
@@ -139,8 +138,6 @@ type EventOptions =
   | "Model Changed"
   | "MapType Changed"
   | "MapShape Changed"
-  | "Open History"
-  | "Close History";
 /**
  *
  */
@@ -159,13 +156,17 @@ class MapController {
   removedMapDemand: any;
   comparisonType: string;
   modelRemovedComparison: boolean;
+  firstModelSelected: number;
+  secondModelSelected: number;
 
   /**
    *
    */
   constructor() {
-    this.prov = initProvenance(initialState, true);
+    this.prov = initProvenance<AppState, EventOptions, string>(initialState);
 
+    this.firstModelSelected = 2;
+    this.secondModelSelected = -1;
     this.removedMapSupply = {};
     this.removedMapDemand = {};
     this.removedProfessions = new Set<string>();
@@ -197,11 +198,13 @@ class MapController {
     let promise;
 
     promise = this.originalMap.drawMap(
-      this.prov.current().getState().firstModelSelected.model_id
+      this.prov.getState(this.prov.current).firstModelSelected.model_id
     );
     if (this.comparisonMode) {
       promise = promise.then(() =>
-        this.secondMap.drawMap(this.prov.current().getState().secondModelSelected.model_id)
+        this.secondMap.drawMap(
+          this.prov.getState(this.prov.current).secondModelSelected.model_id
+        )
       );
       d3.select("#comparisonView").style("display", "block");
       d3.select("#map").attr("width", 1200);
@@ -230,174 +233,218 @@ class MapController {
   }
 
   setupObservers() {
-    this.prov.addGlobalObserver(() => {
-      ProvVisCreator(
-        document.getElementById("provDiv")!,
-        this.prov,
-        (newNode: NodeID) => this.prov.goToNode(newNode),
-        false,
-        false,
-        undefined,
-        { eventConfig: eventConfig }
-      );
-    });
+    this.prov.addObserver(
+      (state) => state.year,
+      () => {
+        let state = this.prov.getState(this.prov.current);
 
-    this.prov.addObserver(["year"], () => {
-      let state = this.prov.current().getState();
+        let promise = this.originalMap.updateMapYear(state.year).then(() => {
+          return this.secondMap.updateMapYear(state.year);
+        });
 
-      let promise = this.originalMap.updateMapYear(state.year).then(() => {
-        return this.secondMap.updateMapYear(state.year);
-      });
-
-      return Promise.all([promise]);
-    });
-
-    this.prov.addObserver(["historyOpen"], () => {
-      let state = this.prov.current().getState();
-
-      if (state.historyOpen) {
-        d3.select("#provDiv").style("width", "250px");
-      } else {
-        d3.select("#provDiv").style("width", "0px");
+        return Promise.all([promise]);
       }
-    });
+    );
 
-    this.prov.addObserver(["firstModelSelected"], () => {
+    this.prov.addObserver(
+      (state) => state.firstModelSelected,
+      (state) => {
+        console.log("hereeeee", state.firstModelSelected);
 
-		api_request("whoami").then((response) => {
-			response.text().then((t) => {
-				if(t === this.prov.current().getState().firstModelSelected.author){
-					d3.select("#modelShareContent").selectAll("p").remove();
-					d3.select("#modelShareContent")
-						.selectAll("p")
-						.data(this.prov.current().getState().firstModelSelected.shared_with)
-						.enter()
-						.append("p")
-						.html(d => d);
-				}
-			})
-		})
+        if(this.firstModelSelected === state.firstModelSelected.id)
+        {
+          return;
+        }
+        else{
+          this.firstModelSelected = state.firstModelSelected.id
+        }
 
-		this.comparisonMode =
-      this.prov.current().getState().secondModelSelected !== undefined;
+        api_request("whoami").then((response) => {
+          response.text().then((t) => {
+            if (
+              t ===
+              this.prov.getState(this.prov.current).firstModelSelected.author
+            ) {
+              d3.select("#modelShareContent").selectAll("p").remove();
+              d3.select("#modelShareContent")
+                .selectAll("p")
+                .data(
+                  this.prov.getState(this.prov.current).firstModelSelected
+                    .shared_with
+                )
+                .enter()
+                .append("p")
+                .html((d) => d);
+            }
+          });
+        });
 
-      if (
-        !this.prov.current().getState().secondModelSelected
-      ) {
-		this.secondMap.destroy();
-		console.log("flexing")
-		d3.select("#runModelButtonDiv").style("display", "flex");
-		d3.select("#deleteModelButton").style("display", "flex");
-		d3.select("#hiddenShareButton").style("display", "flex");
+        this.comparisonMode =
+          this.prov.getState(this.prov.current).secondModelSelected !==
+          undefined;
 
+        if (!this.prov.getState(this.prov.current).secondModelSelected) {
+          this.secondMap.destroy();
+          console.log("flexing");
+          d3.select("#runModelButtonDiv").style("display", "flex");
+          d3.select("#deleteModelButton").style("display", "flex");
+          d3.select("#hiddenShareButton").style("display", "flex");
+        } else if (!this.prov.getState(this.prov.current).firstModelSelected) {
+          this.originalMap.destroy();
+          return;
+        } else {
+          console.log("here");
+          d3.select("#runModelButtonDiv").style("display", "none");
+          d3.select("#deleteModelButton").style("display", "none");
+          d3.select("#hiddenShareButton").style("display", "none");
+        }
 
-      } else if (!this.prov.current().getState().firstModelSelected) {
-        this.originalMap.destroy();
-        return;
-      } else {
-        console.log("here");
-		d3.select("#runModelButtonDiv").style("display", "none");
-		d3.select("#deleteModelButton").style("display", "none");
-		d3.select("#hiddenShareButton").style("display", "none");
+        this.drawMap().then(() => 
+        {
+          this.drawSidebar(); 
+          this.originalMap.highlightAllCounties(
+            this.prov.getState(this.prov.current).countiesSelected
+          );
 
-
+          if(state.secondModelSelected)
+          {
+            this.secondMap.highlightAllCounties(
+              this.prov.getState(this.prov.current).countiesSelected
+            );
+          }
+        });
       }
-      
-      this.drawMap().then(() => this.drawSidebar());
-	});
-	
-	this.prov.addObserver(["secondModelSelected"], () => {
+    );
 
-		    this.comparisonMode =
-          this.prov.current().getState().secondModelSelected !== undefined;
-    if (
-      !this.prov.current().getState().secondModelSelected
-    ) {
-      this.secondMap.destroy();
-		d3.select("#runModelButtonDiv").style("display", "flex");
-		d3.select("#deleteModelButton").style("display", "flex");
-		d3.select("#hiddenShareButton").style("display", "flex");
+    this.prov.addObserver(
+      (state) => state.secondModelSelected,
+      (state) => {
 
+        console.log(state.secondModelSelected)
+        console.log(this.secondModelSelected)
 
+        if (state.secondModelSelected && this.secondModelSelected === state.secondModelSelected.id) {
+          console.log("returning")
+          return;
+        }
+        else{
+          if(state.secondModelSelected === undefined)
+          {
+            this.secondModelSelected = -1;
+          }
+          else{
+            this.secondModelSelected = state.secondModelSelected.id;
+          }
+        }
+        console.log("continuing")
+        this.comparisonMode =
+          this.prov.getState(this.prov.current).secondModelSelected !==
+          undefined;
+        if (!this.prov.getState(this.prov.current).secondModelSelected) {
+          this.secondMap.destroy();
+          d3.select("#runModelButtonDiv").style("display", "flex");
+          d3.select("#deleteModelButton").style("display", "flex");
+          d3.select("#hiddenShareButton").style("display", "flex");
+        } else if (!this.prov.getState(this.prov.current).firstModelSelected) {
+          this.originalMap.destroy();
+          return;
+        } else {
+          d3.select("#runModelButtonDiv").style("display", "none");
+          d3.select("#deleteModelButton").style("display", "none");
+          d3.select("#hiddenShareButton").style("display", "none");
+        }
 
-    } else if (!this.prov.current().getState().firstModelSelected) {
-      this.originalMap.destroy();
-      return;
-	}
-	else{
-		d3.select("#runModelButtonDiv").style("display", "none");
-		d3.select("#deleteModelButton").style("display", "none");
-		d3.select("#hiddenShareButton").style("display", "none");
+        this.drawMap().then(() => {
+          this.drawSidebar();
+          this.originalMap.highlightAllCounties(
+            this.prov.getState(this.prov.current).countiesSelected
+          );
 
-	}
+          if (state.secondModelSelected) {
+            this.secondMap.highlightAllCounties(
+              this.prov.getState(this.prov.current).countiesSelected
+            );
+          }
+        });
+      }
+    );
 
-
-    this.drawMap().then(() => this.drawSidebar());
-  });
-
-    this.prov.addObserver(["scaleType"], () => {
-      this.originalMap.updateMapType(
-        this.prov.current().getState().scaleType,
-        1000
-      );
-      if (this.comparisonMode) {
-        this.secondMap.updateMapType(
-          this.prov.current().getState().scaleType,
+    this.prov.addObserver(
+      (state) => state.scaleType,
+      () => {
+        this.originalMap.updateMapType(
+          this.prov.getState(this.prov.current).scaleType,
           1000
         );
-      }
-      this.drawSidebar();
-    });
-
-    this.prov.addObserver(["mapType"], () => {
-      this.drawMap().then(() => this.drawSidebar());
-    });
-
-    this.prov.addObserver(["countiesSelected"], () => {
-      this.sidebar.highlightAllCounties(
-        this.prov.current().getState().countiesSelected
-      );
-      this.originalMap.highlightAllCounties(
-        this.prov.current().getState().countiesSelected
-      );
-      this.originalMap.initLineChart();
-
-      if (this.comparisonMode) {
-        this.secondMap.highlightAllCounties(
-          this.prov.current().getState().countiesSelected
-        );
-        this.secondMap.initLineChart();
-      }
-      this.setAllHighlights();
-
-      this.sidebar.updateProfessions();
-    });
-
-    this.prov.addObserver(["professionsSelected"], () => {
-      this.recalcData(this.prov.current().getState().year).then(() => {
+        if (this.comparisonMode) {
+          this.secondMap.updateMapType(
+            this.prov.getState(this.prov.current).scaleType,
+            1000
+          );
+        }
         this.drawSidebar();
-        this.setAllHighlights();
-      });
-	});
+      }
+    );
 
-	d3.select("#modelShareContent")
-		.selectAll("p")
-		.data(
-		this.prov.current().getState().firstModelSelected.shared_with
-		)
-		.enter()
-		.append("p")
-		.html((d) => d);
-	
-	ProvVisCreator(
-    document.getElementById("provDiv")!,
-    this.prov,
-    (newNode: NodeID) => this.prov.goToNode(newNode),
-    false,
-    false,
-    undefined,
-    { eventConfig: eventConfig }
-  );
+    this.prov.addObserver(
+      (state) => state.mapType,
+      () => {
+
+        this.drawMap().then(() => this.drawSidebar());
+      }
+    );
+
+    this.prov.addObserver(
+      (state) => state.countiesSelected,
+      () => {
+        this.sidebar.highlightAllCounties(
+          this.prov.getState(this.prov.current).countiesSelected
+        );
+        this.originalMap.highlightAllCounties(
+          this.prov.getState(this.prov.current).countiesSelected
+        );
+        this.originalMap.initLineChart();
+
+        if (this.comparisonMode) {
+          this.secondMap.highlightAllCounties(
+            this.prov.getState(this.prov.current).countiesSelected
+          );
+          this.secondMap.initLineChart();
+        }
+        this.setAllHighlights();
+
+        this.sidebar.updateProfessions();
+      }
+    );
+
+    this.prov.addObserver(
+      (state) => state.professionsSelected,
+      () => {
+        this.recalcData(this.prov.getState(this.prov.current).year).then(() => {
+          this.drawSidebar();
+          this.setAllHighlights();
+        });
+      }
+    );
+
+    d3.select("#modelShareContent")
+      .selectAll("p")
+      .data(
+        this.prov.getState(this.prov.current).firstModelSelected.shared_with
+      )
+      .enter()
+      .append("p")
+      .html((d) => d);
+
+    ProvVisCreator(
+      document.getElementById("provDiv")!,
+      this.prov,
+      (newNode: NodeID) => this.prov.goToNode(newNode),
+      true,
+      true,
+      this.prov.root.id,
+      { eventConfig: eventConfig }
+    );
   }
 
   /**
@@ -405,79 +452,76 @@ class MapController {
    * @param mapData this the selection of the new map type
    */
   updateMapType(newMapType: string) {
-    let action = this.prov.addAction("Map Shape Changed", (state: AppState) => {
-      state.mapType = newMapType;
-      return state;
-    });
+    let action = createAction<AppState, any, EventOptions>(
+      (state: AppState) => {
+        state.countiesSelected = ["State of Utah"]
+        state.mapType = newMapType;
+      }
+    );
 
-    action.addEventType("MapShape Changed").applyAction();
+    action.setEventType("MapShape Changed").setLabel("Map Shape Changed");
+
+    this.prov.apply(action());
   }
 
   editSupply(newMapType: string) {
-    let action = this.prov.addAction("Map Type Changed", (state: AppState) => {
-      state.mapType = newMapType;
-      return state;
-    });
+    let action = createAction<AppState, any, EventOptions>(
+      (state: AppState) => {
+        state.mapType = newMapType;
+      }
+    );
 
-    action.applyAction();
+    action.setLabel("Map Type Changed");
+
+    this.prov.apply(action());
   }
 
   editNeed(newMapType: string) {
-    let action = this.prov.addAction("Map Type Changed", (state: AppState) => {
-      state.mapType = newMapType;
-      return state;
-    });
+    let action = createAction<AppState, any, EventOptions>(
+      (state: AppState) => {
+        state.mapType = newMapType;
+      }
+    );
 
-    action.applyAction();
+    action.setLabel("Map Type Changed");
+
+    this.prov.apply(action());
   }
 
   historyClick() {
-
-	if(this.prov.current().getState().historyOpen)
-	{
-		let action = this.prov.addAction("Close History", (state: AppState) => {
-			state.historyOpen = false;
-			return state;
-		});
-
-		action.applyAction();
-	}
-	else{
-		let action = this.prov.addAction("Open History", (state: AppState) => {
-			state.historyOpen = true;
-			return state;
-		});
-
-		action.applyAction();
-	}
+      if (d3.select("#provDiv").style("width") === "0px") {
+        d3.select("#provDiv").style("width", "300px");
+        d3.select("#historyButton").html("Hide History");
+      } else {
+        d3.select("#provDiv").style("width", "0px");
+        d3.select("#historyButton").html("Show History");
+      }
   }
 
   updateComparisonType(newCompType: string) {
-    let action = this.prov.addAction(
-      "Comparison Type Changed",
+    let action = createAction<AppState, any, EventOptions>(
       (state: AppState) => {
         state.scaleType = newCompType;
-        return state;
       }
     );
 
-    action.addEventType("MapType Changed").applyAction();
+    action.setLabel("Comparison Type Changed").setEventType("MapType Changed");
+
+    this.prov.apply(action());
   }
 
-  updateModelsSelected(firstModelSelected:Model, secondModelSelected:Model) {
-	  console.log(firstModelSelected);
-	  console.log(secondModelSelected)
-    let action = this.prov.addAction(
-      "Change Selected Models",
+  updateModelsSelected(firstModelSelected: Model, secondModelSelected: Model) {
+    let action = createAction<AppState, any, EventOptions>(
       (state: AppState) => {
-		state.firstModelSelected = firstModelSelected;
-		state.secondModelSelected = secondModelSelected;
-
-        return state;
+        console.log("UPDATING MODELS SELECTED");
+        state.firstModelSelected = firstModelSelected;
+        state.secondModelSelected = secondModelSelected;
       }
     );
 
-    action.addEventType("Model Changed").applyAction();
+    action.setLabel("Change Selected Models").setEventType("Model Changed");
+
+    this.prov.apply(action());
   }
 
   /**
@@ -497,67 +541,79 @@ class MapController {
   }
 
   updateMapYear(newYear: string) {
-    let action = this.prov.addAction("Map Year Changed", (state: AppState) => {
-      state.year = newYear;
-      return state;
-    });
+    let action = createAction<AppState, any, EventOptions>(
+      (state: AppState) => {
+        state.year = newYear;
+      }
+    );
 
-    action.addEventType("Year Changed").applyAction();
+    action.setLabel("Map Year Changed").setEventType("Year Changed");
+
+    this.prov.apply(action());
   }
 
   updateSelectedProf(profSelected: string) {
     let label = "";
-    if (this.prov.current().getState().professionsSelected[profSelected]) {
+    if (
+      this.prov.getState(this.prov.current).professionsSelected[profSelected]
+    ) {
       label = "Profession " + profSelected + " De-Selected";
     } else {
       label = "Profession " + profSelected + " Selected";
     }
 
-    let action = this.prov.addAction(label, (state: AppState) => {
-      state.professionsSelected[profSelected] = !state.professionsSelected[
-        profSelected
-      ];
-      return state;
-    });
+    let action = createAction<AppState, any, EventOptions>(
+      (state: AppState) => {
+        state.professionsSelected[profSelected] = !state.professionsSelected[
+          profSelected
+        ];
+      }
+    );
 
-    action.addEventType("Professions Changed").applyAction();
+    action.setLabel(label).setEventType("Professions Changed");
+
+    this.prov.apply(action());
   }
 
   updateSelectedCounty(selectCounty: string) {
     let label = "";
     if (
-      this.prov.current().getState().countiesSelected.includes(selectCounty)
+      this.prov
+        .getState(this.prov.current)
+        .countiesSelected.includes(selectCounty)
     ) {
       label = "County " + selectCounty + " De-Selected";
     } else {
       label = "County " + selectCounty + " Selected";
     }
 
-    let action = this.prov.addAction(label, (state: AppState) => {
-      if (selectCounty === "State of Utah") {
-        state.countiesSelected = ["State of Utah"];
-      } else if (state.countiesSelected.includes(selectCounty)) {
-        state.countiesSelected.splice(
-          state.countiesSelected.indexOf(selectCounty),
-          1
-        );
-        if (state.countiesSelected.length === 0) {
-          state.countiesSelected.push("State of Utah");
-        }
-      } else {
-        if (state.countiesSelected.includes("State of Utah")) {
+    let action = createAction<AppState, any, EventOptions>(
+      (state: AppState) => {
+        if (selectCounty === "State of Utah") {
+          state.countiesSelected = ["State of Utah"];
+        } else if (state.countiesSelected.includes(selectCounty)) {
           state.countiesSelected.splice(
-            state.countiesSelected.indexOf("State of Utah"),
+            state.countiesSelected.indexOf(selectCounty),
             1
           );
+          if (state.countiesSelected.length === 0) {
+            state.countiesSelected.push("State of Utah");
+          }
+        } else {
+          if (state.countiesSelected.includes("State of Utah")) {
+            state.countiesSelected.splice(
+              state.countiesSelected.indexOf("State of Utah"),
+              1
+            );
+          }
+          state.countiesSelected.push(selectCounty);
         }
-        state.countiesSelected.push(selectCounty);
       }
+    );
 
-      return state;
-    });
+    action.setLabel(label).setEventType("Counties Changed");
 
-    action.addEventType("Counties Changed").applyAction();
+    this.prov.apply(action());
   }
 
   createDuplicateMap() {
@@ -567,7 +623,9 @@ class MapController {
 
       this.modelRemovedComparison = true;
       this.comparisonMode = true;
-      this.secondMap.drawMap(this.prov.current().getState().firstModelSelected.model_id);
+      this.secondMap.drawMap(
+        this.prov.getState(this.prov.current).firstModelSelected.model_id
+      );
     }
   }
 
@@ -586,8 +644,9 @@ class MapController {
   }
 
   setAllHighlights() {
-    for (let prof in this.prov.current().getState().professionsSelected) {
-      if (this.prov.current().getState().professionsSelected[prof]) {
+    for (let prof in this.prov.getState(this.prov.current)
+      .professionsSelected) {
+      if (this.prov.getState(this.prov.current).professionsSelected[prof]) {
         this.highlightProfession(prof);
       } else {
         this.unHighlightProfession(prof);
