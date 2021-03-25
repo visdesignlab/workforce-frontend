@@ -10,15 +10,12 @@ The purpose of this project is to model the healthcare workforce trends in Utah 
 
 ## Deploying The Whole Application In Production
 
-We use docker to deploy in production. The specific container that we extend is 
-[here](https://github.com/tiangolo/uwsgi-nginx-flask-docker) and the tag is `python3.8`.
-The container is set up to use uwsgi and nginx to host a flask app and has been extended
-to also serve the static frontend.
+We use a combination of docker mysql, django, react, and nginx to serve this app. The front end components are simplest so let's start there. They are built to static files and served using nginx. The backend is made using django (for easier database integrations) and is served through nginx via a `proxy_pass`. The backend also communicates with a mysql instance (that we chose to run through docker) and comes with the necessary migrations to get everything up and running. The one piece of admin to do, is to create a user that can access the instance.
 
-To build and run the containers, do the following:
+To build and run everything, do the following (NOTE: this expects a user called ubuntu, if your user is different, modify most instances of ubuntu to that user, just not the docker install steps):
 
 ```
-# On a fresh ubuntu 20.04 system
+# On a fresh ubuntu 18.04 system
 sudo apt install curl
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo apt-key fingerprint 0EBFCD88
@@ -28,12 +25,15 @@ sudo add-apt-repository \
    stable"
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt-get update
-sudo apt-get install docker-ce pipenv python3.7 python3.7-dev mysql-server libmysqlclient-dev glpk-utils
+sudo apt-get install docker-ce python3-pip python3.7 python3.7-dev mysql-server libmysqlclient-dev glpk-utils
 sudo usermod -aG docker ubuntu
+
+pip3 install --user pipenv
+sudo systemctl disable --now mysql
 
 # Re-login
 
-cd ~
+cd
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get install -y nodejs
 git clone https://github.com/visdesignlab/workforce-frontend.git
@@ -49,7 +49,8 @@ cd ..
 mkdir /home/ubuntu/workforce-db-data/
 cd backend
 pipenv install
-cd ..
+
+# Create your file .env file in the backend folder, fields to include are in the .env.default file
 
 docker stop workforce-mysql
 docker rm workforce-mysql
@@ -66,8 +67,14 @@ docker run \
   -p 3306:3306 \
   mysql:5
 
+# Set up mysql here to use the above settings
+# This would include creating the user specified above (the database should be automatically created)
+
 pipenv run migrate
-sudo systemctl enable /home/ubuntu/workforce-frontend/api.service
+sudo systemctl enable --now /home/ubuntu/workforce-frontend/api.service
+
+# This will run the deploy script inside of `Pipfile`. If you need to change the user, you'll have to update the config there, too
+# The `Pipfile` would also be the place to add logging output to the deploy script.
 
 cd ..
 
