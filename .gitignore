@@ -21,4 +21,3 @@ admins.txt
 
 # Sensitive SSL config
 backend/certs/
-backend/nginx.conf
